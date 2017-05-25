@@ -24,8 +24,8 @@ class Target
 {
 public:
   Target(std::string target_name, std::string target_frame, std::string transform_interface,
-             double angle_axis_ax = 0.0, double angle_axis_ay = 0.0, double angle_axis_az = 0.0,
-             double position_x = 0.0, double position_y = 0.0, double position_z = 0.0);
+    double angle_axis_ax = 0.0, double angle_axis_ay = 0.0, double angle_axis_az = 0.0,
+    double position_x = 0.0, double position_y = 0.0, double position_z = 0.0);
 
 protected:
   std::string target_name_;
@@ -46,10 +46,9 @@ class CheckerBoardTarget : public Target
 {
 public:
   CheckerBoardTarget(std::string target_name, std::string target_frame, 
-                                  std::string transform_interface, double angle_axis_ax = 0.0, 
-                                  double angle_axis_ay = 0.0, double angle_axis_az = 0.0,
-                                  double position_x = 0.0, double position_y = 0.0, 
-                                  double position_z = 0.0, std::size_t num_rows, std::size_t num_cols);
+    std::string transform_interface, double angle_axis_ax = 0.0, double angle_axis_ay = 0.0, 
+    double angle_axis_az = 0.0, double position_x = 0.0, double position_y = 0.0, 
+    double position_z = 0.0, std::size_t num_rows, std::size_t num_cols);
 
 protected:
   std::size_t num_rows_;
@@ -59,12 +58,11 @@ protected:
 class CircleGridTarget : public Target
 {
 public:
-  CircleGridTarget(std::string target_name, std::string target_frame, 
-                            std::string transform_interface, double angle_axis_ax = 0.0, 
-                            double angle_axis_ay = 0.0, double angle_axis_az = 0.0,
-                            double position_x = 0.0, double position_y = 0.0, 
-                            double position_z = 0.0, std::size_t num_rows, std::size_t num_cols,
-                            bool is_symmetric, double circle_diameter);
+  CircleGridTarget(std::string target_name, std::string target_frame, std::string transform_interface, 
+    double angle_axis_ax = 0.0, double angle_axis_ay = 0.0, double angle_axis_az = 0.0,
+    double position_x = 0.0, double position_y = 0.0, double position_z = 0.0, 
+    std::size_t num_rows, std::size_t num_cols, bool is_symmetric, double circle_diameter);
+  
 protected:
   std::size_t num_rows_;
   std::size_t num_cols_;
