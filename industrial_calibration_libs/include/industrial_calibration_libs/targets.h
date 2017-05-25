@@ -29,7 +29,7 @@ public:
     double angle_axis_ax = 0.0, double angle_axis_ay = 0.0, double angle_axis_az = 0.0,
     double position_x = 0.0, double position_y = 0.0, double position_z = 0.0);
 
-  void generatePoints(const double spacing);
+  bool generatePoints(double spacing);
 
 protected:
   std::string target_name_;
@@ -49,16 +49,16 @@ protected:
 class CheckerBoardTarget : public Target
 {
 public:
-  CheckerBoardTarget();
+  CheckerBoardTarget(const std::string file_path);
 
   CheckerBoardTarget(std::string target_name, std::string target_frame, 
     std::string transform_interface, double angle_axis_ax = 0.0, double angle_axis_ay = 0.0, 
     double angle_axis_az = 0.0, double position_x = 0.0, double position_y = 0.0, 
     double position_z = 0.0, std::size_t num_rows, std::size_t num_cols);
 
-  loadCheckerBoardTarget(const std::string file_path);
 
 protected:
+  bool loadCheckerBoardTarget(const std::string file_path);
   std::size_t num_rows_;
   std::size_t num_cols_;
 };
@@ -66,16 +66,16 @@ protected:
 class CircleGridTarget : public Target
 {
 public:
-  CircleGridTarget();
+  CircleGridTarget(const std::string &file_path);
 
   CircleGridTarget(std::string target_name, std::string target_frame, std::string transform_interface, 
     double angle_axis_ax = 0.0, double angle_axis_ay = 0.0, double angle_axis_az = 0.0,
     double position_x = 0.0, double position_y = 0.0, double position_z = 0.0, 
     std::size_t num_rows, std::size_t num_cols, bool is_symmetric, double circle_diameter);
 
-  loadCircleGridTarget(const std::string file_path);
 
 protected:
+  bool loadCircleGridTarget(const std::string &file_path);
   std::size_t num_rows_;
   std::size_t num_cols_;
   bool is_symmetric_;
