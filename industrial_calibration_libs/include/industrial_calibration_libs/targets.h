@@ -2,16 +2,17 @@
 #define TARGETS_H
 
 #include <vector>
+#include <string>
 
 namespace industrial_calibration_libs
 {
 
-enum target_types
-{
-  ChessBoard = 0;
-  CircleGrid = 1;
-  ModifiedCircleGrid = 2;
-};
+// enum target_types
+// {
+//   ChessBoard = 0;
+//   CircleGrid = 1;
+//   ModifiedCircleGrid = 2;
+// };
 
 struct Point3D
 {
@@ -40,7 +41,7 @@ struct TargetDefinition
   std::size_t num_rows;
   std::size_t num_cols;
 
-  std::vector<Point3d> points;
+  std::vector<Point3D> points;
   double circle_diameter;
 };
 
@@ -50,7 +51,7 @@ public:
 
 protected:
   TargetDefinition target_definition_;
-  std::vector<Point3d> points_;
+  std::vector<Point3D> points_;
 };
 
 class CheckerBoardTarget : public Target
@@ -69,6 +70,8 @@ public:
 protected:
   bool is_symmetric_;
 };
+
+} // namespace industrial_calibration_libs
 
 #endif // TARGETS_H
 

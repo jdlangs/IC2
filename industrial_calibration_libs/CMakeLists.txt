@@ -98,8 +98,10 @@ find_package(catkin REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES industrial_calibration_libs
+  INCLUDE_DIRS 
+    include
+  LIBRARIES 
+    industrial_calibration_libs
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -110,17 +112,18 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(include)
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/industrial_calibration_libs.cpp
-# )
+add_library(${PROJECT_NAME}
+  src/industrial_calibration_libs.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -141,6 +144,10 @@ catkin_package(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
 
 #############
 ## Install ##
@@ -189,3 +196,16 @@ catkin_package(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+# if(CATKIN_ENABLE_TESTING)
+#   find_package(rostest)
+#   set(UTEST_SRC_FILES test/utest.cpp test/targets.cpp)
+
+#   add_rostest_gtest(${PROJECT_NAME}_utest 
+#     test/launch/utest.launch
+#     ${UTEST_SRC_FILES})
+
+#   target_link_libraries(${PROJECT_NAME}_utest
+#     ${PROJECT_NAME}
+#     ${catkin_LIBRARIES})
+# endif()
