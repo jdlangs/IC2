@@ -189,23 +189,11 @@ target_link_libraries(${PROJECT_NAME}
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_industrial_calibration_libs.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+catkin_add_gtest(${PROJECT_NAME}_test 
+  test/test_targets.cpp)
+if(TARGET ${PROJECT_NAME}_test)
+  target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
+endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-
-# if(CATKIN_ENABLE_TESTING)
-#   find_package(rostest)
-#   set(UTEST_SRC_FILES test/utest.cpp test/targets.cpp)
-
-#   add_rostest_gtest(${PROJECT_NAME}_utest 
-#     test/launch/utest.launch
-#     ${UTEST_SRC_FILES})
-
-#   target_link_libraries(${PROJECT_NAME}_utest
-#     ${PROJECT_NAME}
-#     ${catkin_LIBRARIES})
-# endif()

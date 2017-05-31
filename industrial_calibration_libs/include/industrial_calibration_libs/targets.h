@@ -14,6 +14,8 @@ namespace industrial_calibration_libs
 //   ModifiedCircleGrid = 2;
 // };
 
+int number = 5;
+
 struct Point3D
 {
   double x;
