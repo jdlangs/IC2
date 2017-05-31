@@ -5,7 +5,6 @@
 TEST(Targets, temp_test)
 {
   CONSOLE_OUTPUT("ABCDEFG");
-  EXPECT_TRUE(industrial_calibration_libs::number == 5);
   CONSOLE_OUTPUT("Hello World!");
 }
 
