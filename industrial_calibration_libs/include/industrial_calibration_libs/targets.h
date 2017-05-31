@@ -1,23 +1,41 @@
 #ifndef TARGETS_H
 #define TARGETS_H
 
+#include <yaml-cpp/yaml.h>
+#include <cassert>
 #include <vector>
 #include <string>
 
 namespace industrial_calibration_libs
 {
 
-// enum target_types
-// {
-//   ChessBoard = 0;
-//   CircleGrid = 1;
-//   ModifiedCircleGrid = 2;
-// };
-
-int number = 5;
+enum target_types
+{
+  ChessBoard = 0,
+  CircleGrid = 1,
+  ModifiedCircleGrid = 2
+};
 
 struct Point3D
 {
+  Point3D(void);
+
+  Point3D(double x_in, double y_in, double z_in);
+  
+  Point3D(const std::vector<double> &points);
+
+  void setPoints(double x_in, double y_in, double z_in);
+
+  bool setPoints(const std::vector<double> &points);
+
+  std::vector<double> asVector(void)
+  {
+    std::vector<double> points;
+    points.resize(3);
+    points[0] = x; points[1] = y; points[2] = z;
+    return points;
+  }
+
   double x;
   double y;
   double z;
@@ -26,54 +44,49 @@ struct Point3D
 struct TargetDefinition
 {
   std::string target_name;
-  std::string target_frame;
-  std::string transform_interface;
-  
-  double angle_axis_ax;
-  double angle_axis_ay;
-  double angle_axis_az;
-  
-  double position_x;
-  double position_y;
-  double position_z;
-
-  std::size_t traget_type;
-
-  std::size_t num_points;
+  std::size_t target_type;
   std::size_t num_rows;
   std::size_t num_cols;
+  std::size_t num_points;
 
+  double circle_diameter; // Meters
+  double row_spacing; // Meters
+  double col_spacing; // Meters
+  double spacing; // Meters
+
+  bool asymmetric_grid;
   std::vector<Point3D> points;
-  double circle_diameter;
 };
 
 class Target
 {
 public:
+  Target(void);
 
-protected:
-  TargetDefinition target_definition_;
-  std::vector<Point3D> points_;
+  bool loadTargetFromYAML(const std::string &yaml_file_path);
+
+  bool loadTargetFromDefinition(const TargetDefinition &target_definition);
+
+private:
+  bool parseYAML(const YAML::Node &node, const std::string &var_name, 
+    std::string &var_value);
+
+  bool parseYAML(const YAML::Node &node, const std::string &var_name,
+    std::size_t &var_value);
+
+  bool parseYAML(const YAML::Node &node, const std::string &var_name,
+    double &var_value);
+
+  bool parseYAML(const YAML::Node &node, const std::string &var_name,
+    bool &var_value);
+
+  bool parseYAML(const YAML::Node &node, const std::string &var_name,
+    Point3D &var_value);
+
+  TargetDefinition target_params_;
 };
 
-class CheckerBoardTarget : public Target
-{
-public:
-
-protected:
-};
-
-class CircleGridTarget : public Target
-{
-public:
-  CircleGridTarget(const std::string yaml_path);
-
-
-protected:
-  bool is_symmetric_;
-};
 
 } // namespace industrial_calibration_libs
-
 #endif // TARGETS_H
 

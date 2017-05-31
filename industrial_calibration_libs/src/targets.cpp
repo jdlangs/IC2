@@ -3,43 +3,110 @@
 namespace industrial_calibration_libs
 {
 
-// Target::Target(std::string target_name, std::string target_frame, std::string transform_interface, 
-//   double angle_axis_ax = 0.0, double angle_axis_ay = 0.0, double angle_axis_az = 0.0,
-//   double position_x = 0.0, double position_y = 0.0, double position_z = 0.0, 
-//   std::size_t num_points) : target_name_(target_name), target_frame_(target_frame), 
-//   transform_interface_(transform_interface), angle_axis_ax_(angle_axis_ax), 
-//   angle_axis_ay_(angle_axis_ay), angle_axis_az_(angle_axis_az), position_x_(position_x),
-//   position_y_(position_y), position_z_(position_z) { }
+Point3D::Point3D(void) { }
 
-// void Target::generatePoints(double spacing)
-// {
+Point3D::Point3D(double x_in, double y_in, double z_in) : 
+  x(x_in), y(y_in), z(z_in) { }
 
-// }
+Point3D::Point3D(const std::vector<double> &points)
+{
+  assert(points.size() == 3);
+  x = points[0];
+  y = points[1];
+  z = points[2];  
+}
 
-// CheckerBoardTarget::CheckerBoardTarget(std::string target_name, std::string target_frame, 
-//   std::string transform_interface, double angle_axis_ax = 0.0, double angle_axis_ay = 0.0, 
-//   double angle_axis_az = 0.0, double position_x = 0.0, double position_y = 0.0, 
-//   double position_z = 0.0, std::size_t num_rows, std::size_t num_cols) : 
-//   Target(target_name, target_frame, transform_interface, angle_axis_ax, angle_axis_ay,
-//   angle_axis_az, position_x, position_y, position_z), num_rows_(num_rows), num_cols_(num_cols) { }
+void Point3D::setPoints(double x_in, double y_in, double z_in)
+{
+  x = x_in;
+  y = y_in;
+  z = z_in;
+}
 
-// bool CheckerBoardTarget::loadCheckerBoardTarget(const std::string &file_path)
-// {
+bool Point3D::setPoints(const std::vector<double> &points)
+{
+  if (points.size() != 3) {return false;}
+  else
+  {
+    x = points[0];
+    y = points[1];
+    z = points[2];
+    return true;
+  }
+}
 
-// }
+Target::Target(void) { }
 
-// CircleGridTarget::CircleGridTarget(std::string target_name, std::string target_frame, 
-//   std::string transform_interface, double angle_axis_ax = 0.0, double angle_axis_ay = 0.0, 
-//   double angle_axis_az = 0.0, double position_x = 0.0, double position_y = 0.0, 
-//   double position_z = 0.0, std::size_t num_rows, std::size_t num_cols, bool is_symmetric, 
-//   double circle_diameter) : Target(target_name, target_frame, transform_interface, 
-//   angle_axis_ax, angle_axis_ay, angle_axis_az, position_x, position_y, position_z), 
-//   num_rows_(num_rows), num_cols_(num_cols), is_symmetric_(is_symmetric), 
-//   circle_diameter_(circle_diameter) { }
+bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
+{
+  YAML::Node target_yaml = YAML::LoadFile(yaml_file_path);
+}
 
-// bool CircleGridTarget::loadCircleGridTarget(const std::string &file_path)
-// {
+bool Target::loadTargetFromDefinition(const TargetDefinition &target_definition)
+{
 
-// }
+}
+
+bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
+  std::string &var_value)
+{
+  if (node[var_name])
+  {
+    var_value = node[var_name].as<std::string>();
+    return true;
+  }
+  else {return false;}
+}
+
+bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
+  std::size_t &var_value)
+{
+  if (node[var_name])
+  {
+    var_value = node[var_name].as<std::size_t>();
+    return true;
+  }
+  else {return false;}
+}
+
+bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
+  double &var_value)
+{
+  if (node[var_name])
+  {
+    var_value = node[var_name].as<double>();
+    return true;
+  }
+  else {return false;}
+}
+
+bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
+  bool &var_value)
+{
+  if (node[var_name])
+  {
+    var_value = node[var_name].as<bool>();
+    return true;
+  }
+  else {return false;}
+}
+
+bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
+  Point3D &var_value)
+{
+  std::vector<double> points;
+  if (node[var_name])
+  {
+    const YAML::Node n = node[var_name];
+    for (std::size_t i = 0; i < n.size(); i++)
+    {
+      double value = n[i].as<double>();
+      points.push_back(value);
+    }
+    if (var_value.setPoints(points)) {return true;}
+    else {return false;}
+  }
+  else {return false;}
+}
 
 } // namespace industrial_calibration_libs
