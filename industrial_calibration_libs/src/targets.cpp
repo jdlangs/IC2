@@ -80,15 +80,15 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
 
   // TODO(gChiou): Add function to populate points if points is empty
 
-  success &= checkForValidTarget();
+  // success &= checkForValidTarget();
 
   return success;
 }
 
-bool Target::loadTargetFromDefinition(const TargetDefinition &target_definition)
-{
-  // TODO(gChiou): ...
-}
+// bool Target::loadTargetFromDefinition(const TargetDefinition &target_definition)
+// {
+//   // TODO(gChiou): ...
+// }
 
 bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
   std::string &var_value)
@@ -155,13 +155,22 @@ bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
 bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
   std::vector<Point3D> &var_value)
 {
+  var_value.clear();
   if (node[var_name])
   {
     const YAML::Node n = node[var_name];
-    // for (std::size_t i = 0; i < n.size(); j++)
+    for (std::size_t i = 0; i < n.size(); i++)
+    {
+      Point3D temp_point;
+      if (!parseYAML(n[i], "pnt", temp_point)) {return false;}
+      var_value.push_back(temp_point);
+    }
+    return true;
   }
+  else {return false;}
 }
 
+#if 0
 bool Target::checkForValidTarget(void)
 {
   if (target_params_.target_type == CircleGrid)
@@ -185,5 +194,5 @@ bool Target::checkForValidTarget(void)
   }
   // TODO(gChiou): Write these same checks for modified circle grid and checkerboard
 }
-
+#endif
 } // namespace industrial_calibration_libs
