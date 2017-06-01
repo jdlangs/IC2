@@ -39,12 +39,26 @@ Target::Target(void) { }
 
 bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
 {
-  YAML::Node target_yaml = YAML::LoadFile(yaml_file_path);
+  try
+  {
+    YAML::Node target_yaml = YAML::LoadFile(yaml_file_path);
+  }
+  catch (YAML::BadFile &bf) {return false;}
+
+  bool success = true;
+
+  success &= parseYAML(target_yaml, "target_name", target_params_.target_name);
+  success &= parseYAML(target_yaml, "target_type", target_params_.target_type);
+  success &= parseYAML(target_yaml, "target_rows", target_params_.target_rows);
+  success &= parseYAML(target_yaml, "target_cols", target_params_.target_cols);
+  success &= parseYAML(target_yaml, "target_points", target_params_.target_points);
+  success &= checkForValidTarget();
+  // Continue Here! https://github.com/ros-industrial/industrial_calibration/blob/kinetic-devel/industrial_extrinsic_cal/src/targets_yaml_parser.cpp
 }
 
 bool Target::loadTargetFromDefinition(const TargetDefinition &target_definition)
 {
-
+  // TODO: Geoffrey
 }
 
 bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
@@ -107,6 +121,11 @@ bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
     else {return false;}
   }
   else {return false;}
+}
+
+bool Target::checkForValidTarget(void)
+{
+  // CONTINUE HERE!!!!
 }
 
 } // namespace industrial_calibration_libs

@@ -83,6 +83,8 @@ private:
   bool parseYAML(const YAML::Node &node, const std::string &var_name,
     Point3D &var_value);
 
+  bool checkForValidTarget(void);
+
   TargetDefinition target_params_;
 };
 
