@@ -8,4 +8,6 @@
 #define CONSOLE_OUTPUT(str) do { } while (false)
 #endif
 
+#include <string>
+
 #endif // TEST_UTILS_H

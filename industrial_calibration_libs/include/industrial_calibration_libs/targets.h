@@ -3,8 +3,10 @@
 
 #include <yaml-cpp/yaml.h>
 #include <cassert>
-#include <vector>
+#include <iostream>
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace industrial_calibration_libs
 {
@@ -28,13 +30,7 @@ struct Point3D
 
   bool setPoints(const std::vector<double> &points);
 
-  std::vector<double> asVector(void)
-  {
-    std::vector<double> points;
-    points.resize(3);
-    points[0] = x; points[1] = y; points[2] = z;
-    return points;
-  }
+  std::vector<double> asVector(void);
 
   double x;
   double y;
@@ -67,6 +63,8 @@ public:
 
   bool loadTargetFromDefinition(const TargetDefinition &target_definition);
 
+  std::shared_ptr<TargetDefinition> getData(void);
+
 private:
   bool parseYAML(const YAML::Node &node, const std::string &var_name, 
     std::string &var_value);
@@ -91,7 +89,7 @@ private:
   bool populatePoints(void);
 
   // Variables
-  TargetDefinition target_params_;
+  std::shared_ptr<TargetDefinition> target_params_;
 };
 
 
