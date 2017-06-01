@@ -6,7 +6,7 @@ calibration_target:
      target_rows: 10
      target_cols: 10
      target_points: 100
-     circle_dia:  0.0125
+     circle_diameter:  0.0125
      spacing: 0.0200
      points:
       - pnt: [0.0000, 0.1800, 0.0000]
