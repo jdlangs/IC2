@@ -88,6 +88,9 @@ private:
 
   bool checkForValidTarget(void);
 
+  bool populatePoints(void);
+
+  // Variables
   TargetDefinition target_params_;
 };
 

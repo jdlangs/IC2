@@ -75,20 +75,23 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
       break;
   }
 
-  // TODO(gChiou): Load Points here
-  // success &= parseYAML(target_yaml, "points", target_params_.points);
+  if (!parseYAML(target_yaml, "points", target_params_.points))
+  {
+    // TODO(gChiou): Populate points from rows, cols, and spacing.
+  }
 
-  // TODO(gChiou): Add function to populate points if points is empty
 
+  // TODO(gChiou): Better implementation of this
   // success &= checkForValidTarget();
 
   return success;
 }
 
-// bool Target::loadTargetFromDefinition(const TargetDefinition &target_definition)
-// {
-//   // TODO(gChiou): ...
-// }
+bool Target::loadTargetFromDefinition(const TargetDefinition &target_definition)
+{
+  // TODO(gChiou): ...
+  return false;
+}
 
 bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
   std::string &var_value)
@@ -170,13 +173,12 @@ bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
   else {return false;}
 }
 
-#if 0
+// TODO(gChiou): Refactor this...
 bool Target::checkForValidTarget(void)
 {
   if (target_params_.target_type == CircleGrid)
   {
-    // Note(gChiou): Check if total number of points is half of number of rows times number 
-    // of columns for an asymmetric circle grid.
+    // Note(gChiou): Check if total number of points is half of number of rows times number of columns for an asymmetric circle grid.
     if (target_params_.asymmetric_grid)
     {
       if (target_params_.target_points != (target_params_.target_rows*target_params_.target_cols) / 2)
@@ -194,5 +196,11 @@ bool Target::checkForValidTarget(void)
   }
   // TODO(gChiou): Write these same checks for modified circle grid and checkerboard
 }
-#endif
+
+// TODO(gChiou): Implement this...
+bool Target::populatePoints(void)
+{
+  return false;
+}
+
 } // namespace industrial_calibration_libs
