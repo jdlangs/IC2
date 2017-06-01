@@ -52,8 +52,31 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
   success &= parseYAML(target_yaml, "target_rows", target_params_.target_rows);
   success &= parseYAML(target_yaml, "target_cols", target_params_.target_cols);
   success &= parseYAML(target_yaml, "target_points", target_params_.target_points);
-  success &= checkForValidTarget();
-  // Continue Here! https://github.com/ros-industrial/industrial_calibration/blob/kinetic-devel/industrial_extrinsic_cal/src/targets_yaml_parser.cpp
+
+  switch (target_params_.target_type)
+  {
+    case ChessBoard:
+      success &= parseYAML(target_yaml, "row_spacing", target_params_.row_spacing);
+      success &= parseYAML(target_yaml, "col_spacing", target_params_.col_spacing);
+      // Should we assume chessboard targets always have even spacing???
+      break;
+    case CircleGrid:
+      success &= parseYAML(target_yaml, "circle_diameter", target_params_.circle_diameter);
+      success &= parseYAML(target_yaml, "spacing", target_params_.spacing);
+      success &= parseYAML(target_yaml, "asymmetric_grid", target_params_.asymmetric_grid);
+      break;
+    case ModifiedCircleGrid:
+      success &= parseYAML(target_yaml, "circle_diameter", target_params_.circle_diameter);
+      success &= parseYAML(target_yaml, "spacing", target_params_.spacing);
+      break;
+    default:
+      success = false;
+      break;
+  }
+
+  success &= checkForValidTarget(void);
+
+  return success;
 }
 
 bool Target::loadTargetFromDefinition(const TargetDefinition &target_definition)
@@ -125,7 +148,24 @@ bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
 
 bool Target::checkForValidTarget(void)
 {
-  // CONTINUE HERE!!!!
+  if (target_params_.target_type == CircleGrid)
+  {
+    // Check if 
+    if (target_params_.asymmetric_grid)
+    {
+      if (target_params_.num_points != (target_params_.num_rows*target_params_.num_cols) / 2)
+      {
+        return false;
+      }
+    }
+    else
+    {
+      if (target_params_.num_points != (target_params_.num_rows*target_params_.num_cols))
+      {
+        return false;
+      }
+    }
+  }  
 }
 
 } // namespace industrial_calibration_libs
