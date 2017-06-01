@@ -194,6 +194,7 @@ bool Target::checkForValidTarget(void)
       }
     }
   }
+  return false; //TODO(gChiou): Remove this...
   // TODO(gChiou): Write these same checks for modified circle grid and checkerboard
 }
 
