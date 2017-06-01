@@ -58,7 +58,7 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
     case ChessBoard:
       success &= parseYAML(target_yaml, "row_spacing", target_params_.row_spacing);
       success &= parseYAML(target_yaml, "col_spacing", target_params_.col_spacing);
-      // Should we assume chessboard targets always have even spacing???
+      // TODO(gChiou): Should we assume chessboard targets always have even spacing???
       break;
     case CircleGrid:
       success &= parseYAML(target_yaml, "circle_diameter", target_params_.circle_diameter);
@@ -74,6 +74,9 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
       break;
   }
 
+  // TODO(gChiou): Load Points here
+  // TODO(gChiou): Add function to populate points if points is empty
+
   success &= checkForValidTarget(void);
 
   return success;
@@ -81,7 +84,7 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
 
 bool Target::loadTargetFromDefinition(const TargetDefinition &target_definition)
 {
-  // TODO: Geoffrey
+  // TODO(gChiou): ...
 }
 
 bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
@@ -150,8 +153,8 @@ bool Target::checkForValidTarget(void)
 {
   if (target_params_.target_type == CircleGrid)
   {
-    // Check if total number of points is half of number of rows times number of columns
-    // for an asymmetric circle grid.
+    // Note(gChiou): Check if total number of points is half of number of rows times number 
+    // of columns for an asymmetric circle grid.
     if (target_params_.asymmetric_grid)
     {
       if (target_params_.num_points != (target_params_.num_rows*target_params_.num_cols) / 2)
@@ -167,7 +170,7 @@ bool Target::checkForValidTarget(void)
       }
     }
   }
-  // Write these same checks for modified circle grid and checkerboard
+  // TODO(gChiou): Write these same checks for modified circle grid and checkerboard
 }
 
 } // namespace industrial_calibration_libs
