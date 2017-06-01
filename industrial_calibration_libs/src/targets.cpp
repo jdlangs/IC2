@@ -39,9 +39,10 @@ Target::Target(void) { }
 
 bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
 {
+  YAML::Node target_yaml;
   try
   {
-    YAML::Node target_yaml = YAML::LoadFile(yaml_file_path);
+    target_yaml = YAML::LoadFile(yaml_file_path);
   }
   catch (YAML::BadFile &bf) {return false;}
 
@@ -75,9 +76,11 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
   }
 
   // TODO(gChiou): Load Points here
+  // success &= parseYAML(target_yaml, "points", target_params_.points);
+
   // TODO(gChiou): Add function to populate points if points is empty
 
-  success &= checkForValidTarget(void);
+  success &= checkForValidTarget();
 
   return success;
 }
@@ -149,6 +152,16 @@ bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
   else {return false;}
 }
 
+bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
+  std::vector<Point3D> &var_value)
+{
+  if (node[var_name])
+  {
+    const YAML::Node n = node[var_name];
+    // for (std::size_t i = 0; i < n.size(); j++)
+  }
+}
+
 bool Target::checkForValidTarget(void)
 {
   if (target_params_.target_type == CircleGrid)
@@ -157,14 +170,14 @@ bool Target::checkForValidTarget(void)
     // of columns for an asymmetric circle grid.
     if (target_params_.asymmetric_grid)
     {
-      if (target_params_.num_points != (target_params_.num_rows*target_params_.num_cols) / 2)
+      if (target_params_.target_points != (target_params_.target_rows*target_params_.target_cols) / 2)
       {
         return false;
       }
     }
     else
     {
-      if (target_params_.num_points != (target_params_.num_rows*target_params_.num_cols))
+      if (target_params_.target_points != (target_params_.target_rows*target_params_.target_cols))
       {
         return false;
       }

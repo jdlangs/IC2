@@ -45,9 +45,9 @@ struct TargetDefinition
 {
   std::string target_name;
   std::size_t target_type;
-  std::size_t num_rows;
-  std::size_t num_cols;
-  std::size_t num_points;
+  std::size_t target_rows;
+  std::size_t target_cols;
+  std::size_t target_points;
 
   double circle_diameter; // Meters
   double row_spacing; // Meters
@@ -82,6 +82,9 @@ private:
 
   bool parseYAML(const YAML::Node &node, const std::string &var_name,
     Point3D &var_value);
+
+  bool parseYAML(const YAML::Node &node, const std::string &var_name,
+    std::vector<Point3D> &var_value);
 
   bool checkForValidTarget(void);
 
