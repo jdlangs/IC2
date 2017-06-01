@@ -150,7 +150,8 @@ bool Target::checkForValidTarget(void)
 {
   if (target_params_.target_type == CircleGrid)
   {
-    // Check if 
+    // Check if total number of points is half of number of rows times number of columns
+    // for an asymmetric circle grid.
     if (target_params_.asymmetric_grid)
     {
       if (target_params_.num_points != (target_params_.num_rows*target_params_.num_cols) / 2)
@@ -165,7 +166,8 @@ bool Target::checkForValidTarget(void)
         return false;
       }
     }
-  }  
+  }
+  // Write these same checks for modified circle grid and checkerboard
 }
 
 } // namespace industrial_calibration_libs
