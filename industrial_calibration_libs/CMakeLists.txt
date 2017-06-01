@@ -117,6 +117,7 @@ include_directories(include)
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
   src/industrial_calibration_libs.cpp
+  src/targets.cpp
 )
 
 ## Add cmake target dependencies of the library
