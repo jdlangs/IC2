@@ -22,8 +22,22 @@ TEST(Targets, load_yaml)
   // Note(gChiou): Checking that the first and last point match.
   industrial_calibration_libs::Point3D first_point_actual(0.0000, 0.1400, 0.0000);
   industrial_calibration_libs::Point3D first_point_yaml(my_target.getData()->points[0]);
+
+  industrial_calibration_libs::Point3D second_point_actual(0.0350, 0.1400, 0.0000);
+  industrial_calibration_libs::Point3D second_point_yaml(my_target.getData()->points[1]);
+
+  industrial_calibration_libs::Point3D second_to_last_point_actual(0.1400, 0.0000, 0.0000);
+  industrial_calibration_libs::Point3D second_to_last_point_yaml(my_target.getData()->points[my_target.getData()->target_points-2]);
+
   industrial_calibration_libs::Point3D last_point_actual(0.1750, 0.0000, 0.0000);
   industrial_calibration_libs::Point3D last_point_yaml(my_target.getData()->points[my_target.getData()->target_points-1]);
+
+  for (std::size_t i = 0; i < my_target.getData()->points.size(); i++)
+  {
+    industrial_calibration_libs::Point3D point(my_target.getData()->points[i]);
+    CONSOLE_OUTPUT("Point: " << i+1 << " x: " << point.x << " y: " << point.y << " z:" << point.z);
+  }
+  #if 0
   for (std::size_t i = 0; i < first_point_actual.asVector().size(); i++)
   {
     CONSOLE_OUTPUT("I: " << i << " " << "Actual:" << first_point_actual.asVector()[i] << " | " << "YAML: " << first_point_yaml.asVector()[i]);
@@ -34,10 +48,25 @@ TEST(Targets, load_yaml)
   for (std::size_t i = 0; i < first_point_actual.asVector().size(); i++)
   {
     // CONSOLE_OUTPUT("I: " << i << " " << "Actual:" << first_point_actual.asVector()[i] << " | " << "YAML: " << first_point_yaml.asVector()[i]);
+    CONSOLE_OUTPUT("I: " << i << " " << "Actual:" << second_point_actual.asVector()[i] << " | " << "YAML: " << second_point_yaml.asVector()[i]);
+    // EXPECT_TRUE(first_point_actual.asVector()[i] == first_point_yaml.asVector()[i]);
+    // EXPECT_TRUE(last_point_actual.asVector()[i] == last_point_yaml.asVector()[i]);
+  }
+  for (std::size_t i = 0; i < first_point_actual.asVector().size(); i++)
+  {
+    // CONSOLE_OUTPUT("I: " << i << " " << "Actual:" << first_point_actual.asVector()[i] << " | " << "YAML: " << first_point_yaml.asVector()[i]);
+    CONSOLE_OUTPUT("I: " << i << " " << "Actual:" << second_to_last_point_actual.asVector()[i] << " | " << "YAML: " << second_to_last_point_yaml.asVector()[i]);
+    // EXPECT_TRUE(first_point_actual.asVector()[i] == first_point_yaml.asVector()[i]);
+    // EXPECT_TRUE(last_point_actual.asVector()[i] == last_point_yaml.asVector()[i]);
+  }
+  for (std::size_t i = 0; i < first_point_actual.asVector().size(); i++)
+  {
+    // CONSOLE_OUTPUT("I: " << i << " " << "Actual:" << first_point_actual.asVector()[i] << " | " << "YAML: " << first_point_yaml.asVector()[i]);
     CONSOLE_OUTPUT("I: " << i << " " << "Actual:" << last_point_actual.asVector()[i] << " | " << "YAML: " << last_point_yaml.asVector()[i]);
     // EXPECT_TRUE(first_point_actual.asVector()[i] == first_point_yaml.asVector()[i]);
     // EXPECT_TRUE(last_point_actual.asVector()[i] == last_point_yaml.asVector()[i]);
-  }  
+  }
+  #endif    
   // BUG HERE, FIX THIS!!!
 }
 
