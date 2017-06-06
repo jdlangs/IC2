@@ -20,11 +20,10 @@ elif [ "$1" = "config" ]; then
 elif [ "$1" = "test" ]; then
   subl industrial_calibration_libs/test/*.cpp
   subl industrial_calibration_libs/test/*.h
+elif [ "$1" = "targets" ]; then
+  subl target_generator/*.sh
+  subl target_generator/*.md
+  subl target_generator/scripts/*.py
 else
-  subl industrial_calibration_libs/CMakeLists.txt
-  subl industrial_calibration_libs/package.xml
-  subl industrial_calibration_libs/src/*.cpp
-  subl industrial_calibration_libs/include/industrial_calibration_libs/*.h
-  subl industrial_calibration_libs/test/*.cpp
-  subl industrial_calibration_libs/test/*.h
+  echo "Command: ./dev_env.sh <all> <code> <config> <tests> <targets>"
 fi
