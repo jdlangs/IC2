@@ -47,8 +47,9 @@ the use of this software, even if advised of the possibility of such damage.
 #ifndef CIRCLE_DETECTOR_H
 #define CIRCLE_DETECTOR_H
 
-#include <opencv2//core.hpp>
+#include <opencv2/core.hpp>
 #include <opencv2/features2d.hpp>
+#include <opencv2/imgproc.hpp>
 
 namespace cv 
 {
@@ -61,7 +62,7 @@ public:
     CV_PROP_RW float thresholdStep;
     CV_PROP_RW float minThreshold;
     CV_PROP_RW float maxThreshold;
-    CV_PROP_RW std::size_t minRepeatability;
+    CV_PROP_RW size_t minRepeatability;
     CV_PROP_RW float minDistBetweenCircles;
     CV_PROP_RW float minRadiusDiff;
 
@@ -80,30 +81,12 @@ public:
     CV_PROP_RW bool filterByConvexity;
     CV_PROP_RW float minConvexity, maxConvexity;
 
-    void read(const FileNode& fn);
-    void write(FileStorage& fs) const;
+    void read( const FileNode& fn );
+    void write( FileStorage& fs ) const;
   };
 
-  CV_WRAP CircleDetector(const CircleDetector::Params &parameters = CircleDetector::Params());
-
-  virtual void read(const FileNode &fn);
-  virtual void write(FileStorage &fs) const;
-
-protected:
-  struct CV_EXPORTS Center
-  {
-    Point2d location;
-    double radius;
-    double confidence;
-  };
-
-  virtual void detectImpl(const Mat &image, std::vector<KeyPoint> &keypoints,
-    const Mat &mask = Mat()) const;
-
-  virtual void findCircles(const Mat &image, const Mat &binaryImage, 
-    std::vector<Center> &centers) const;
-
-  Params params;
+  CV_WRAP static Ptr<CircleDetector>
+    create(const CircleDetector::Params &parameters = CircleDetector::Params());
 };
 
 } // namespace cv
