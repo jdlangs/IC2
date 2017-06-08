@@ -74,20 +74,24 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
 
   switch (target_params_->target_type)
   {
-    case ChessBoard:
+    case Chessboard:
       success &= parseYAML(target_yaml_node, "row_spacing", target_params_->row_spacing);
       success &= parseYAML(target_yaml_node, "col_spacing", target_params_->col_spacing);
       // TODO(gChiou): Should we assume chessboard targets always have even spacing???
       break;
+      
     case CircleGrid:
       success &= parseYAML(target_yaml_node, "circle_diameter", target_params_->circle_diameter);
       success &= parseYAML(target_yaml_node, "spacing", target_params_->spacing);
+      // TODO(gChiou): Set this to false by default, check if it even exists.
       success &= parseYAML(target_yaml_node, "asymmetric_grid", target_params_->asymmetric_grid);
       break;
+
     case ModifiedCircleGrid:
       success &= parseYAML(target_yaml_node, "circle_diameter", target_params_->circle_diameter);
       success &= parseYAML(target_yaml_node, "spacing", target_params_->spacing);
       break;
+
     default:
       success = false;
       break;
@@ -212,7 +216,7 @@ bool Target::checkForValidTarget(void)
     }
   }
   return false; //TODO(gChiou): Remove this...
-  // TODO(gChiou): Write these same checks for modified circle grid and checkerboard
+  // TODO(gChiou): Write these same checks for modified circle grid and chessboard
 }
 
 // TODO(gChiou): Implement this...

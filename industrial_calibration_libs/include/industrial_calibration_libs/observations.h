@@ -2,9 +2,13 @@
 #define OBSERVATIONS_H
 
 #include <industrial_calibration_libs/targets.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 
 namespace industrial_calibration_libs
 {
+#if 0
 struct Observation
 {
   std::shared_ptr<Target> target;
@@ -15,8 +19,9 @@ struct Observation
   // an 'intermediate_frame'. Leaving it out for now.
   // see: https://github.com/ros-industrial/industrial_calibration/blob/kinetic-devel/industrial_extrinsic_cal/include/industrial_extrinsic_cal/camera_observer.hpp
 };
+#endif
 
-typedef std::vector<Observation> CameraObservations;
+typedef std::vector<cv::Point2f> ObservationPoints;
 
 // Note(gChiou): I think the above typedef is for a single image.
 // The input of the ObservationExtractor class should be a vector of 
@@ -24,18 +29,32 @@ typedef std::vector<Observation> CameraObservations;
 // typedef std::vector<CameraObservations> ObservationData 
 // (or something like that) of the same size as input vector of images.
 // Something to test for.
-typedef std::vector<CameraObservations> ObservationData;
+typedef std::vector<ObservationPoints> ObservationData;
 
 class ObservationExtractor
 {
 public:
-  ObservationExtractor(void);
+  ObservationExtractor(const std::vector<cv::Mat> &images, const Target &target);
 
   ~ObservationExtractor(void);
 
-  bool getObservations(CameraObservations &observations);
+  ObservationData getObservationData(void) {return observation_data_;}
+
+  bool extractObservations(void);
 
 private:
+  bool checkData(void) const;
+
+  bool extractChessboard(void);
+
+  bool extractCircleGrid(void);
+
+  bool extractModifiedCircleGrid(void);
+
+  // Data Members
+  std::vector<cv::Mat> images_;
+  ObservationData observation_data_;
+  Target target_;
 };
 
 } // namespace industrial_calibration_libs
