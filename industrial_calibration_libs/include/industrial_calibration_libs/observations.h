@@ -9,7 +9,7 @@
 
 namespace industrial_calibration_libs
 {
-#if 0
+#if 0 
 struct Observation
 {
   std::shared_ptr<Target> target;
@@ -48,7 +48,9 @@ private:
 
   bool extractChessboard(void);
 
-  bool extractCircleGrid(void);
+  bool extractCircleGridAsymmetric(void);
+
+  bool extractCircleGridSymmetric(void);
 
   bool extractModifiedCircleGrid(void);
 
@@ -56,6 +58,7 @@ private:
   std::vector<cv::Mat> images_;
   ObservationData observation_data_;
   Target target_;
+  bool custom_circle_detector_;
 };
 
 } // namespace industrial_calibration_libs
