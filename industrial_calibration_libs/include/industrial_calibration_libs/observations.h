@@ -2,6 +2,7 @@
 #define OBSERVATIONS_H
 
 #include <industrial_calibration_libs/targets.h>
+#include <industrial_calibration_libs/circle_detector.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>

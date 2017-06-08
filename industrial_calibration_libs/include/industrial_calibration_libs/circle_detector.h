@@ -47,7 +47,8 @@ the use of this software, even if advised of the possibility of such damage.
 #ifndef CIRCLE_DETECTOR_H
 #define CIRCLE_DETECTOR_H
 
-#include <opencv2/core/core.hpp>
+#include <opencv2//core.hpp>
+#include <opencv2/features2d.hpp>
 
 namespace cv 
 {
@@ -106,4 +107,4 @@ protected:
 };
 
 } // namespace cv
-#endif
+#endif // CIRCLE_DETECTOR_H
