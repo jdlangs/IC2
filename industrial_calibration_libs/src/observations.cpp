@@ -24,9 +24,11 @@ bool ObservationExtractor::extractObservations(void)
       {
         if (extractCircleGridSymmetric()) {return true;}
       }
+      break;
 
     case ModifiedCircleGrid:
-      if (extractModifiedCircleGrid()) {return true;};
+      if (extractModifiedCircleGrid()) {return true;}
+
       break;
 
     default:
@@ -105,7 +107,7 @@ bool ObservationExtractor::extractCircleGridSymmetric(void)
       {
         observation_data_[i] = observation_points;
       }
-      else // Try flipped_pattern_size
+      else // Try flipped pattern size
       {
         if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, cv::CALIB_CB_SYMMETRIC_GRID, circle_detector_ptr))
         {
@@ -133,7 +135,7 @@ bool ObservationExtractor::extractCircleGridSymmetric(void)
       {
         observation_data_[i] = observation_points;
       }
-      else // Try flipped_pattern_size
+      else // Try flipped pattern size
       {
         if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, cv::CALIB_CB_SYMMETRIC_GRID))
         {
@@ -175,7 +177,7 @@ bool ObservationExtractor::extractCircleGridAsymmetric(void)
       {
         observation_data_[i] = observation_points;
       }
-      else // Try flipped_pattern_size
+      else // Try flipped pattern size
       {
         if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
         {
@@ -223,9 +225,82 @@ bool ObservationExtractor::extractCircleGridAsymmetric(void)
 
 bool ObservationExtractor::extractModifiedCircleGrid(void)
 {
+  cv::Ptr<cv::CircleDetector> circle_detector_ptr = cv::CircleDetector::create();
 
-  // TODO(gChiou): Temporary (return false)
-  return false;
+  std::size_t cols = target_.getData()->target_cols;
+  std::size_t rows = target_.getData()->target_rows;
+
+  // observation_data_.clear();
+  // observation_data_.resize(images_.size());
+
+  cv::Size pattern_size(cols, rows);
+  cv::Size pattern_size_flipped(rows, cols);
+
+  ObservationData center_data;
+  center_data.resize(images_.size());
+
+  if (custom_circle_detector_)
+  {
+    #pragma omp parallel for
+    for (std::size_t i = 0; i < images_.size(); i++)
+    {
+      ObservationPoints centers;
+      // Try regular pattern size
+      if (cv::findCirclesGrid(images_[i], pattern_size, centers, cv::CALIB_CB_SYMMETRIC_GRID, circle_detector_ptr))
+      {
+        center_data[i] = centers;
+      }
+      else // Try flipped pattern size
+      {
+        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, centers, cv::CALIB_CB_SYMMETRIC_GRID, circle_detector_ptr))
+        {
+          center_data[i] = centers;
+        }
+      }
+    }
+    // Note(gChiou): Check if any images failed to return observations
+    for (std::size_t i = 0; i < center_data.size(); i++)
+    {
+      if (center_data[i].size() == 0) {return false;}
+    }
+  }
+
+  else
+  {
+    #pragma omp parallel for
+    for (std::size_t i = 0; i < images_.size(); i++)
+    {
+      ObservationPoints centers;
+      // Try regular pattern size
+      if (cv::findCirclesGrid(images_[i], pattern_size, centers, cv::CALIB_CB_SYMMETRIC_GRID))
+      {
+        center_data[i] = centers;
+      }
+      else // Try pattern_size_flipped
+      {
+        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, centers, cv::CALIB_CB_SYMMETRIC_GRID))
+        {
+          center_data[i] = centers;
+        }
+      }
+    }
+
+    // Note(gChiou): Check if any images failed to return observations
+    for (std::size_t i = 0; i < center_data.size(); i++)
+    {
+      if (center_data[i].size() == 0) {return false;}
+    }
+  }
+
+  // Extract KeyPoints
+  // Note(cLewis): This is the same method called in the beginning of findCirclesGrid,
+  // unfortunately, they don't return their keypoints. If OpenCV changes, the keypoint
+  // locations may not match, which has the risk of failing with updates to OpenCV.
+  std::vector<cv::KeyPoint> keypoints;
+  std::vector<std::vector<cv::KeyPoint>> keypoint_vector;
+  // LINE 251
+
+  return true;
 }
 
 } // namespace industrial_calibration_libs
