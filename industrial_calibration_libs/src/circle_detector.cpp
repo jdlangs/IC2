@@ -43,27 +43,13 @@ the use of this software, even if advised of the possibility of such damage.
 
 // Slight Modification of OpenCV function to use ellipse fitting rather than 
 // center of mass of contour to provide the location of the circle.
-#if 1
+
 #include <opencv2/opencv.hpp>
 #include <industrial_calibration_libs/circle_detector.h>
 #include <iterator>
 
-//#define DEBUG_CIRCLE_DETECTOR
-
-#ifdef DEBUG_CIRCLE_DETECTOR
-#  include "opencv2/opencv_modules.hpp"
-#  ifdef HAVE_OPENCV_HIGHGUI
-#    include "opencv2/highgui/highgui.hpp"
-#  else
-#    undef DEBUG_CIRCLE_DETECTOR
-#  endif
-#endif
-
-using namespace cv;
-
-/*
-*  CircleDetector
-*/
+namespace cv
+{
 CircleDetector::Params::Params()
 {
   thresholdStep = 10;
@@ -71,7 +57,7 @@ CircleDetector::Params::Params()
   maxThreshold = 220;
   minRepeatability = 2;
   minDistBetweenCircles = 10;
-        minRadiusDiff = 10;
+  minRadiusDiff = 10;
 
   filterByColor = true;
   circleColor = 0;
@@ -85,104 +71,163 @@ CircleDetector::Params::Params()
   maxCircularity = std::numeric_limits<float>::max();
 
   filterByInertia = true;
-  //minInertiaRatio = 0.6;
   minInertiaRatio = 0.1f;
   maxInertiaRatio = std::numeric_limits<float>::max();
 
   filterByConvexity = true;
-  //minConvexity = 0.8;
   minConvexity = 0.95f;
   maxConvexity = std::numeric_limits<float>::max();
 }
 
-void CircleDetector::Params::read(const cv::FileNode& fn )
+// Note(gChiou): Leaving this hear for now in case my changes broke anything
+// void CircleDetector::Params::read(const cv::FileNode &fn)
+// {
+//   thresholdStep = fn["thresholdStep"];
+//   minThreshold = fn["minThreshold"];
+//   maxThreshold = fn["maxThreshold"];
+
+//   minRepeatability = (size_t)(int)fn["minRepeatability"];
+//   minDistBetweenCircles = fn["minDistBetweenCircles"];
+
+//   filterByColor = (int)fn["filterByColor"] != 0 ? true : false;
+//   circleColor = (uchar)(int)fn["circleColor"];
+
+//   filterByArea = (int)fn["filterByArea"] != 0 ? true : false;
+//   minArea = fn["minArea"];
+//   maxArea = fn["maxArea"];
+
+//   filterByCircularity = (int)fn["filterByCircularity"] != 0 ? true : false;
+//   minCircularity = fn["minCircularity"];
+//   maxCircularity = fn["maxCircularity"];
+
+//   filterByInertia = (int)fn["filterByInertia"] != 0 ? true : false;
+//   minInertiaRatio = fn["minInertiaRatio"];
+//   maxInertiaRatio = fn["maxInertiaRatio"];
+
+//   filterByConvexity = (int)fn["filterByConvexity"] != 0 ? true : false;
+//   minConvexity = fn["minConvexity"];
+//   maxConvexity = fn["maxConvexity"];
+// }
+
+void CircleDetector::Params::read(const cv::FileNode &fn)
 {
-    thresholdStep = fn["thresholdStep"];
-    minThreshold = fn["minThreshold"];
-    maxThreshold = fn["maxThreshold"];
+  thresholdStep = fn["thresholdStep"];
+  minThreshold = fn["minThreshold"];
+  maxThreshold = fn["maxThreshold"];
 
-    minRepeatability = (size_t)(int)fn["minRepeatability"];
-    minDistBetweenCircles = fn["minDistBetweenCircles"];
+  minRepeatability = static_cast<std::size_t>(static_cast<int>(fn["minRepeatability"]));
 
-    filterByColor = (int)fn["filterByColor"] != 0 ? true : false;
-    circleColor = (uchar)(int)fn["circleColor"];
+  minDistBetweenCircles = fn["minDistBetweenCircles"];
 
-    filterByArea = (int)fn["filterByArea"] != 0 ? true : false;
-    minArea = fn["minArea"];
-    maxArea = fn["maxArea"];
+  filterByColor = static_cast<int>(fn["filterByColor"]) != 0 ? true : false;
+  circleColor = static_cast<uchar>(static_cast<int>(fn["circleColor"]));
 
-    filterByCircularity = (int)fn["filterByCircularity"] != 0 ? true : false;
-    minCircularity = fn["minCircularity"];
-    maxCircularity = fn["maxCircularity"];
+  filterByArea = static_cast<int>(fn["filterByArea"]) != 0 ? true : false;
+  minArea = fn["minArea"];
+  maxArea = fn["maxArea"];
 
-    filterByInertia = (int)fn["filterByInertia"] != 0 ? true : false;
-    minInertiaRatio = fn["minInertiaRatio"];
-    maxInertiaRatio = fn["maxInertiaRatio"];
+  filterByCircularity = static_cast<int>(fn["filterByCircularity"]) != 0 ? true : false;
+  minCircularity = fn["minCircularity"];
+  maxCircularity = fn["maxCircularity"];
 
-    filterByConvexity = (int)fn["filterByConvexity"] != 0 ? true : false;
-    minConvexity = fn["minConvexity"];
-    maxConvexity = fn["maxConvexity"];
+  filterByInertia = static_cast<int>(fn["filterByInertia"]) != 0 ? true : false;
+  minInertiaRatio = fn["minInertiaRatio"];
+  maxInertiaRatio = fn["maxInertiaRatio"];
+
+  filterByConvexity = static_cast<int>(fn["filterByConvexity"]) != 0 ? true : false;
+  minConvexity = fn["minConvexity"];
+  maxConvexity = fn["maxConvexity"];
 }
 
-void CircleDetector::Params::write(cv::FileStorage& fs) const
+// Note(gChiou): Leaving this hear for now in case my changes broke anything
+// void CircleDetector::Params::write(cv::FileStorage &fs) const
+// {
+//   fs << "thresholdStep" << thresholdStep;
+//   fs << "minThreshold" << minThreshold;
+//   fs << "maxThreshold" << maxThreshold;
+
+//   fs << "minRepeatability" << (int)minRepeatability;
+//   fs << "minDistBetweenCircles" << minDistBetweenCircles;
+
+//   fs << "filterByColor" << (int)filterByColor;
+//   fs << "circleColor" << (int)circleColor;
+
+//   fs << "filterByArea" << (int)filterByArea;
+//   fs << "minArea" << minArea;
+//   fs << "maxArea" << maxArea;
+
+//   fs << "filterByCircularity" << (int)filterByCircularity;
+//   fs << "minCircularity" << minCircularity;
+//   fs << "maxCircularity" << maxCircularity;
+
+//   fs << "filterByInertia" << (int)filterByInertia;
+//   fs << "minInertiaRatio" << minInertiaRatio;
+//   fs << "maxInertiaRatio" << maxInertiaRatio;
+
+//   fs << "filterByConvexity" << (int)filterByConvexity;
+//   fs << "minConvexity" << minConvexity;
+//   fs << "maxConvexity" << maxConvexity;
+// }
+
+void CircleDetector::Params::write(cv::FileStorage &fs) const
 {
-    fs << "thresholdStep" << thresholdStep;
-    fs << "minThreshold" << minThreshold;
-    fs << "maxThreshold" << maxThreshold;
+  fs << "thresholdStep" << thresholdStep;
+  fs << "minThreshold" << minThreshold;
+  fs << "maxThreshold" << maxThreshold;
 
-    fs << "minRepeatability" << (int)minRepeatability;
-    fs << "minDistBetweenCircles" << minDistBetweenCircles;
+  fs << "minRepeatability" << static_cast<int>(minRepeatability);
+  fs << "minDistBetweenCircles" << minDistBetweenCircles;
 
-    fs << "filterByColor" << (int)filterByColor;
-    fs << "circleColor" << (int)circleColor;
+  fs << "filterByColor" << static_cast<int>(filterByColor);
+  fs << "circleColor" << static_cast<int>(circleColor);
 
-    fs << "filterByArea" << (int)filterByArea;
-    fs << "minArea" << minArea;
-    fs << "maxArea" << maxArea;
+  fs << "filterByArea" << static_cast<int>(filterByArea);
+  fs << "minArea" << minArea;
+  fs << "maxArea" << maxArea;
 
-    fs << "filterByCircularity" << (int)filterByCircularity;
-    fs << "minCircularity" << minCircularity;
-    fs << "maxCircularity" << maxCircularity;
+  fs << "filterByCircularity" << static_cast<int>(filterByCircularity);
+  fs << "minCircularity" << minCircularity;
+  fs << "maxCircularity" << maxCircularity;
 
-    fs << "filterByInertia" << (int)filterByInertia;
-    fs << "minInertiaRatio" << minInertiaRatio;
-    fs << "maxInertiaRatio" << maxInertiaRatio;
+  fs << "filterByInertia" << static_cast<int>(filterByInertia);
+  fs << "minInertiaRatio" << minInertiaRatio;
+  fs << "maxInertiaRatio" << maxInertiaRatio;
 
-    fs << "filterByConvexity" << (int)filterByConvexity;
-    fs << "minConvexity" << minConvexity;
-    fs << "maxConvexity" << maxConvexity;
+  fs << "filterByConvexity" << static_cast<int>(filterByConvexity);
+  fs << "minConvexity" << minConvexity;
+  fs << "maxConvexity" << maxConvexity;
 }
 
 CircleDetector::CircleDetector(const CircleDetector::Params &parameters) :
-params(parameters)
+params(parameters) { }
+
+void CircleDetector::read(const cv::FileNode &fn)
 {
+  params.read(fn);
 }
 
-void CircleDetector::read( const cv::FileNode& fn )
+void CircleDetector::write(cv::FileStorage &fs) const
 {
-    params.read(fn);
+  params.write(fs);
 }
 
-void CircleDetector::write( cv::FileStorage& fs ) const
-{
-    params.write(fs);
-}
-
-void CircleDetector::findCircles(const cv::Mat &image, const cv::Mat &binaryImage, vector<Center> &centers) const
+void CircleDetector::findCircles(const cv::Mat &image, const cv::Mat &binaryImage,
+  std::vector<Center> &centers) const
 {
   (void)image;
   centers.clear();
 
-  vector < vector<Point> > contours;
-  Mat tmpBinaryImage = binaryImage.clone();
-  findContours(tmpBinaryImage, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+  std::vector <std::vector<Point>> contours;
+  cv::Mat tmpBinaryImage = binaryImage.clone();
 
-  // loop on all contours
-  for (size_t contourIdx = 0; contourIdx < contours.size(); contourIdx++)
+  cv::findContours(tmpBinaryImage, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+
+  // Loop on all contours
+  for (std::size_t contourIdx = 0; contourIdx < contours.size(); contourIdx++)
   {
-    // each if statement may eliminate a contour through the continue function
-    // some if statements may also set the confidence whose default is 1.0
-          Center center;
+    // Each if statement may eliminate a contour through the continue function
+    // Some if statements may also set the confidence whose default is 1.0
+    Center center;
     center.confidence = 1;
     Moments moms = moments(Mat(contours[contourIdx]));
     if (params.filterByArea)
@@ -230,7 +275,7 @@ void CircleDetector::findCircles(const cv::Mat &image, const cv::Mat &binaryImag
 
     if (params.filterByConvexity)
     {
-      vector < Point > hull;
+      std::vector<Point> hull;
       convexHull(Mat(contours[contourIdx]), hull);
       double area = contourArea(Mat(contours[contourIdx]));
       double hullArea = contourArea(Mat(hull));
@@ -238,51 +283,31 @@ void CircleDetector::findCircles(const cv::Mat &image, const cv::Mat &binaryImag
       if (ratio < params.minConvexity || ratio >= params.maxConvexity)
         continue;
     }
-                Mat pointsf;
+
+    Mat pointsf;
     Mat(contours[contourIdx]).convertTo(pointsf, CV_32F);
     if(pointsf.rows<5) continue;
           RotatedRect box = fitEllipse(pointsf);
 
-    
-    // find center
-    //center.location = Point2d(moms.m10 / moms.m00, moms.m01 / moms.m00);
+    // Find center
     center.location = box.center;
-    
 
-    // one more filter by color of central pixel
+    // One more filter by color of central pixel
     if (params.filterByColor)
     {
-      if (binaryImage.at<uchar> (cvRound(center.location.y), cvRound(center.location.x)) != params.circleColor)
+      if (binaryImage.at<uchar>(cvRound(center.location.y), cvRound(center.location.x)) != params.circleColor)
         continue;
     }
 
-    //compute circle radius
-    //  {
-    //  vector<double> dists;
-    //  for (size_t pointIdx = 0; pointIdx < contours[contourIdx].size(); pointIdx++)
-    //  {
-    //    Point2d pt = contours[contourIdx][pointIdx];
-    //    dists.push_back(norm(center.location - pt));
-    //  }
-    //  std::sort(dists.begin(), dists.end());
-    //  center.radius = (dists[(dists.size() - 1) / 2] + dists[dists.size() / 2]) / 2.;
-    //}
-                center.radius = (box.size.height+box.size.width)/4.0;
+    center.radius = (box.size.height+box.size.width) / 4.0;
     centers.push_back(center);
-
-#ifdef DEBUG_CIRCLE_DETECTOR
-    //    circle( keypointsImage, center.location, 1, Scalar(0,0,255), 1 );
-#endif
   }
-#ifdef DEBUG_CIRCLE_DETECTOR
-  //  imshow("bk", keypointsImage );
-  //  waitKey();
-#endif
 }
 
-void CircleDetector::detectImpl(const cv::Mat& image, std::vector<cv::KeyPoint>& keypoints, const cv::Mat&) const
+void CircleDetector::detectImpl(const cv::Mat &image, std::vector<cv::KeyPoint> &keypoints,
+  const cv::Mat &) const
 {
-  //TODO: support mask
+  //TODO(cLewis): support mask
   keypoints.clear();
   Mat grayscaleImage;
   if (image.channels() == 3)
@@ -290,89 +315,65 @@ void CircleDetector::detectImpl(const cv::Mat& image, std::vector<cv::KeyPoint>&
   else
     grayscaleImage = image;
 
-  vector < vector<Center> > centers;
+  std::vector<std::vector<Center>> centers;
   for (double thresh = params.minThreshold; thresh < params.maxThreshold; thresh += params.thresholdStep)
   {
     Mat binarizedImage;
     threshold(grayscaleImage, binarizedImage, thresh, 255, THRESH_BINARY);
 
-#ifdef DEBUG_CIRCLE_DETECTOR
-    //    Mat keypointsImage;
-    //    cvtColor( binarizedImage, keypointsImage, CV_GRAY2RGB );
-#endif
-
-    vector < Center > curCenters;
+    std::vector<Center> curCenters;
     findCircles(grayscaleImage, binarizedImage, curCenters);
-    vector < vector<Center> > newCenters;
-    for (size_t i = 0; i < curCenters.size(); i++)
+    std::vector<std::vector<Center>> newCenters;
+    for (std::size_t i = 0; i < curCenters.size(); i++)
     {
-#ifdef DEBUG_CIRCLE_DETECTOR
-      //      circle(keypointsImage, curCenters[i].location, curCenters[i].radius, Scalar(0,0,255),-1);
-#endif
-
       bool isNew = true;
-      for (size_t j = 0; j < centers.size(); j++)
+      for (std::size_t j = 0; j < centers.size(); j++)
       {
-        double dist = norm(centers[j][ centers[j].size() / 2 ].location - curCenters[i].location);
-        //        isNew = dist >= params.minDistBetweenCircles && dist >= centers[j][ centers[j].size() / 2 ].radius && dist >= curCenters[i].radius;
-        double rad_diff = fabs(centers[j][ centers[j].size() / 2 ].radius - curCenters[i].radius);
+        double dist = norm(centers[j][ centers[j].size() / 2 ].location 
+          - curCenters[i].location);
+
+        double rad_diff = fabs(centers[j][ centers[j].size() / 2 ].radius 
+          - curCenters[i].radius);
+
         isNew = dist >= params.minDistBetweenCircles || rad_diff >= params.minRadiusDiff;
+        
         if (!isNew)
         {
           centers[j].push_back(curCenters[i]);
-
-          size_t k = centers[j].size() - 1;
-          while( k > 0 && centers[j][k].radius < centers[j][k-1].radius )
+          std::size_t k = centers[j].size() - 1;
+          while (k > 0 && centers[j][k].radius < centers[j][k-1].radius)
           {
             centers[j][k] = centers[j][k-1];
             k--;
           }
           centers[j][k] = curCenters[i];
-
           break;
         }
       }
+
       if (isNew)
       {
-        newCenters.push_back(vector<Center> (1, curCenters[i]));
-        //centers.push_back(vector<Center> (1, curCenters[i]));
+        newCenters.push_back(std::vector<Center> (1, curCenters[i]));
       }
     }
     std::copy(newCenters.begin(), newCenters.end(), std::back_inserter(centers));
-
-#ifdef DEBUG_CIRCLE_DETECTOR
-    //    imshow("binarized", keypointsImage );
-    //waitKey();
-#endif
   }
 
-  for (size_t i = 0; i < centers.size(); i++)
+  for (std::size_t i = 0; i < centers.size(); i++)
   {
     if (centers[i].size() < params.minRepeatability)
       continue;
     Point2d sumPoint(0, 0);
     double normalizer = 0;
-    for (size_t j = 0; j < centers[i].size(); j++)
+    for (std::size_t j = 0; j < centers[i].size(); j++)
     {
       sumPoint += centers[i][j].confidence * centers[i][j].location;
       normalizer += centers[i][j].confidence;
     }
     sumPoint *= (1. / normalizer);
-    KeyPoint kpt(sumPoint, (float)(centers[i][centers[i].size() / 2].radius*2.0));
+    KeyPoint kpt(sumPoint, static_cast<float>(centers[i][centers[i].size() / 2].radius*2.0));
     keypoints.push_back(kpt);
   }
-
-#ifdef DEBUG_CIRCLE_DETECTOR
-  namedWindow("keypoints", CV_WINDOW_NORMAL);
-  Mat outImg = image.clone();
-  for(size_t i=0; i<keypoints.size(); i++)
-  {
-    circle(outImg, keypoints[i].pt, keypoints[i].size, Scalar(255, 0, 255), -1);
-  }
-  //drawKeypoints(image, keypoints, outImg);
-  imshow("keypoints", outImg);
-  waitKey();
-#endif
 }
 
-#endif
+} // namespace cv
