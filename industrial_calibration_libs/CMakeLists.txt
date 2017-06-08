@@ -11,6 +11,14 @@ add_definitions(-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-pri
 find_package(catkin REQUIRED)
 find_package(OpenCV REQUIRED)
 
+# OpenMP
+find_package(OpenMP REQUIRED)
+if(OPENMP_FOUND)
+  message(STATUS "OPENMP FOUND")
+  set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})  # or if you use C: ${OpenMP_C_FLAGS}
+  set(OpenMP_LIBS gomp)
+endif()
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -153,9 +161,14 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  ${OpenMP_LIBS}
   yaml-cpp
 )
 
+target_compile_options(${PROJECT_NAME}
+  PRIVATE
+  ${OpenMP_FLAGS}
+)
 
 #############
 ## Install ##
