@@ -13,7 +13,7 @@ namespace industrial_calibration_libs
 
 enum target_types
 {
-  ChessBoard = 0,
+  Chessboard = 0,
   CircleGrid = 1,
   ModifiedCircleGrid = 2
 };
@@ -88,7 +88,7 @@ private:
 
   bool populatePoints(void);
 
-  // Variables
+  // Data Members
   std::shared_ptr<TargetDefinition> target_params_;
 };
 
