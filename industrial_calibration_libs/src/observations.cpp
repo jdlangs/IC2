@@ -226,6 +226,20 @@ bool ObservationExtractor::extractCircleGridAsymmetric(void)
 bool ObservationExtractor::extractModifiedCircleGrid(void)
 {
   cv::Ptr<cv::CircleDetector> circle_detector_ptr = cv::CircleDetector::create();
+  cv::SimpleBlobDetector::Params simple_blob_params; // What is this for???
+  cv::Ptr<cv::FeatureDetector> blob_detector_ptr = cv::SimpleBlobDetector::create(simple_blob_params);
+
+  // Note(gChiou): Keep track of which images are flipped
+  // Start by setting all to false.
+  std::vector<bool> flipped;
+  if (images_.size() > 0) 
+  {
+    flipped.resize(images_.size());
+    for (std::size_t i = 0; i < images_.size(); i++)
+    {
+      flipped[i] = false;
+    }
+  }
 
   std::size_t cols = target_.getData()->target_cols;
   std::size_t rows = target_.getData()->target_rows;
@@ -255,6 +269,7 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
         if (cv::findCirclesGrid(images_[i], pattern_size_flipped, centers, cv::CALIB_CB_SYMMETRIC_GRID, circle_detector_ptr))
         {
           center_data[i] = centers;
+          flipped[i] = true;
         }
       }
     }
@@ -281,6 +296,7 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
         if (cv::findCirclesGrid(images_[i], pattern_size_flipped, centers, cv::CALIB_CB_SYMMETRIC_GRID))
         {
           center_data[i] = centers;
+          flipped[i] = true;
         }
       }
     }
@@ -296,9 +312,142 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
   // Note(cLewis): This is the same method called in the beginning of findCirclesGrid,
   // unfortunately, they don't return their keypoints. If OpenCV changes, the keypoint
   // locations may not match, which has the risk of failing with updates to OpenCV.
-  std::vector<cv::KeyPoint> keypoints;
+  std::vector<cv::KeyPoint> keypoints; // May not need this
   std::vector<std::vector<cv::KeyPoint>> keypoint_vector;
+  std::vector<cv::Point> large_point;
   // LINE 251
+
+  std::size_t start_first_row = 0;
+  std::size_t end_first_row = cols-1;
+  std::size_t start_last_row = rows*cols - cols;
+  std::size_t end_last_row = rows*cols - 1;
+
+  for (std::size_t i = 0; i < images_.size(); i++)
+  {
+    if (custom_circle_detector_)
+    {
+      circle_detector_ptr->detect(images_[i], keypoint_vector[i]);
+    }
+    else
+    {
+      blob_detector_ptr->detect(images_[i], keypoint_vector[i]);
+    }
+
+    // If a flipped pattern is found, flip the rows/columns
+    std::size_t temp_rows = flipped[i] ? cols : rows;
+    std::size_t temp_cols = flipped[i] ? rows : cols;
+
+    // Determine which circle is the largest
+    // TODO(gChiou): WHY ARE THESE DOUBLES???
+    double start_first_row_size = -1.0;
+    double start_last_row_size = -1.0;
+    double end_first_row_size = -1.0;
+    double end_last_row_size = -1.0;
+
+    for (std::size_t j = 0; j < keypoint_vector[i].size(); j++)
+    {
+      double x = keypoint_vector[i][j].pt.x;
+      double y = keypoint_vector[i][j].pt.y;
+      double ksize = keypoint_vector[i][j].size;
+
+      if (x == center_data[i][start_last_row].x && y == center_data[i][start_last_row].y) 
+      {
+        start_last_row_size = ksize;
+      }
+      if (x == center_data[i][end_last_row].x && y == center_data[i][end_last_row].y)
+      {
+        end_last_row_size = ksize;
+      }
+      if (x == center_data[i][start_first_row].x && y == center_data[i][start_first_row].y)
+      {
+        start_first_row_size = ksize;
+      }
+      if (x == center_data[i][end_first_row].x && y == center_data[i][end_first_row].y)
+      {
+        end_first_row_size = ksize;
+      }
+    }
+
+    // No keypoint match for one or more corners
+    if (start_last_row_size < 0.0 || start_first_row_size < 0.0 ||
+    end_last_row_size < 0.0 || end_first_row_size < 0.0)
+    {
+      return false;
+    }
+
+    // Note(cLewis): Determine if ordering is usual by computing cross product of two vectors
+    // normal ordering has z axis positive in cross
+    // The most common ordering is with points going from left to right then to to bottom
+    bool usual_ordering = true;
+    double v1x, v1y, v2x, v2y;
+
+    v1x = center_data[i][end_last_row].x - center_data[i][start_last_row].x;
+    v1y = -center_data[i][end_last_row].y + center_data[i][start_last_row].y;
+    v2x = center_data[i][end_first_row].x - center_data[i][end_last_row].x;
+    v2y = -center_data[i][end_first_row].y + center_data[i][end_last_row].y;
+
+    double cross = v1x*v2y - v1y*v2x;
+    if (cross < 0.0)
+    {
+      usual_ordering = false;
+    }
+
+    ObservationPoints observation_points;
+
+    // Note(cLewis): Largest circle at start of last row
+    // ......
+    // ......
+    // o.....
+    // This is a simple picture of the grid with the largest circle indicated
+    // by the letter o.
+    if (start_last_row_size > start_first_row_size && 
+      start_last_row_size > end_first_row_size && 
+      start_last_row_size > end_last_row_size)
+    {
+      large_point[i].x = center_data[i][start_last_row].x;
+      large_point[i].y = center_data[i][start_last_row].y;
+      if (usual_ordering)
+      {
+        for (std::size_t j = 0; j < center_data[i].size(); j++)
+        {
+          observation_points.push_back(center_data[i][j]);
+        }
+      }
+      else // unusual-ordering
+      {
+        for (std::size_t j = temp_cols - 1; j >= 0; j--)
+        {
+          for (std::size_t k = temp_rows - 1; k >= 0; k--)
+          {
+            observation_points.push_back(center_data[i][k*temp_cols + j]);
+          }
+        }
+      }
+    }
+
+    // Largest circle at end of first row
+    // .....o
+    // ......
+    // ......
+    else if (end_first_row_size > end_last_row_size &&
+      end_first_row_size > start_last_row_size &&
+      end_first_row_size > start_first_row_size)
+    {
+      large_point[i].x = center_data[i][end_first_row].x;
+      large_point[i].y = center_data[i][end_first_row].y;
+      if (usual_ordering)
+      {
+        for (std::size_t j = 0; j < center_data[i].size(); j++)
+        {
+          observation_points.push_back(center_data[i][j]);
+        }
+      }
+      else // Unusual Ordering
+      {
+
+      }
+    }
+  }
 
   return true;
 }

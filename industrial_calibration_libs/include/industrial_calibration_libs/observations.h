@@ -22,7 +22,8 @@ struct Observation
 };
 #endif
 
-typedef std::vector<cv::Point2f> ObservationPoints;
+// Note(gChiou): Was Point2f
+typedef std::vector<cv::Point3f> ObservationPoints;
 
 // Note(gChiou): I think the above typedef is for a single image.
 // The input of the ObservationExtractor class should be a vector of 
@@ -41,6 +42,7 @@ public:
 
   ObservationData getObservationData(void) {return observation_data_;}
 
+  // TODO(gChiou): Put this in constructor.
   bool extractObservations(void);
 
 private:
@@ -63,3 +65,4 @@ private:
 
 } // namespace industrial_calibration_libs
 #endif // OBSERVATIONS_H
+
