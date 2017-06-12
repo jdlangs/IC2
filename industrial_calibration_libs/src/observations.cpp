@@ -415,11 +415,12 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
       }
       else // unusual-ordering
       {
-        for (std::size_t j = temp_cols - 1; j >= 0; j--)
+        for (int j = temp_cols - 1; j >= 0; j--)
         {
-          for (std::size_t k = temp_rows - 1; k >= 0; k--)
+          for (int k = temp_rows - 1; k >= 0; k--)
           {
-            observation_points.push_back(center_data[i][k*temp_cols + j]);
+            // Note(gChiou): I have warnings turned on >:[
+            observation_points.push_back(center_data[i][static_cast<std::size_t>(k)*temp_cols + static_cast<std::size_t>(j)]);
           }
         }
       }
@@ -444,8 +445,83 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
       }
       else // Unusual Ordering
       {
-
+        for (std::size_t j = 0; j < temp_cols; j++)
+        {
+          for (std::size_t k = 0; i < temp_rows; k++)
+          {
+            observation_points.push_back(center_data[i][k*temp_cols + j]);
+          }
+        }
       }
+    }
+
+    // Largest circle at end of last row
+    // ......
+    // ......
+    // .....o
+    else if (end_last_row_size > start_last_row_size &&
+      end_last_row_size > end_first_row_size &&
+      end_last_row_size > start_first_row_size)
+    {
+      large_point[i].x = center_data[i][end_last_row].x;
+      large_point[i].y = center_data[i][end_last_row].y;
+      if (usual_ordering)
+      {
+        for (std::size_t j = 0; j < temp_cols; j++)
+        {
+          for (int k = temp_rows - 1; k >= 0; k--)
+          {
+            observation_points.push_back(center_data[i][static_cast<std::size_t>(k)*temp_cols + j]);
+          }
+        }
+      }
+      else // Unusual Ordering
+      {
+        for (std::size_t j = 0; j < temp_cols; j++)
+        {
+          for (std::size_t k = 0; k < temp_rows; k++)
+          {
+            observation_points.push_back(center_data[i][k*temp_cols + j]);
+          }
+        }
+      }
+    }
+
+    // Largest circle at start of first row
+    // o.....
+    // ......
+    // ......
+    else if (start_first_row_size > end_last_row_size &&
+      start_first_row_size > end_first_row_size &&
+      start_first_row_size > start_last_row_size)
+    {
+      large_point[i].x = center_data[i][start_first_row].x;
+      large_point[i].y = center_data[i][start_first_row].y;
+      if (usual_ordering)
+      {
+        for (int j = temp_cols - 1; j >= 0; j++)
+        {
+          for (std::size_t k = 0; k < temp_rows; k++)
+          {
+            observation_points.push_back(center_data[i][k*temp_cols + static_cast<std::size_t>(j)]);
+          }
+        }
+      }
+      else // Unusual Ordering
+      {
+        for (int j = temp_cols - 1; j >= 0; j--)
+        {
+          for (int k = temp_rows - 1; k >= 0; k--)
+          {
+            observation_points.push_back(center_data[i][static_cast<std::size_t>(k)*temp_cols + static_cast<std::size_t>(j)]);
+          }
+        }
+      }
+    }
+
+    else
+    {
+      return false;
     }
   }
 
