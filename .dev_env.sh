@@ -17,13 +17,17 @@ elif [ "$1" = "code" ]; then
 elif [ "$1" = "config" ]; then
   subl industrial_calibration_libs/CMakeLists.txt
   subl industrial_calibration_libs/package.xml
-elif [ "$1" = "test" ]; then
+elif [ "$1" = "tests" ]; then
   subl industrial_calibration_libs/test/*.cpp
   subl industrial_calibration_libs/test/*.h
 elif [ "$1" = "targets" ]; then
   subl target_generator/*.sh
   subl target_generator/*.md
   subl target_generator/scripts/*.py
+elif [ "$1" = "src" ]; then
+  subl industrial_calibration_libs/src/*.cpp
+elif [ "$1" = "headers" ]; then
+  subl industrial_calibration_libs/include/industrial_calibration_libs/*.h
 else
-  echo "Command: ./dev_env.sh <all> <code> <config> <tests> <targets>"
+  echo "Command: ./dev_env.sh <all> <code> <config> <tests> <targets> <src> <headers>"
 fi

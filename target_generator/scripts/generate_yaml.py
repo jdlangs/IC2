@@ -30,6 +30,7 @@ def represent_dict(self, data):
 def generate_yaml(name, t_type, rows, cols, n_points, diameter, spacing, units):
   diameter = float(diameter)
   spacing = float(spacing)
+  target_type = 0
   
   # Convert all units to meters (from mm and in)
   # Units defaulted to mm so this may not be necessary
@@ -63,14 +64,18 @@ def generate_yaml(name, t_type, rows, cols, n_points, diameter, spacing, units):
   file_name = name + '.yaml'
   stream = file(file_name, 'w')
   yaml.add_representer(TargetDefinition, represent_dict)
-  print yaml.dump(TargetDefinition(name=name, t_type=t_type, rows=rows, cols=cols, n_points=n_points, diameter=diameter, spacing=spacing, points=points), stream)
+  yaml.dump(TargetDefinition(name=name, t_type=target_type, rows=rows, cols=cols, n_points=n_points, diameter=diameter, spacing=spacing, points=points), stream)
 
+# Note: Target points are listed from top left to bottom right. (L->R)
+# 1 2 3 4
+# 5 6 7 8
+# 9 etc...
 def generate_points(rows, cols, n_points, spacing):
   points = []
   assert(rows*cols == n_points)
 
-  for i in range(0, rows):
-    y = i*spacing
+  for i in range(1, rows+1):
+    y = (rows-i)*spacing
     for j in range(0, cols):
       x = j*spacing
       point = [x, y, 0.0000]

@@ -48,48 +48,43 @@ Target::Target(void) : target_params_(new TargetDefinition) { }
 bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
 {
   YAML::Node target_yaml;
-  YAML::Node target_yaml_node;
   try
   {
     target_yaml = YAML::LoadFile(yaml_file_path);
-    if (!target_yaml["calibration_target"]) {return false;}
-    else
-    {
-      // Note(gChiou): Each target yaml description should only contain
-      // the definition for a single target. The files were structured like
-      // the way they are now when I got them (meant to hold an array of targets.
-      // I will probably redefine the structure later. Keeping the 0 in for now.
-      target_yaml_node = target_yaml["calibration_target"][0];
-    }
+    if (!target_yaml["target_name"]) {return false;}
+    // Note(gChiou): Each target yaml description should only contain
+    // the definition for a single target. The files were structured like
+    // the way they are now when I got them (meant to hold an array of targets.
+    // I will probably redefine the structure later. Keeping the 0 in for now.
   }
   catch (YAML::BadFile &bf) {return false;}
 
   bool success = true;
 
-  success &= parseYAML(target_yaml_node, "target_name", target_params_->target_name);
-  success &= parseYAML(target_yaml_node, "target_type", target_params_->target_type);
-  success &= parseYAML(target_yaml_node, "target_rows", target_params_->target_rows);
-  success &= parseYAML(target_yaml_node, "target_cols", target_params_->target_cols);
-  success &= parseYAML(target_yaml_node, "target_points", target_params_->target_points);
+  success &= parseYAML(target_yaml, "target_name", target_params_->target_name);
+  success &= parseYAML(target_yaml, "target_type", target_params_->target_type);
+  success &= parseYAML(target_yaml, "target_rows", target_params_->target_rows);
+  success &= parseYAML(target_yaml, "target_cols", target_params_->target_cols);
+  success &= parseYAML(target_yaml, "target_points", target_params_->target_points);
 
   switch (target_params_->target_type)
   {
     case Chessboard:
-      success &= parseYAML(target_yaml_node, "row_spacing", target_params_->row_spacing);
-      success &= parseYAML(target_yaml_node, "col_spacing", target_params_->col_spacing);
+      success &= parseYAML(target_yaml, "row_spacing", target_params_->row_spacing);
+      success &= parseYAML(target_yaml, "col_spacing", target_params_->col_spacing);
       // TODO(gChiou): Should we assume chessboard targets always have even spacing???
       break;
       
     case CircleGrid:
-      success &= parseYAML(target_yaml_node, "circle_diameter", target_params_->circle_diameter);
-      success &= parseYAML(target_yaml_node, "spacing", target_params_->spacing);
+      success &= parseYAML(target_yaml, "circle_diameter", target_params_->circle_diameter);
+      success &= parseYAML(target_yaml, "spacing", target_params_->spacing);
       // TODO(gChiou): Set this to false by default, check if it even exists.
-      success &= parseYAML(target_yaml_node, "asymmetric_grid", target_params_->asymmetric_grid);
+      success &= parseYAML(target_yaml, "asymmetric_grid", target_params_->asymmetric_grid);
       break;
 
     case ModifiedCircleGrid:
-      success &= parseYAML(target_yaml_node, "circle_diameter", target_params_->circle_diameter);
-      success &= parseYAML(target_yaml_node, "spacing", target_params_->spacing);
+      success &= parseYAML(target_yaml, "circle_diameter", target_params_->circle_diameter);
+      success &= parseYAML(target_yaml, "spacing", target_params_->spacing);
       break;
 
     default:
@@ -97,7 +92,7 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
       break;
   }
 
-  if (!parseYAML(target_yaml_node, "points", target_params_->points))
+  if (!parseYAML(target_yaml, "points", target_params_->points))
   {
     // TODO(gChiou): Populate points from rows, cols, and spacing.
   }
@@ -158,6 +153,7 @@ bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
   else {return false;}
 }
 
+// Note(gChiou): This is unused for now, remove later.
 bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
   Point3D &var_value)
 {
@@ -185,9 +181,15 @@ bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
     const YAML::Node n = node[var_name];
     for (std::size_t i = 0; i < n.size(); i++)
     {
-      Point3D temp_point;
-      if (!parseYAML(n[i], "pnt", temp_point)) {return false;}
-      var_value.push_back(temp_point);
+      Point3D point;
+      std::vector<double> temp_point;
+      for (std::size_t j = 0; j < n[i].size(); j++)
+      {
+        double value = n[i][j].as<double>();
+        temp_point.push_back(value);
+      }
+      if (!point.setPoints(temp_point)) {return false;}
+      var_value.push_back(point);
     }
     return true;
   }

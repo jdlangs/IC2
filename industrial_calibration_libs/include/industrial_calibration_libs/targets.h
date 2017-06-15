@@ -32,6 +32,12 @@ struct Point3D
 
   std::vector<double> asVector(void);
 
+  bool operator==(const Point3D &p2)
+  {
+    if (this->x == p2.x && this->y == p2.y && this->z == p2.z) {return true;}
+    else {return false;}
+  }
+
   double x;
   double y;
   double z;
