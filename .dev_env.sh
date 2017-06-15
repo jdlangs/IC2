@@ -17,7 +17,7 @@ elif [ "$1" = "code" ]; then
 elif [ "$1" = "config" ]; then
   subl industrial_calibration_libs/CMakeLists.txt
   subl industrial_calibration_libs/package.xml
-elif [ "$1" = "test" ]; then
+elif [ "$1" = "tests" ]; then
   subl industrial_calibration_libs/test/*.cpp
   subl industrial_calibration_libs/test/*.h
 elif [ "$1" = "targets" ]; then
