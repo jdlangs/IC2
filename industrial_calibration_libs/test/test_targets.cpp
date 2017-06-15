@@ -4,6 +4,7 @@
 
 TEST(Targets, load_yaml)
 {
+  // CONSOLE_OUTPUT("Target Path: " << getExecutionPath());
   // Note(gChiou): The test runs this from the build/industrial_calibration_libs/ 
   // folder. Assuming this is being built from a catkin_ws, this relative path 
   // should take it directly to the targets directory.
