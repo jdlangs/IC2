@@ -1,5 +1,5 @@
 target_name: mcircles_7x5
-target_type: mcircles
+target_type: 2
 target_rows: 7
 target_cols: 5
 target_points: 35
