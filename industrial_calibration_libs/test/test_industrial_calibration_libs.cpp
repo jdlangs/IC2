@@ -2,7 +2,8 @@
 #include <gtest/gtest.h>
 #include "test_utils.h"
 
-TEST(Observations, load_observations)
+int main(int argc, char** argv)
 {
-  EXPECT_TRUE(true);
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

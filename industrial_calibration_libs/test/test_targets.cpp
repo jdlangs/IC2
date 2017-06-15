@@ -45,8 +45,3 @@ TEST(Targets, load_yaml)
   EXPECT_TRUE(last_point_actual == last_point_yaml);
 }
 
-int main(int argc, char** argv)
-{
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
