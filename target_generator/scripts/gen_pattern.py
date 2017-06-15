@@ -1,15 +1,18 @@
 #!/usr/bin/env python
+# This is a modified version of the gen_pattern.py script provided by OpenCV: 
+# https://github.com/opencv/opencv/tree/master/doc/pattern_tools
 
 """gen_pattern.py
-Usage example:
-python gen_pattern.py -o out.svg -r 11 -c 8 -T circles -s 20.0 -R 5.0 -u mm -w 216 -h 279
+Usage example: NOTE: UNITS ARE IN MM
+python gen_pattern.py -o mcircles_7x5 -r 7 -c 5 -T circles -s 20.0 -R 5.0 -w 216 -h 279
 -o, --output - output file (default out.svg)
 -r, --rows - pattern rows (default 11)
 -c, --columns - pattern columns (default 8)
--T, --type - type of pattern, circles, acircles, checkerboard (default circles)
+-T, --type - type of pattern, circles, mcircles, checkerboard (default circles)
 -s, --square_size - size of squares in pattern (default 20.0)
 -R, --radius_rate - circles_radius = square_size/radius_rate (default 5.0)
--u, --units - mm, inches, px, m (default mm)
+-D, --diameter - diameter of circles
+-u, --units - mm, inches, m (default mm) (DEPRECATED)
 -w, --page_width - page width in units (default 216)
 -h, --page_height - page height in units (default 279)
 -a, --page_size - page size (default A4), supercedes -h -w arguments
@@ -17,6 +20,7 @@ python gen_pattern.py -o out.svg -r 11 -c 8 -T circles -s 20.0 -R 5.0 -u mm -w 2
 """
 
 from svgfig import *
+import generate_yaml as GY
 
 import sys
 import getopt
@@ -49,6 +53,18 @@ class PatternMaker:
         dot = SVG("circle", cx= ((j*2 + i%2)*spacing) + spacing, cy=self.height - (i * spacing + spacing), r=r, fill="black")
         self.g.append(dot)
 
+  def makeMCirclesPattern(self):
+    spacing = self.square_size
+    r = spacing / self.radius_rate
+    for x in range(1,self.cols+1):
+      for y in range(1, self.rows+1):
+        if (x == 1 and y == self.rows):
+          dot = SVG("circle", cx=x*spacing, cy=y*spacing, r=(1.25*r), fill="black")
+          self.g.append(dot)
+        else:    
+          dot = SVG("circle", cx=x*spacing, cy=y*spacing, r=r, fill="black")
+          self.g.append(dot)
+
   def makeCheckerboardPattern(self):
     spacing = self.square_size
     xspacing = (self.width - self.cols * self.square_size) / 2.0
@@ -67,14 +83,13 @@ class PatternMaker:
 def main():
     # parse command line options, TODO use argparse for better doc
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "Ho:c:r:T:u:s:R:w:h:a:", ["help","output=","columns=","rows=",
-                                                                      "type=","units=","square_size=","radius_rate=",
-                                                                      "page_width=","page_height=", "page_size="])
+        opts, args = getopt.getopt(sys.argv[1:], "Ho:c:r:T:u:s:R:D:w:h:a:", ["help","output=","columns=","rows=","type=","units=","square_size=","radius_rate=","radius_rate=","page_width=","page_height=", "page_size="])
     except getopt.error as msg:
         print(msg)
         print("for help use --help")
         sys.exit(2)
     output = "out.svg"
+    yaml_name = "out"
     columns = 8
     rows = 11
     p_type = "circles"
@@ -82,6 +97,7 @@ def main():
     square_size = 20.0
     radius_rate = 5.0
     page_size = "A4"
+    circle_diameter = 0.0
     # page size dict (ISO standard, mm) for easy lookup. format - size: [width, height]
     page_sizes = {"A0": [840, 1188], "A1": [594, 840], "A2": [420, 594], "A3": [297, 420], "A4": [210, 297], "A5": [148, 210]}
     page_width = page_sizes[page_size.upper()][0]
@@ -96,15 +112,20 @@ def main():
         elif o in ("-c", "--columns"):
             columns = int(a)
         elif o in ("-o", "--output"):
-            output = a
+            output = a + '.svg'
+            yaml_name = a
         elif o in ("-T", "--type"):
             p_type = a
         elif o in ("-u", "--units"):
             units = a
+            # REMOVE THIS LATER
         elif o in ("-s", "--square_size"):
             square_size = float(a)
         elif o in ("-R", "--radius_rate"):
             radius_rate = float(a)
+        elif o in ("-D", "--diameter"):
+              radius_rate = 2.0 * float(square_size) / float(a)
+              circle_diameter = a;
         elif o in ("-w", "--page_width"):
             page_width = float(a)
         elif o in ("-h", "--page_height"):
@@ -116,10 +137,12 @@ def main():
             page_height = page_sizes[page_size][1]
     pm = PatternMaker(columns,rows,output,units,square_size,radius_rate,page_width,page_height)
     #dict for easy lookup of pattern type
-    mp = {"circles":pm.makeCirclesPattern,"acircles":pm.makeACirclesPattern,"checkerboard":pm.makeCheckerboardPattern}
+    mp = {"circles":pm.makeCirclesPattern,"mcircles":pm.makeMCirclesPattern, "acircles":pm.makeACirclesPattern,"checkerboard":pm.makeCheckerboardPattern}
     mp[p_type]()
     #this should save pattern to output
     pm.save()
+
+    GY.generate_yaml(yaml_name, p_type, rows, columns, rows*columns, circle_diameter, square_size, units)
 
 if __name__ == "__main__":
     main()
