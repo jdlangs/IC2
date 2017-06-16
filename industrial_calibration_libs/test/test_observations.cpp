@@ -2,18 +2,12 @@
 #include <gtest/gtest.h>
 #include "test_utils.h"
 
-#include <string>
-#include <limits.h>
-#include <unistd.h>
-
 TEST(Observations, load_observations)
 {
   // Load in calibration images
   std::vector<cv::Mat> calibration_images;
   calibration_images.reserve(5);
-  std::string cal_image_path = "../../src/IC2/industrial_calibration_libs/test/res/cal_images/mcircles_7x5/";
-
-  // CONSOLE_OUTPUT("Observation Path: " << getExecutionPath());
+  std::string cal_image_path = "/cal_images/mcircles_7x5/";
 
   for (std::size_t i = 0; i < 5; i++)
   {
