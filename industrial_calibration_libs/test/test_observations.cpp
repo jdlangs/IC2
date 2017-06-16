@@ -19,4 +19,13 @@ TEST(Observations, load_observations)
 
     calibration_images.push_back(image);
   }
+
+
+  // Load in target
+  industrial_calibration_libs::Target target;
+  target.loadTargetFromYAML("cal_targets/mcircles_7x5.yaml");
+
+  // Create Observation Extractor Object
+  industrial_calibration_libs::ObservationExtractor observation_extractor(calibration_images, target);
+  observation_extractor.extractObservations();
 }
