@@ -12,9 +12,7 @@
 #include <limits.h>
 #include <unistd.h>
 
-std::string getExecutionPath(void);
-
-std::string getExecutionPath(void)
+inline std::string getExecutionPath(void)
 {
   char result[ PATH_MAX ];
   ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
