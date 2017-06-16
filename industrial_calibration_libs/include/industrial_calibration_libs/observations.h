@@ -39,7 +39,7 @@ class ObservationExtractor
 public:
   ObservationExtractor(const std::vector<cv::Mat> &images, const Target &target);
 
-  ~ObservationExtractor(void);
+  ~ObservationExtractor(void) { }
 
   ObservationData getObservationData(void) {return observation_data_;}
 
