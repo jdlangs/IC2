@@ -17,12 +17,8 @@ TEST(Observations, load_observations)
     ASSERT_TRUE(!image.empty());
     ASSERT_TRUE(image.size().width > 0 && image.size().height > 0);
 
-    // TODO(gChiou): Do this inside of observations???
-    image = image > 128;
-
     calibration_images.push_back(image);
   }
-
 
   // Load in target
   industrial_calibration_libs::Target target;
@@ -37,8 +33,8 @@ TEST(Observations, load_observations)
   CONSOLE_OUTPUT("Total Observations: " << observation_data.size());
   for (std::size_t i = 0; i < observation_data.size(); i++)
   {
-    CONSOLE_OUTPUT("Observation #" << i << " Size: " << observation_data[i].size());
-    CONSOLE_OUTPUT("Observation #" << i << " Points:");
+    CONSOLE_OUTPUT("Observations for Image " << i+1 << " Size: " << observation_data[i].size());
+    CONSOLE_OUTPUT("Observations for Image " << i+1 << " Points:");
     for (std::size_t j = 0; j < observation_data[i].size(); j++)
     {
       CONSOLE_OUTPUT(observation_data[i][j]);
