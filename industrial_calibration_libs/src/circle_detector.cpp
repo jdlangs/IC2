@@ -65,9 +65,9 @@ public:
 protected:
   struct CV_EXPORTS Center
   {
-      Point2d location;
-      double radius;
-      double confidence;
+    Point2d location;
+    double radius;
+    double confidence;
   };
 
   virtual void detect(InputArray image, std::vector<KeyPoint> &keypoints, 
@@ -92,7 +92,9 @@ CircleDetector::Params::Params()
 
   filterByArea = true;
   minArea = 25;
-  maxArea = 5000;
+  // maxArea = 5000;
+  // Note(gChiou): I set this obscenely large for now...
+  maxArea = 50000000;
 
   filterByCircularity = false;
   minCircularity = 0.8f;
