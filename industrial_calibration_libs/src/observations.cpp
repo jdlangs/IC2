@@ -62,7 +62,7 @@ bool ObservationExtractor::extractChessboard(void)
 
   cv::Size pattern_size(cols, rows); // CV uses (cols, rows)
 
-  #pragma omp parallel for
+  // pragma omp parallel for
   for (std::size_t i = 0; i < images_.size(); i++)
   {
     ObservationPoints observation_points;
@@ -98,7 +98,7 @@ bool ObservationExtractor::extractCircleGridSymmetric(void)
   // Should it be flipping the pattern half way?
   if (custom_circle_detector_)
   {
-    #pragma omp parallel for
+    // pragma omp parallel for
     for (std::size_t i = 0; i < images_.size(); i++)
     {
       ObservationPoints observation_points;
@@ -126,7 +126,7 @@ bool ObservationExtractor::extractCircleGridSymmetric(void)
 
   else
   {
-    #pragma omp parallel for
+    // pragma omp parallel for
     for (std::size_t i = 0; i < images_.size(); i++)
     {
       ObservationPoints observation_points;
@@ -168,7 +168,7 @@ bool ObservationExtractor::extractCircleGridAsymmetric(void)
   
   if (custom_circle_detector_)
   {
-    #pragma omp parallel for
+    // pragma omp parallel for
     for (std::size_t i = 0; i < images_.size(); i++)
     {
       ObservationPoints observation_points;
@@ -196,7 +196,7 @@ bool ObservationExtractor::extractCircleGridAsymmetric(void)
 
   else
   {
-    #pragma omp parallel for
+    // pragma omp parallel for
     for (std::size_t i = 0; i < images_.size(); i++)
     {
       ObservationPoints observation_points;
@@ -226,7 +226,7 @@ bool ObservationExtractor::extractCircleGridAsymmetric(void)
 bool ObservationExtractor::extractModifiedCircleGrid(void)
 {
   cv::Ptr<cv::CircleDetector> circle_detector_ptr = cv::CircleDetector::create();
-  cv::SimpleBlobDetector::Params simple_blob_params; // What is this for???
+  cv::SimpleBlobDetector::Params simple_blob_params;
   cv::Ptr<cv::FeatureDetector> blob_detector_ptr = cv::SimpleBlobDetector::create(simple_blob_params);
 
   // Note(gChiou): Keep track of which images are flipped
@@ -244,8 +244,8 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
   std::size_t cols = target_.getData()->target_cols;
   std::size_t rows = target_.getData()->target_rows;
 
-  // observation_data_.clear();
-  // observation_data_.resize(images_.size());
+  observation_data_.clear();
+  observation_data_.resize(images_.size());
 
   cv::Size pattern_size(cols, rows);
   cv::Size pattern_size_flipped(rows, cols);
@@ -255,18 +255,18 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
 
   if (custom_circle_detector_)
   {
-    #pragma omp parallel for
+    // pragma omp parallel for
     for (std::size_t i = 0; i < images_.size(); i++)
     {
       ObservationPoints centers;
       // Try regular pattern size
-      if (cv::findCirclesGrid(images_[i], pattern_size, centers, cv::CALIB_CB_SYMMETRIC_GRID, circle_detector_ptr))
+      if (cv::findCirclesGrid(images_[i], pattern_size, centers, cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
       {
         center_data[i] = centers;
       }
       else // Try flipped pattern size
       {
-        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, centers, cv::CALIB_CB_SYMMETRIC_GRID, circle_detector_ptr))
+        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, centers, cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
         {
           center_data[i] = centers;
           flipped[i] = true;
@@ -282,7 +282,7 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
 
   else
   {
-    #pragma omp parallel for
+    // pragma omp parallel for
     for (std::size_t i = 0; i < images_.size(); i++)
     {
       ObservationPoints centers;
@@ -314,8 +314,9 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
   // locations may not match, which has the risk of failing with updates to OpenCV.
   std::vector<cv::KeyPoint> keypoints; // May not need this
   std::vector<std::vector<cv::KeyPoint>> keypoint_vector;
+  keypoint_vector.resize(images_.size());
   std::vector<cv::Point> large_point;
-  // LINE 251
+  large_point.resize(images_.size());
 
   std::size_t start_first_row = 0;
   std::size_t end_first_row = cols-1;
@@ -499,7 +500,7 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
       large_point[i].y = center_data[i][start_first_row].y;
       if (usual_ordering)
       {
-        for (int j = temp_cols - 1; j >= 0; j++)
+        for (int j = temp_cols - 1; j >= 0; j--)
         {
           for (std::size_t k = 0; k < temp_rows; k++)
           {
@@ -523,6 +524,7 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
     {
       return false;
     }
+    observation_data_[i] = observation_points;
   }
 
   return true;
