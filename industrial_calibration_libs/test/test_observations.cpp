@@ -17,6 +17,9 @@ TEST(Observations, load_observations)
     ASSERT_TRUE(!image.empty());
     ASSERT_TRUE(image.size().width > 0 && image.size().height > 0);
 
+    // TODO(gChiou): Do this inside of observations???
+    image = image > 128;
+
     calibration_images.push_back(image);
   }
 
@@ -28,4 +31,17 @@ TEST(Observations, load_observations)
   // Create Observation Extractor Object
   industrial_calibration_libs::ObservationExtractor observation_extractor(calibration_images, target);
   observation_extractor.extractObservations();
+
+  industrial_calibration_libs::ObservationData observation_data = observation_extractor.getObservationData();
+
+  CONSOLE_OUTPUT("Total Observations: " << observation_data.size());
+  for (std::size_t i = 0; i < observation_data.size(); i++)
+  {
+    CONSOLE_OUTPUT("Observation #" << i << " Size: " << observation_data[i].size());
+    CONSOLE_OUTPUT("Observation #" << i << " Points:");
+    for (std::size_t j = 0; j < observation_data[i].size(); j++)
+    {
+      CONSOLE_OUTPUT(observation_data[i][j]);
+    }
+  }
 }
