@@ -21,11 +21,12 @@ int main(void)
 {
   // cv::Mat image_gray = cv::imread("4.jpg", CV_LOAD_IMAGE_COLOR);
   // cv::Mat image_gray = cv::imread("4.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-  cv::Mat image_gray = cv::imread("BLAH.jpg", CV_LOAD_IMAGE_COLOR);
+  cv::Mat image_gray = cv::imread("images/4.jpg", CV_LOAD_IMAGE_COLOR);
+  // cv::Mat image_gray = cv::imread("images/4.jpg", CV_LOAD_IMAGE_GRAYSCALE);
   // cv::Mat image_gray = cv::imread("3.png", CV_LOAD_IMAGE_COLOR);
   // cv::Mat image_gray; 
   // cv::cvtColor(image, image_gray, CV_BGR2GRAY);
-  // image_gray = image_gray > 128;
+  image_gray = image_gray > 128;
 
 
   // // Canny
