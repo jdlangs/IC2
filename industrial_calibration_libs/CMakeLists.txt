@@ -212,7 +212,13 @@ target_compile_options(${PROJECT_NAME}
 
 ## Add gtest based cpp test target and link libraries
 catkin_add_gtest(${PROJECT_NAME}_test 
-  test/test_targets.cpp)
+  test/test_industrial_calibration_libs.cpp
+  test/test_targets.cpp
+  test/test_observations.cpp
+  WORKING_DIRECTORY 
+    ${PROJECT_SOURCE_DIR}/test/resources
+)
+
 if(TARGET ${PROJECT_NAME}_test)
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
 endif()

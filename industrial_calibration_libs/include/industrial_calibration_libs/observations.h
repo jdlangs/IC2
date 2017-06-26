@@ -6,6 +6,10 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/opencv_modules.hpp>
+#include <opencv2/core/core.hpp>
 
 namespace industrial_calibration_libs
 {
@@ -22,8 +26,7 @@ struct Observation
 };
 #endif
 
-// Note(gChiou): Was Point2f
-typedef std::vector<cv::Point3f> ObservationPoints;
+typedef std::vector<cv::Point2f> ObservationPoints;
 
 // Note(gChiou): I think the above typedef is for a single image.
 // The input of the ObservationExtractor class should be a vector of 
@@ -38,7 +41,7 @@ class ObservationExtractor
 public:
   ObservationExtractor(const std::vector<cv::Mat> &images, const Target &target);
 
-  ~ObservationExtractor(void);
+  ~ObservationExtractor(void) { }
 
   ObservationData getObservationData(void) {return observation_data_;}
 
