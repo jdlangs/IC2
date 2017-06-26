@@ -6,7 +6,6 @@ ObservationExtractor::ObservationExtractor(const std::vector<cv::Mat> &images,
   const Target &target) : images_(images), target_(target), custom_circle_detector_(true) 
 {
   // Threshold images
-  std::cerr << images_.size() << std::endl;
   for (std::size_t i = 0; i < images_.size(); i++)
   {
     images_[i] = images_[i] > 128;
