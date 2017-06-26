@@ -4,12 +4,14 @@
 
 TEST(Observations, load_observations)
 {
+  const std::size_t num_images = 5;
+
   // Load in calibration images
   std::vector<cv::Mat> calibration_images;
-  calibration_images.reserve(5);
+  calibration_images.reserve(num_images);
   std::string cal_image_path = "cal_images/mcircles_7x5/";
 
-  for (std::size_t i = 0; i < 5; i++)
+  for (std::size_t i = 0; i < num_images; i++)
   {
     std::string image_path = cal_image_path + std::to_string(i+1) + ".jpg";
     cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_COLOR);
@@ -30,6 +32,16 @@ TEST(Observations, load_observations)
 
   industrial_calibration_libs::ObservationData observation_data = observation_extractor.getObservationData();
 
+  EXPECT_EQ(observation_data.size(), num_images);
+
+  for (std::size_t i = 0; i < num_images; i++)
+  {
+    EXPECT_EQ(observation_data[i].size(), target.getData()->target_points);
+  }
+
+  // TODO(gChiou): Find a way to verify observation data... if it is even possible.
+
+#if 0
   CONSOLE_OUTPUT("Total Observations: " << observation_data.size());
   for (std::size_t i = 0; i < observation_data.size(); i++)
   {
@@ -40,4 +52,5 @@ TEST(Observations, load_observations)
       CONSOLE_OUTPUT(observation_data[i][j]);
     }
   }
+#endif
 }
