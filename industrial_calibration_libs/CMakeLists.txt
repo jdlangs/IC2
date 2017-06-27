@@ -136,6 +136,7 @@ add_library(${PROJECT_NAME}
   src/observations.cpp
   src/circle_detector.cpp
   src/calibration.cpp
+  src/types.cpp
 )
 
 ## Add cmake target dependencies of the library
