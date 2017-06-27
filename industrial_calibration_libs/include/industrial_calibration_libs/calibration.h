@@ -1,6 +1,7 @@
 #ifndef CALIBRATION_H
 #define CALIBRATION_H
 
+#include <industrial_calibration_libs/targets.h>
 #include <industrial_calibration_libs/cost_functions.h>
 
 namespace industrial_calibration_libs
