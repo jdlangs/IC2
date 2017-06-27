@@ -22,7 +22,7 @@ struct Point3D
 
   bool setPoints(const std::vector<double> &points);
 
-  std::vector<double> asVector(void);
+  std::vector<double> asVector(void) const;
 
   bool operator==(const Point3D &p2)
   {
