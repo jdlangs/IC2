@@ -32,6 +32,7 @@
 
   <run_depend>yaml-cpp</run_depend>
   <run_depend>ceres-solver</run_depend>
+
   <!-- The *_depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
   <!-- Examples: -->

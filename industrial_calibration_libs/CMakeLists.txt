@@ -11,6 +11,7 @@ add_definitions(-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-pri
 find_package(catkin REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # OpenMP
 find_package(OpenMP REQUIRED)
@@ -113,7 +114,7 @@ catkin_package(
     include
   LIBRARIES 
     industrial_calibration_libs
-#  CATKIN_DEPENDS other_catkin_pkg
+  # CATKIN_DEPENDS other_catkin_pkg
   DEPENDS 
     CERES
 )
@@ -127,6 +128,7 @@ catkin_package(
 include_directories(include
   ${OpenCV_INCLUDE_DIRS}
   ${CERES_INCLUDE_DIRS}
+  SYSTEM ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
