@@ -34,7 +34,7 @@ bool Point3D::setPoints(const std::vector<double> &points)
   }
 }
 
-std::vector<double> Point3D::asVector(void)
+std::vector<double> Point3D::asVector(void) const
 {
   std::vector<double> points;
   points.resize(3);
