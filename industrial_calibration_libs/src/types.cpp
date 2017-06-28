@@ -183,9 +183,15 @@ void Pose6D::setAngleAxis(double aax, double aay, double aaz)
 //   double wy = ay/angle;
 //   double wz = az/angle;
 //   double omct = 1.0 - cos_theta;
-//   R[0][0] = cos_theta + wx*wx*omct;        R[0][1] = wx*wy*omct - wz*sin_theta;      R[0][2] = wx*wz*omct + wy*sin_theta; 
-//   R[1][0] = wy*wx*omct + wz*sin_theta;   R[1][1] =  cos_theta+wy*wy*omct;          R[1][2] = wy*wz*omct - wx*sin_theta;  
-//   R[2][0] = wz*wx*omct - wy*sin_theta;     R[2][1] =  wz*wy*omct + wx*sin_theta;   R[2][2] = cos_theta + wz*wz*omct;     
+//   R[0][0] = cos_theta + wx*wx*omct;    
+//   R[0][1] = wx*wy*omct - wz*sin_theta;      
+//   R[0][2] = wx*wz*omct + wy*sin_theta; 
+//   R[1][0] = wy*wx*omct + wz*sin_theta; 
+//   R[1][1] =  cos_theta+wy*wy*omct;          
+//   R[1][2] = wy*wz*omct - wx*sin_theta;  
+//   R[2][0] = wz*wx*omct - wy*sin_theta; 
+//   R[2][1] =  wz*wy*omct + wx*sin_theta; 
+//   R[2][2] = cos_theta + wz*wz*omct;     
 //   return(R);
 // }
 
@@ -353,14 +359,16 @@ void Pose6D::show(std::string message)
   double qx, qy, qz, qw;
   this->getEulerZYX(ez_yaw,ey_pitch,ex_roll);
   this->getQuaternion(qx, qy, qz, qw);
- printf("%s =[\n %6.3lf  %6.3lf  %6.3lf  %6.3lf\n  %6.3lf  %6.3lf  %6.3lf  %6.3lf\n  %6.3lf  %6.3lf %6.3lf  %6.3lf\n  %6.3lf  %6.3lf %6.3lf  %6.3lf];\n rpy= %6.3lf %6.3lf %6.3lf\n quat= %6.3lf  %6.3lf  %6.3lf %6.3lf\n ",
-      message.c_str(),
-      basis[0][0],basis[0][1], basis[0][2],this->x,
-      basis[1][0],basis[1][1], basis[1][2],this->y,
-      basis[2][0],basis[2][1], basis[2][2],this->z,
-      0.0, 0.0, 0.0, 1.0,
-      ez_yaw, ey_pitch, ex_roll,
-      qx, qy, qz, qw);
+  printf("%s =[\n %6.3lf  %6.3lf  %6.3lf  %6.3lf\n  %6.3lf  %6.3lf  %6.3lf  %6.3lf\n  %6.3lf  
+    %6.3lf %6.3lf  %6.3lf\n  %6.3lf  %6.3lf %6.3lf  %6.3lf];\n rpy= %6.3lf %6.3lf %6.3lf\n 
+    quat= %6.3lf  %6.3lf  %6.3lf %6.3lf\n ",
+    message.c_str(),
+    basis[0][0],basis[0][1], basis[0][2],this->x,
+    basis[1][0],basis[1][1], basis[1][2],this->y,
+    basis[2][0],basis[2][1], basis[2][2],this->z,
+    0.0, 0.0, 0.0, 1.0,
+    ez_yaw, ey_pitch, ex_roll,
+    qx, qy, qz, qw);
 }
 #endif
 

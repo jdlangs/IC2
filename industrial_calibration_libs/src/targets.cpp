@@ -160,7 +160,8 @@ bool Target::checkForValidTarget(void)
 {
   if (target_params_->target_type == CircleGrid)
   {
-    // Note(gChiou): Check if total number of points is half of number of rows times number of columns for an asymmetric circle grid.
+    // Note(gChiou): Check if total number of points is half of number of rows times number 
+    // of columns for an asymmetric circle grid.
     if (target_params_->asymmetric_grid)
     {
       if (target_params_->target_points != (target_params_->target_rows*target_params_->target_cols) / 2)

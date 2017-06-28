@@ -51,7 +51,8 @@ template<typename T> inline void transformPoint(const T angle_axis[3],
   t_point[2] = t_point[2] + tx[2];
 }
 
-template<typename T> inline void extractCameraIntrinsics(const T intrinsics[9], T &fx, T &fy, T &cx, T &cy, T &k1, T &k2, T &k3, T &p1, T &p2)
+template<typename T> inline void extractCameraIntrinsics(const T intrinsics[9], 
+  T &fx, T &fy, T &cx, T &cy, T &k1, T &k2, T &k3, T &p1, T &p2)
 {
   fx  = intrinsics[0]; /** focal length x */
   fy  = intrinsics[1]; /** focal length y */
@@ -142,12 +143,18 @@ template<typename T> inline void cameraPointResidualWithDistortion(T point[3],
 struct CameraOnWristStaticTargetExtrinsic
 {
   CameraOnWristStaticTargetExtrinsic(const double observed_x, 
-    const double observed_y, const double focal_length_x, const double focal_length_y, const double optical_center_x, const double optical_center_y, Pose6D link_pose, Point3D point) : observed_x_(observed_x), observed_y_(observed_y), focal_length_x_(focal_length_x), focal_length_y_(focal_length_y), optical_center_x_(optical_center_x), optical_center_y_(optical_center_y), link_pose_(link_pose), point_(point)
+    const double observed_y, const double focal_length_x, const double focal_length_y, 
+    const double optical_center_x, const double optical_center_y, Pose6D link_pose, 
+    Point3D point) : observed_x_(observed_x), observed_y_(observed_y), 
+    focal_length_x_(focal_length_x), focal_length_y_(focal_length_y), 
+    optical_center_x_(optical_center_x), optical_center_y_(optical_center_y), 
+    link_pose_(link_pose), point_(point)
   {
     link_pose_i_ = link_pose_.getInverse();
   }
 
-  template<typename T> bool operator() (const T* const extrinsic_parameters, const T* target_to_world, T* residual) const
+  template<typename T> bool operator() (const T* const extrinsic_parameters, 
+  const T* target_to_world, T* residual) const
   {
     // Extract camera angle axis and position
     const T* camera_angle_axis(&extrinsic_parameters[0]);
@@ -174,17 +181,20 @@ struct CameraOnWristStaticTargetExtrinsic
     T observed_x = T(observed_x_);
     T observed_y = T(observed_y_);
 
-    cameraPointResidual(camera_point, focal_length_x, focal_length_y, optical_center_x, optical_center_y, observed_x, observed_y, residual);
+    cameraPointResidual(camera_point, focal_length_x, focal_length_y, optical_center_x, 
+      optical_center_y, observed_x, observed_y, residual);
 
     return true;
   }
 
   // Factory to hide the construction of the Cost Function object from
   // client code.
-  static ceres::CostFunction *Create(const double observed_x, const double observed_y, const double focal_length_x, const double focal_length_y, const double optical_center_x, const double optical_center_y, Pose6D pose, Point3D point)
+  static ceres::CostFunction *Create(const double observed_x, const double observed_y, 
+    const double focal_length_x, const double focal_length_y, const double optical_center_x, 
+    const double optical_center_y, Pose6D pose, Point3D point)
   {
-    return (new ceres::AutoDiffCostFunction<CameraOnWristStaticTargetExtrinsic, 2, 6, 6>(new CameraOnWristStaticTargetExtrinsic(observed_x, observed_y, focal_length_x, focal_length_y, optical_center_x, optical_center_y, 
-      pose, point)));
+    return (new ceres::AutoDiffCostFunction<CameraOnWristStaticTargetExtrinsic, 2, 6, 6>(new CameraOnWristStaticTargetExtrinsic(observed_x, observed_y, focal_length_x, focal_length_y, 
+      optical_center_x, optical_center_y, pose, point)));
   }
 
   double observed_x_; // Observed x location of object in the image
@@ -201,12 +211,14 @@ struct CameraOnWristStaticTargetExtrinsic
 struct CameraOnWristStaticTargetIntrinsic
 {
   CameraOnWristStaticTargetIntrinsic(const double observed_x, 
-    const double observed_y, Pose6D link_pose, Point3D point) : observed_x_(observed_x), observed_y_(observed_y), link_pose_(link_pose), point_(point) 
+    const double observed_y, Pose6D link_pose, Point3D point) : observed_x_(observed_x), 
+    observed_y_(observed_y), link_pose_(link_pose), point_(point) 
   { 
     link_pose_i_ = link_pose_.getInverse();
   }
 
-  template<typename T> bool operator() (const T* const extrinsic_parameters, const T* const intrinsic_parameters, const T* const target_to_world, T* residual) const
+  template<typename T> bool operator() (const T* const extrinsic_parameters, 
+    const T* const intrinsic_parameters, const T* const target_to_world, T* residual) const
   {
     T focal_length_x;
     T focal_length_y;
@@ -219,8 +231,8 @@ struct CameraOnWristStaticTargetIntrinsic
     T distortion_p2;
 
     // Extract intrinsics
-    extractCameraIntrinsics(intrinsic_parameters, focal_length_x, focal_length_y, optical_center_x, optical_center_y, distortion_k1, distortion_k2, 
-      distortion_k3, distortion_p1, distortion_p2);
+    extractCameraIntrinsics(intrinsic_parameters, focal_length_x, focal_length_y, optical_center_x, 
+      optical_center_y, distortion_k1, distortion_k2, distortion_k3, distortion_p1, distortion_p2);
 
     // Extract camera angle axis and position
     const T* camera_angle_axis(&extrinsic_parameters[0]);
@@ -243,7 +255,9 @@ struct CameraOnWristStaticTargetIntrinsic
     T observed_x = T(observed_x_);
     T observed_y = T(observed_y_);
 
-    cameraPointResidualWithDistortion(camera_point, distortion_k1, distortion_k2, distortion_k3, distortion_p1, distortion_p2, focal_length_x, focal_length_y, optical_center_x, optical_center_y, observed_x, observed_y, residual);
+    cameraPointResidualWithDistortion(camera_point, distortion_k1, distortion_k2, distortion_k3, 
+      distortion_p1, distortion_p2, focal_length_x, focal_length_y, optical_center_x, 
+      optical_center_y, observed_x, observed_y, residual);
 
     return true;
   }
