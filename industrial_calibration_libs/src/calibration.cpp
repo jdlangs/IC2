@@ -60,7 +60,7 @@ bool IntrinsicCalibration::Calibrate(void)
   if (summary.termination_type != ceres::NO_CONVERGENCE)
   {
     initial_cost_ = summary.initial_cost / total_observations;
-    final_cost_ = summary.final_cost / 
+    final_cost_ = summary.final_cost / total_observations;
   }
 
   return false; // REPLACE THIS
