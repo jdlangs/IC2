@@ -24,12 +24,11 @@ bool IntrinsicCalibration::Calibrate(void)
   }
 
   // Iterate through every observation image.
+  double extrinsics[6];
+  double intrinsics[9];
+  double target_to_world[6];  
   for (std::size_t i = 0; i < num_images; i++)
   {
-    double extrinsics[6];
-    double intrinsics[9];
-    double target_to_world[6];
-
     // Iterate through every observation in the observation image.
     for (std::size_t j = 0; j < observations_per_image; j++)
     {
