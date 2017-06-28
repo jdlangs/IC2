@@ -59,6 +59,8 @@ private:
   ObservationData observation_data_;
   Target target_;
   std::vector<Pose6D> link_poses_;
+  double initial_cost_;
+  double final_cost_;
 };
 
 } // namespace industrial_calibration_libs

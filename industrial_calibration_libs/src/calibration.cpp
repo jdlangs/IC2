@@ -23,6 +23,9 @@ bool IntrinsicCalibration::Calibrate(void)
     }
   }
 
+  // Calculates the total number of observations across all images
+  std::size_t total_observations = num_images * observations_per_image;
+
   // Iterate through every observation image.
   double extrinsics[6];
   double intrinsics[9];
@@ -53,6 +56,12 @@ bool IntrinsicCalibration::Calibrate(void)
   options.minimizer_progress_to_stdout = true;
   options.max_num_iterations = 2000;
   ceres::Solve(options, &problem, &summary);
+
+  if (summary.termination_type != ceres::NO_CONVERGENCE)
+  {
+    initial_cost_ = summary.initial_cost / total_observations;
+    final_cost_ = summary.final_cost / 
+  }
 
   return false; // REPLACE THIS
 }
