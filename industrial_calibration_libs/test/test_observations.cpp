@@ -37,7 +37,7 @@ TEST(Observations, load_observations)
     EXPECT_EQ(observation_data[i].size(), target.getData()->target_points);
   }
 
-  // TODO(gChiou): Find a way to verify observation data... if it is even possible.
+  // TODO(gChiou): Find a way to verify observation data...
 
 #if 0
   CONSOLE_OUTPUT("Total Observations: " << observation_data.size());

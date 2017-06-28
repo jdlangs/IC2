@@ -3,7 +3,6 @@ project(industrial_calibration_libs)
 
 # Compile with C++ 11
 add_definitions(-std=c++11)
-add_definitions(-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -174,6 +173,8 @@ target_link_libraries(${PROJECT_NAME}
   yaml-cpp
 )
 
+set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused")
+
 target_compile_options(${PROJECT_NAME}
   PRIVATE
   ${OpenMP_FLAGS}
@@ -220,6 +221,8 @@ target_compile_options(${PROJECT_NAME}
 
 ## Add gtest based cpp test target and link libraries
 if (CATKIN_ENABLE_TESTING)
+  include_directories(test)
+
   catkin_add_gtest(${PROJECT_NAME}_test 
     test/test_industrial_calibration_libs.cpp
     test/test_targets.cpp
@@ -228,12 +231,12 @@ if (CATKIN_ENABLE_TESTING)
       ${PROJECT_SOURCE_DIR}/test/resources
   )
 
-  include_directories(test)
-
   if(TARGET ${PROJECT_NAME}_test)
     target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
-  endif()
-endif()
+  endif(TARGET ${PROJECT_NAME}_test)
+
+endif(CATKIN_ENABLE_TESTING)
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+ 
