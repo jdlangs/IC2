@@ -111,6 +111,7 @@ endif()
 catkin_package(
   INCLUDE_DIRS 
     include
+    test
   LIBRARIES 
     industrial_calibration_libs
   # CATKIN_DEPENDS other_catkin_pkg
@@ -124,7 +125,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include
+include_directories(include test
   ${OpenCV_INCLUDE_DIRS}
   ${CERES_INCLUDE_DIRS}
   SYSTEM ${EIGEN3_INCLUDE_DIRS}
@@ -221,8 +222,6 @@ target_compile_options(${PROJECT_NAME}
 
 ## Add gtest based cpp test target and link libraries
 if (CATKIN_ENABLE_TESTING)
-  include_directories(test)
-
   catkin_add_gtest(${PROJECT_NAME}_test 
     test/test_industrial_calibration_libs.cpp
     test/test_targets.cpp
