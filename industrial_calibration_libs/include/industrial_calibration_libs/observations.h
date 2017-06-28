@@ -55,25 +55,37 @@ public:
 
   ObservationData getObservationData(void) {return observation_data_;}
 
-  // TODO(gChiou): Put this in constructor.
   bool extractObservations(void);
+
+  bool extractSingleObservation(const cv::Mat &image);
 
 private:
   bool checkData(void) const;
 
   bool extractChessboard(void);
 
+  bool extractSingleChessboard(ObservationPoints &observation_points);
+
   bool extractCircleGridAsymmetric(void);
+
+  bool extractSingleCircleGridAsymmetric(ObservationPoints &observation_points);
 
   bool extractCircleGridSymmetric(void);
 
+  bool extractSingleCircleGridSymmetric(ObservationPoints &observation_points);
+
   bool extractModifiedCircleGrid(void);
+
+  bool extractSingleModifiedCircleGrid(ObservationPoints &observation_points);
 
   // Data Members
   std::vector<cv::Mat> images_;
   ObservationData observation_data_;
   Target target_;
   bool custom_circle_detector_;
+
+  bool extract_all_observations_;
+  bool extract_single_observation_;
 };
 
 } // namespace industrial_calibration_libs

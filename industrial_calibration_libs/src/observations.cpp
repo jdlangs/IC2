@@ -3,7 +3,9 @@
 namespace industrial_calibration_libs
 {
 ObservationExtractor::ObservationExtractor(const std::vector<cv::Mat> &images,
-  const Target &target) : images_(images), target_(target), custom_circle_detector_(true) 
+  const Target &target) : images_(images), target_(target), 
+  custom_circle_detector_(true), extract_all_observations_(true),
+  extract_single_observation_(false)
 {
   // Threshold images
   for (std::size_t i = 0; i < images_.size(); i++)
@@ -13,10 +15,13 @@ ObservationExtractor::ObservationExtractor(const std::vector<cv::Mat> &images,
 }
 
 ObservationExtractor::ObservationExtractor(const Target &target) : target_(target), 
-  custom_circle_detector_(true) { }
+  custom_circle_detector_(true), extract_all_observations_(false),
+  extract_single_observation_(true) { }
 
 bool ObservationExtractor::extractObservations(void)
 {
+  if (extract_single_observation_ && !extract_all_observations_) {return false;}
+
   if (!checkData()) {return false;}
 
   switch (target_.getData()->target_type)
@@ -38,7 +43,62 @@ bool ObservationExtractor::extractObservations(void)
 
     case ModifiedCircleGrid:
       if (extractModifiedCircleGrid()) {return true;}
+      break;
 
+    default:
+      break;
+  }
+  return false;
+}
+
+bool ObservationExtractor::extractSingleObservation(const cv::Mat &input_image)
+{
+  if (extract_all_observations_ && !extract_single_observation_) {return false;}
+  
+  if (input_image.empty()) {return false;}
+
+  // Threshold image
+  cv::Mat image = input_image > 128;
+
+  // Add this image to the images_ vector for later use.
+  images_.push_back(image);
+
+  ObservationPoints observation_points;
+  switch (target_.getData()->target_type)
+  {
+    case Chessboard:
+      if (extractSingleChessboard(observation_points)) 
+      {
+        observation_data_.push_back(observation_points);
+        return true;
+      }
+      break;
+
+    case CircleGrid:
+      if (target_.getData()->asymmetric_grid)
+      {
+        if (extractSingleCircleGridAsymmetric(observation_points)) 
+        {
+          observation_data_.push_back(observation_points);
+          return true;
+        }
+      }
+      else
+      {
+        if (extractSingleCircleGridSymmetric(observation_points)) 
+        {
+          observation_data_.push_back(observation_points);
+          return true;
+        }
+      }
+      break;
+
+    case ModifiedCircleGrid:
+      if (extractSingleModifiedCircleGrid(observation_points)) 
+      {
+        observation_data_.push_back(observation_points);
+        return true;
+      }
       break;
 
     default:
@@ -89,6 +149,12 @@ bool ObservationExtractor::extractChessboard(void)
     if (observation_data_[i].size() == 0) {return false;}
   }
   return true;
+}
+
+bool ObservationExtractor::extractSingleChessboard(ObservationPoints
+  &observation_points) 
+{
+  return false;
 }
 
 bool ObservationExtractor::extractCircleGridSymmetric(void)
@@ -166,6 +232,12 @@ bool ObservationExtractor::extractCircleGridSymmetric(void)
   }
 }
 
+bool ObservationExtractor::extractSingleCircleGridAsymmetric(ObservationPoints
+  &observation_points) 
+{
+  return false;
+}
+
 bool ObservationExtractor::extractCircleGridAsymmetric(void)
 {
   cv::Ptr<cv::CircleDetector> circle_detector_ptr = cv::CircleDetector::create();
@@ -236,6 +308,12 @@ bool ObservationExtractor::extractCircleGridAsymmetric(void)
     }
     return true;
   }
+}
+
+bool ObservationExtractor::extractSingleCircleGridSymmetric(ObservationPoints
+  &observation_points) 
+{
+  return false;
 }
 
 bool ObservationExtractor::extractModifiedCircleGrid(void)
@@ -546,6 +624,12 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
   }
 
   return true;
+}
+
+bool ObservationExtractor::extractSingleModifiedCircleGrid(ObservationPoints
+  &observation_points) 
+{
+  return false;
 }
 
 } // namespace industrial_calibration_libs
