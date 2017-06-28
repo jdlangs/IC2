@@ -12,6 +12,9 @@ ObservationExtractor::ObservationExtractor(const std::vector<cv::Mat> &images,
   }
 }
 
+ObservationExtractor::ObservationExtractor(const Target &target) : target_(target), 
+  custom_circle_detector_(true) { }
+
 bool ObservationExtractor::extractObservations(void)
 {
   if (!checkData()) {return false;}

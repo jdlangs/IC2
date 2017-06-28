@@ -38,10 +38,18 @@ typedef std::vector<cv::Point2d> ObservationPoints;
 // Something to test for.
 typedef std::vector<ObservationPoints> ObservationData;
 
+// Note(gChiou): This class should work two ways, the first way is to pass a
+// vector of images and a target definition into the constructor and call the
+// extractObservations() method.
+// The second way will be call the extractSingleObservation() method which will
+// return a bool. This way the user will know if the observations were actually 
+// able to be extracted.
 class ObservationExtractor
 {
 public:
   ObservationExtractor(const std::vector<cv::Mat> &images, const Target &target);
+
+  ObservationExtractor(const Target &target);
 
   ~ObservationExtractor(void) { }
 
