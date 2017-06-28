@@ -64,7 +64,8 @@ private:
 
   bool extractChessboard(void);
 
-  bool extractSingleChessboard(ObservationPoints &observation_points);
+  bool extractSingleChessboard(const cv::Mat &image, 
+    ObservationPoints &observation_points);
 
   bool extractCircleGridAsymmetric(void);
 
@@ -86,6 +87,9 @@ private:
 
   bool extract_all_observations_;
   bool extract_single_observation_;
+
+  std::size_t cols_;
+  std::size_t rows_;
 };
 
 } // namespace industrial_calibration_libs

@@ -12,11 +12,18 @@ ObservationExtractor::ObservationExtractor(const std::vector<cv::Mat> &images,
   {
     images_[i] = images_[i] > 128;
   }
+
+  cols_ = target_.getData()->target_cols;
+  rows_ = target_.getData()->target_rows;
 }
 
 ObservationExtractor::ObservationExtractor(const Target &target) : target_(target), 
   custom_circle_detector_(true), extract_all_observations_(false),
-  extract_single_observation_(true) { }
+  extract_single_observation_(true) 
+{ 
+  cols_ = target_.getData()->target_cols;
+  rows_ = target_.getData()->target_rows;  
+}
 
 bool ObservationExtractor::extractObservations(void)
 {
@@ -67,7 +74,7 @@ bool ObservationExtractor::extractSingleObservation(const cv::Mat &input_image)
   switch (target_.getData()->target_type)
   {
     case Chessboard:
-      if (extractSingleChessboard(observation_points)) 
+      if (extractSingleChessboard(image, observation_points)) 
       {
         observation_data_.push_back(observation_points);
         return true;
@@ -122,6 +129,7 @@ bool ObservationExtractor::checkData(void) const
   return true;
 }
 
+#if 0
 bool ObservationExtractor::extractChessboard(void)
 {
   std::size_t cols = target_.getData()->target_cols;
@@ -150,11 +158,52 @@ bool ObservationExtractor::extractChessboard(void)
   }
   return true;
 }
+#endif
 
-bool ObservationExtractor::extractSingleChessboard(ObservationPoints
-  &observation_points) 
+bool ObservationExtractor::extractChessboard(void)
 {
-  return false;
+  std::size_t cols = this->cols_;
+  std::size_t rows = this->rows_;
+
+  observation_data_.clear();
+  observation_data_.resize(images_.size());
+
+  cv::Size pattern_size(cols, rows); // CV uses (cols, rows)
+
+  // pragma omp parallel for
+  for (std::size_t i = 0; i < images_.size(); i++)
+  {
+    ObservationPoints observation_points;
+    if (extractSingleChessboard(images_[i], observation_points))
+    {
+      observation_data_[i] = observation_points;
+    }
+  }
+  
+  // Note(gChiou): Checks if any of the images failed to return observations.
+  for (std::size_t i = 0; i < observation_data_.size(); i++)
+  {
+    if (observation_data_[i].size() == 0) {return false;}
+  }
+  return true;  
+}
+
+bool ObservationExtractor::extractSingleChessboard(const cv::Mat &image,
+  ObservationPoints &observation_points) 
+{
+  std::size_t cols = this->cols_;
+  std::size_t rows = this->rows_;
+
+  cv::Size pattern_size(cols, rows); // CV uses (cols, rows)
+
+  if (cv::findChessboardCorners(image, pattern_size, observation_points,
+    cv::CALIB_CB_ADAPTIVE_THRESH))
+  {
+    if (observation_points.size() == 0) {return false;}
+    else {return true;}
+  }
+
+  return true;
 }
 
 bool ObservationExtractor::extractCircleGridSymmetric(void)
