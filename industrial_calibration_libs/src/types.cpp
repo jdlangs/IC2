@@ -351,26 +351,24 @@ Pose6D Pose6D::getInverse() const
   return(new_pose);
 }
 
-#if 0
-void Pose6D::show(std::string message)
-{
-  tf::Matrix3x3 basis = this->getBasis();
-  double ez_yaw, ey_pitch, ex_roll;
-  double qx, qy, qz, qw;
-  this->getEulerZYX(ez_yaw,ey_pitch,ex_roll);
-  this->getQuaternion(qx, qy, qz, qw);
-  printf("%s =[\n %6.3lf  %6.3lf  %6.3lf  %6.3lf\n  %6.3lf  %6.3lf  %6.3lf  %6.3lf\n  %6.3lf  
-    %6.3lf %6.3lf  %6.3lf\n  %6.3lf  %6.3lf %6.3lf  %6.3lf];\n rpy= %6.3lf %6.3lf %6.3lf\n 
-    quat= %6.3lf  %6.3lf  %6.3lf %6.3lf\n ",
-    message.c_str(),
-    basis[0][0],basis[0][1], basis[0][2],this->x,
-    basis[1][0],basis[1][1], basis[1][2],this->y,
-    basis[2][0],basis[2][1], basis[2][2],this->z,
-    0.0, 0.0, 0.0, 1.0,
-    ez_yaw, ey_pitch, ex_roll,
-    qx, qy, qz, qw);
-}
-#endif
+// void Pose6D::show(std::string message)
+// {
+//   tf::Matrix3x3 basis = this->getBasis();
+//   double ez_yaw, ey_pitch, ex_roll;
+//   double qx, qy, qz, qw;
+//   this->getEulerZYX(ez_yaw,ey_pitch,ex_roll);
+//   this->getQuaternion(qx, qy, qz, qw);
+//   printf("%s =[\n %6.3lf  %6.3lf  %6.3lf  %6.3lf\n  %6.3lf  %6.3lf  %6.3lf  %6.3lf\n  %6.3lf  
+//     %6.3lf %6.3lf  %6.3lf\n  %6.3lf  %6.3lf %6.3lf  %6.3lf];\n rpy= %6.3lf %6.3lf %6.3lf\n 
+//     quat= %6.3lf  %6.3lf  %6.3lf %6.3lf\n ",
+//     message.c_str(),
+//     basis[0][0],basis[0][1], basis[0][2],this->x,
+//     basis[1][0],basis[1][1], basis[1][2],this->y,
+//     basis[2][0],basis[2][1], basis[2][2],this->z,
+//     0.0, 0.0, 0.0, 1.0,
+//     ez_yaw, ey_pitch, ex_roll,
+//     qx, qy, qz, qw);
+// }
 
 // Pose6D Pose6D::operator * ( Pose6D pose2) const
 // {
