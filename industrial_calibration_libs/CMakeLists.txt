@@ -10,6 +10,8 @@ add_definitions(-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-pri
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(Ceres REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # OpenMP
 find_package(OpenMP REQUIRED)
@@ -112,8 +114,9 @@ catkin_package(
     include
   LIBRARIES 
     industrial_calibration_libs
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+  # CATKIN_DEPENDS other_catkin_pkg
+  DEPENDS 
+    CERES
 )
 
 ###########
@@ -124,6 +127,8 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(include
   ${OpenCV_INCLUDE_DIRS}
+  ${CERES_INCLUDE_DIRS}
+  SYSTEM ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -132,6 +137,8 @@ add_library(${PROJECT_NAME}
   src/targets.cpp
   src/observations.cpp
   src/circle_detector.cpp
+  src/calibration.cpp
+  src/types.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -163,6 +170,7 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${OpenMP_LIBS}
+  ${CERES_LIBRARIES}
   yaml-cpp
 )
 
