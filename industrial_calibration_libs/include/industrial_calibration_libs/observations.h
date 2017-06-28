@@ -23,7 +23,8 @@ struct Observation
   double point_y;
   // Note(gChiou): May need cost function type associated with observation and
   // an 'intermediate_frame'. Leaving it out for now.
-  // see: https://github.com/ros-industrial/industrial_calibration/blob/kinetic-devel/industrial_extrinsic_cal/include/industrial_extrinsic_cal/camera_observer.hpp
+  // see: https://github.com/ros-industrial/industrial_calibration/blob/kinetic-devel/
+  // industrial_extrinsic_cal/include/industrial_extrinsic_cal/camera_observer.hpp
 };
 #endif
 

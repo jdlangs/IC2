@@ -110,13 +110,15 @@ bool ObservationExtractor::extractCircleGridSymmetric(void)
     {
       ObservationPoints observation_points;
       // Try regular pattern_size
-      if (cv::findCirclesGrid(images_[i], pattern_size, observation_points, cv::CALIB_CB_SYMMETRIC_GRID, circle_detector_ptr))
+      if (cv::findCirclesGrid(images_[i], pattern_size, observation_points, 
+        cv::CALIB_CB_SYMMETRIC_GRID, circle_detector_ptr))
       {
         observation_data_[i] = observation_points;
       }
       else // Try flipped pattern size
       {
-        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, cv::CALIB_CB_SYMMETRIC_GRID, circle_detector_ptr))
+        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, 
+          cv::CALIB_CB_SYMMETRIC_GRID, circle_detector_ptr))
         {
           observation_data_[i] = observation_points;
         }
@@ -144,7 +146,8 @@ bool ObservationExtractor::extractCircleGridSymmetric(void)
       }
       else // Try flipped pattern size
       {
-        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, cv::CALIB_CB_SYMMETRIC_GRID))
+        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, 
+          cv::CALIB_CB_SYMMETRIC_GRID))
         {
           observation_data_[i] = observation_points;
         }
@@ -186,7 +189,8 @@ bool ObservationExtractor::extractCircleGridAsymmetric(void)
       }
       else // Try flipped pattern size
       {
-        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
+        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, 
+          cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
         {
           observation_data_[i] = observation_points;
         }
@@ -214,7 +218,8 @@ bool ObservationExtractor::extractCircleGridAsymmetric(void)
       }
       else // Try flipped pattern size
       {
-        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING))
+        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, 
+          cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING))
         {
           observation_data_[i] = observation_points;
         }
@@ -273,7 +278,8 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
       }
       else // Try flipped pattern size
       {
-        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, centers, cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
+        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, centers, 
+          cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
         {
           center_data[i] = centers;
           flipped[i] = true;
@@ -428,7 +434,8 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
           for (int k = temp_rows - 1; k >= 0; k--)
           {
             // Note(gChiou): I have warnings turned on >:[
-            observation_points.push_back(center_data[i][static_cast<std::size_t>(k)*temp_cols + static_cast<std::size_t>(j)]);
+            observation_points.push_back(center_data[i][static_cast<std::size_t>(k)*temp_cols 
+              + static_cast<std::size_t>(j)]);
           }
         }
       }
@@ -521,7 +528,8 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
         {
           for (int k = temp_rows - 1; k >= 0; k--)
           {
-            observation_points.push_back(center_data[i][static_cast<std::size_t>(k)*temp_cols + static_cast<std::size_t>(j)]);
+            observation_points.push_back(center_data[i][static_cast<std::size_t>(k)*temp_cols 
+              + static_cast<std::size_t>(j)]);
           }
         }
       }
