@@ -28,7 +28,7 @@ struct Observation
 };
 #endif
 
-typedef std::vector<cv::Point2f> ObservationPoints;
+typedef std::vector<cv::Point2d> ObservationPoints;
 
 // Note(gChiou): I think the above typedef is for a single image.
 // The input of the ObservationExtractor class should be a vector of 
