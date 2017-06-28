@@ -268,7 +268,7 @@ struct CameraOnWristStaticTargetIntrinsic
     const double observed_y, Pose6D link_pose, Point3D point)
   {
     return (new ceres::AutoDiffCostFunction<CameraOnWristStaticTargetIntrinsic, 2, 
-      9, 6, 6>(new CameraOnWristStaticTargetIntrinsic(observed_x, observed_y, 
+      6, 9, 6>(new CameraOnWristStaticTargetIntrinsic(observed_x, observed_y, 
       link_pose, point)));
   }  
 
