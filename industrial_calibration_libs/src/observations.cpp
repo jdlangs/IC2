@@ -8,10 +8,10 @@ ObservationExtractor::ObservationExtractor(const std::vector<cv::Mat> &images,
   extract_single_observation_(false)
 {
   // Threshold images
-  for (std::size_t i = 0; i < images_.size(); i++)
-  {
-    images_[i] = images_[i] > 128;
-  }
+  // for (std::size_t i = 0; i < images_.size(); i++)
+  // {
+    // images_[i] = images_[i] > 128;
+  // }
 
   cols_ = target_.getData()->target_cols;
   rows_ = target_.getData()->target_rows;
@@ -65,7 +65,8 @@ bool ObservationExtractor::extractSingleObservation(const cv::Mat &input_image)
   if (input_image.empty()) {return false;}
 
   // Threshold image
-  cv::Mat image = input_image > 128;
+  // cv::Mat image = input_image > 128;
+  cv::Mat image = input_image;
 
   // Add this image to the images_ vector for later use.
   images_.push_back(image);
