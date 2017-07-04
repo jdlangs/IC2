@@ -2,12 +2,12 @@
 
 TEST(Observations, load_observations)
 {
-  const std::size_t num_images = 5;
+  const std::size_t num_images = 15;
 
   // Load in calibration images
   std::vector<cv::Mat> calibration_images;
   calibration_images.reserve(num_images);
-  std::string cal_image_path = "cal_images/mcircles_7x5/";
+  std::string cal_image_path = "mcircles_7x5/images/";
 
   for (std::size_t i = 0; i < num_images; i++)
   {
@@ -22,11 +22,11 @@ TEST(Observations, load_observations)
 
   // Load in target
   industrial_calibration_libs::Target target;
-  target.loadTargetFromYAML("cal_targets/mcircles_7x5.yaml");
+  target.loadTargetFromYAML("mcircles_7x5/mcircles_7x5.yaml");
 
   // Create Observation Extractor Object
   industrial_calibration_libs::ObservationExtractor observation_extractor(calibration_images, target);
-  observation_extractor.extractObservations();
+  ASSERT_TRUE(observation_extractor.extractObservations());
 
   industrial_calibration_libs::ObservationData observation_data = observation_extractor.getObservationData();
 
