@@ -94,7 +94,7 @@ CircleDetector::Params::Params()
   minArea = 25;
   // maxArea = 5000;
   // Note(gChiou): I set this obscenely large for now...
-  maxArea = 50000000;
+  maxArea = 500000;
 
   filterByCircularity = false;
   minCircularity = 0.8f;
