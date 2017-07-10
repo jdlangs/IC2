@@ -143,8 +143,9 @@ template<typename T> inline void cameraPointResidualWithDistortion(T point[3],
 struct CameraOnWristStaticTargetExtrinsic
 {
   CameraOnWristStaticTargetExtrinsic(const double observed_x, 
-    const double observed_y, const double focal_length_x, const double focal_length_y, 
-    const double optical_center_x, const double optical_center_y, Pose6D link_pose, 
+    const double observed_y, const double focal_length_x, 
+    const double focal_length_y, const double optical_center_x, 
+    const double optical_center_y, Pose6D link_pose, 
     Point3D point) : observed_x_(observed_x), observed_y_(observed_y), 
     focal_length_x_(focal_length_x), focal_length_y_(focal_length_y), 
     optical_center_x_(optical_center_x), optical_center_y_(optical_center_y), 
