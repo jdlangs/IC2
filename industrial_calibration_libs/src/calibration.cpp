@@ -64,7 +64,7 @@ bool ExtrinsicCalibration::calibrate(void)
   ceres::Solver::Summary summary;
   options.linear_solver_type = ceres::DENSE_SCHUR;
   options.minimizer_progress_to_stdout = true;
-  options.max_num_iterations = 9001;
+  options.max_num_iterations = 2000;
   ceres::Solve(options, &problem, &summary);
 
   if (summary.termination_type != ceres::NO_CONVERGENCE)
@@ -155,7 +155,7 @@ bool IntrinsicCalibration::calibrate(void)
   ceres::Solver::Summary summary;
   options.linear_solver_type = ceres::DENSE_SCHUR;
   options.minimizer_progress_to_stdout = true;
-  options.max_num_iterations = 9001;
+  options.max_num_iterations = 2000;
   ceres::Solve(options, &problem, &summary);
 
   if (summary.termination_type != ceres::NO_CONVERGENCE)
