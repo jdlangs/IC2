@@ -81,7 +81,7 @@ bool convertToPose6D(const std::vector<LinkData> &link_data,
     double qz = link_data[i].rotation_quat[2];
     double qw = link_data[i].rotation_quat[3];
     link_pose.setOrigin(tx, ty, tz);
-    link_pose.setQuaternion(qz, qy, qz, qw);
+    link_pose.setQuaternion(qx, qy, qz, qw);
 
     link_poses->push_back(link_pose);
   }
@@ -90,6 +90,7 @@ bool convertToPose6D(const std::vector<LinkData> &link_data,
   else {return false;}
 }
 
+#if 1
 TEST(CostFunctions, intrinsic_calibration)
 {
   // Load Target Data
@@ -141,6 +142,30 @@ TEST(CostFunctions, intrinsic_calibration)
     EXPECT_TRUE(link_data[i].rotation_deg.size() == 3);
   }
 
+  // Convert Link Data to a vector of Pose6D poses
+  double intrinsics[9] = {0};
+  intrinsics[0] = 944.72;
+  intrinsics[1] = 940.92;
+  intrinsics[2] = 925.56;
+  intrinsics[3] = 518.89;
+
+  // Set camera extrinsics seed
+  industrial_calibration_libs::Pose6D link_6_to_camera;
+  link_6_to_camera.setOrigin(0.125, 0.000, 0.091);
+  link_6_to_camera.setQuaternion(0.500, 0.500, 0.500, 0.500);
+
+  double extrinsics[6];
+  extrinsics[0] = link_6_to_camera.ax;
+  extrinsics[1] = link_6_to_camera.ay;
+  extrinsics[2] = link_6_to_camera.az;
+  extrinsics[3] = link_6_to_camera.x;
+  extrinsics[4] = link_6_to_camera.y;
+  extrinsics[5] = link_6_to_camera.z;
+
+  double target_to_world[6] = {0.001};
+
+  target_to_world[3] = -0.75;
+
   // Note(gChiou): Prints out all recorded poses, leaving commented 
   // for debugging purposes.
 #if 0
@@ -167,6 +192,8 @@ TEST(CostFunctions, intrinsic_calibration)
   industrial_calibration_libs::IntrinsicCalibration 
     intrinsic_cal(observation_data, my_target, link_poses);
 
+  intrinsic_cal.setSeedValues(extrinsics, target_to_world, intrinsics);
+
   EXPECT_TRUE(intrinsic_cal.calibrate());
 
   industrial_calibration_libs::IntrinsicResults results = intrinsic_cal.getResults();
@@ -190,6 +217,7 @@ TEST(CostFunctions, intrinsic_calibration)
   }
 #endif
 }
+#endif
 
 #if 1
 TEST(CostFunctions, extrinsic_calibration)
@@ -245,13 +273,41 @@ TEST(CostFunctions, extrinsic_calibration)
 
   // Convert Link Data to a vector of Pose6D poses
   double intrinsics[4];
-  for (std::size_t i = 0; i < 4; i++) {intrinsics[i] = 150;}
+  intrinsics[0] = 944.72;
+  intrinsics[1] = 940.92;
+  intrinsics[2] = 925.56;
+  intrinsics[3] = 518.89;
+
+  // Set camera extrinsics seed
+  industrial_calibration_libs::Pose6D link_6_to_camera;
+  link_6_to_camera.setOrigin(0.125, 0.000, 0.091);
+  link_6_to_camera.setQuaternion(0.500, 0.500, 0.500, 0.500);
+
+  double extrinsics[6];
+  extrinsics[0] = link_6_to_camera.ax;
+  extrinsics[1] = link_6_to_camera.ay;
+  extrinsics[2] = link_6_to_camera.az;
+  extrinsics[3] = link_6_to_camera.x;
+  extrinsics[4] = link_6_to_camera.y;
+  extrinsics[5] = link_6_to_camera.z;
+
+  // CONSOLE_OUTPUT("Extrinsics:");
+  // for (std::size_t i = 0; i < 6; i++)
+  // {
+  //   CONSOLE_OUTPUT(extrinsics[i] << ", ");
+  // }
+
+  double target_to_world[6] = {0.001};
+
+  target_to_world[3] = -0.75;
 
   std::vector<industrial_calibration_libs::Pose6D> link_poses;
   EXPECT_TRUE(convertToPose6D(link_data, &link_poses));
 
   industrial_calibration_libs::ExtrinsicCalibration 
     extrinsic_cal(observation_data, my_target, link_poses, intrinsics);
+
+  extrinsic_cal.setSeedValues(extrinsics, target_to_world);
 
   EXPECT_TRUE(extrinsic_cal.calibrate());
 

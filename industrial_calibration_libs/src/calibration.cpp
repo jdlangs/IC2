@@ -11,6 +11,16 @@ ExtrinsicCalibration::ExtrinsicCalibration(const ObservationData &observation_da
   setIntrinsics(intrinsics); 
 }
 
+void ExtrinsicCalibration::setSeedValues(const double extrinsics[6], 
+  const double target_to_world[6])
+{
+  for (std::size_t i = 0; i < 6; i++)
+  {
+    extrinsics_seed_[i] = extrinsics[i];
+    target_to_world_seed_[i] = target_to_world[i];
+  }
+}
+
 bool ExtrinsicCalibration::calibrate(void)
 {
   ceres::Problem problem;
@@ -34,6 +44,13 @@ bool ExtrinsicCalibration::calibrate(void)
   // Allocate outputs
   double extrinsics[6];
   double target_to_world[6];
+
+  // TODO(gChiou): This is temporary, refactor this.
+  for (std::size_t i = 0; i < 6; i++)
+  {
+    extrinsics[i] = extrinsics_seed_[i];
+    target_to_world[i] = target_to_world_seed_[i];
+  }
 
   // Iterate through every observation image
   for (std::size_t i = 0; i < num_images; i++)
@@ -67,14 +84,15 @@ bool ExtrinsicCalibration::calibrate(void)
   options.max_num_iterations = 2000;
   ceres::Solve(options, &problem, &summary);
 
+  std::cerr << summary.FullReport() << '\n';
+  
   if (summary.termination_type != ceres::NO_CONVERGENCE)
   {
     initial_cost_ = summary.initial_cost / total_observations;
     final_cost_ = summary.final_cost / total_observations;
+    setResults(extrinsics, target_to_world);
     return true;
   }
-
-  setResults(extrinsics, target_to_world);
 
   return false;
 }
@@ -105,6 +123,20 @@ void ExtrinsicCalibration::setResults(const double extrinsics[6],
 IntrinsicCalibration::IntrinsicCalibration(const ObservationData &observation_data, const Target &target, const std::vector<Pose6D> link_poses) : 
   observation_data_(observation_data), target_(target), link_poses_(link_poses) { }
 
+void IntrinsicCalibration::setSeedValues(const double extrinsics[6],
+  const double target_to_world[6], const double intrinsics[6])
+{
+  for (std::size_t i = 0; i < 9; i++)
+  {
+    if (i < 6)
+    {
+      extrinsics_seed_[i] = extrinsics[i];
+      target_to_world_seed_[i] = target_to_world[i];
+    }
+    intrinsics_seed_[i] = intrinsics[i];
+  }
+}
+
 bool IntrinsicCalibration::calibrate(void)
 {
   ceres::Problem problem;
@@ -128,7 +160,17 @@ bool IntrinsicCalibration::calibrate(void)
   // Allocate outputs
   double extrinsics[6];
   double intrinsics[9];
-  double target_to_world[6];  
+  double target_to_world[6];
+
+  for (std::size_t i = 0; i < 9; i++)
+  {
+    if (i < 6)
+    {
+      extrinsics[i] = extrinsics_seed_[i];
+      target_to_world[i] = target_to_world_seed_[i];
+    }
+    intrinsics[i] = intrinsics_seed_[i];
+  }  
 
   // Iterate through every observation image.
   for (std::size_t i = 0; i < num_images; i++)
@@ -157,15 +199,16 @@ bool IntrinsicCalibration::calibrate(void)
   options.minimizer_progress_to_stdout = true;
   options.max_num_iterations = 2000;
   ceres::Solve(options, &problem, &summary);
+  
+  std::cerr << summary.FullReport() << '\n';
 
   if (summary.termination_type != ceres::NO_CONVERGENCE)
   {
     initial_cost_ = summary.initial_cost / total_observations;
     final_cost_ = summary.final_cost / total_observations;
+    setResults(extrinsics, intrinsics, target_to_world);
     return true;
   }
-
-  setResults(extrinsics, intrinsics, target_to_world);
 
   return false;
 }

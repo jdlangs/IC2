@@ -59,6 +59,8 @@ public:
 
   ~ExtrinsicCalibration(void) { }
 
+  void setSeedValues(const double extrinsics[6], const double target_to_world[6]);
+
   bool calibrate(void);
 
   ExtrinsicResults getResults(void);
@@ -73,6 +75,8 @@ private:
   Target target_;
   std::vector<Pose6D> link_poses_;
   double intrinsics_[4];
+  double extrinsics_seed_[6];
+  double target_to_world_seed_[6];
   double initial_cost_;
   double final_cost_;
 };
@@ -92,6 +96,9 @@ public:
 
   ~IntrinsicCalibration(void) { }
 
+  void setSeedValues(const double extrinsics[6], const double target_to_world[6],
+    const double intrinsics[9]);
+
   bool calibrate(void);
 
   IntrinsicResults getResults(void);
@@ -104,6 +111,9 @@ private:
   ObservationData observation_data_;
   Target target_;
   std::vector<Pose6D> link_poses_;
+  double extrinsics_seed_[6];
+  double target_to_world_seed_[6];
+  double intrinsics_seed_[9];
   double initial_cost_;
   double final_cost_;
 };
