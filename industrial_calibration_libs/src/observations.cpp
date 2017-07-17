@@ -13,32 +13,35 @@ ObservationExtractor::ObservationExtractor(const std::vector<cv::Mat> &images,
     // images_[i] = images_[i] > 128;
   // }
 
-  cols_ = target_.getData()->target_cols;
-  rows_ = target_.getData()->target_rows;
+  this->cols_ = target_.getData()->target_cols;
+  this->rows_ = target_.getData()->target_rows;
 }
 
 ObservationExtractor::ObservationExtractor(const Target &target) : target_(target), 
   custom_circle_detector_(true), extract_all_observations_(false),
   extract_single_observation_(true) 
 { 
-  cols_ = target_.getData()->target_cols;
-  rows_ = target_.getData()->target_rows;  
+  this->cols_ = target_.getData()->target_cols;
+  this->rows_ = target_.getData()->target_rows;  
 }
 
 bool ObservationExtractor::extractObservations(void)
 {
-  if (extract_single_observation_ && !extract_all_observations_) {return false;}
+  if (this->extract_single_observation_ && !this->extract_all_observations_) 
+  {
+    return false;
+  }
 
   if (!checkData()) {return false;}
 
-  switch (target_.getData()->target_type)
+  switch (this->target_.getData()->target_type)
   {
     case Chessboard:
       if (extractChessboard()) {return true;}
       break;
 
     case CircleGrid:
-      if (target_.getData()->asymmetric_grid)
+      if (this->target_.getData()->asymmetric_grid)
       {
         if (extractCircleGridAsymmetric()) {return true;}
       }
@@ -163,14 +166,6 @@ bool ObservationExtractor::extractChessboard(void)
 
 bool ObservationExtractor::extractChessboard(void)
 {
-  std::size_t cols = this->cols_;
-  std::size_t rows = this->rows_;
-
-  observation_data_.clear();
-  observation_data_.resize(images_.size());
-
-  cv::Size pattern_size(cols, rows); // CV uses (cols, rows)
-
   // pragma omp parallel for
   for (std::size_t i = 0; i < images_.size(); i++)
   {
@@ -205,6 +200,124 @@ bool ObservationExtractor::extractSingleChessboard(const cv::Mat &image,
   }
 
   return true;
+}
+
+bool ObservationExtractor::extractCircleGridAsymmetric(void)
+{
+  observation_data_.clear();
+  observation_data_.resize(images_.size());
+  
+  for (std::size_t i = 0; i < images_.size(); i++)
+  {
+    ObservationPoints observation_points;
+    if (extractSingleCircleGridAsymmetric(images_[i], observation_points))
+    {
+      observation_data_[i] = observation_points;
+    }
+  }
+
+  if (custom_circle_detector_)
+  {
+    // pragma omp parallel for
+    for (std::size_t i = 0; i < images_.size(); i++)
+    {
+      ObservationPoints observation_points;
+      // Try regular pattern_size
+      if (cv::findCirclesGrid(images_[i], pattern_size, observation_points, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
+      {
+        observation_data_[i] = observation_points;
+      }
+      else // Try flipped pattern size
+      {
+        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, 
+          cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
+        {
+          observation_data_[i] = observation_points;
+        }
+      }
+    }
+
+    // Note(gChiou): Check if any images failed to return observations
+    for (std::size_t i = 0; i < observation_data_.size(); i++)
+    {
+      if (observation_data_[i].size() == 0) {return false;}
+    }
+    return true;
+  }
+
+  else
+  {
+    // pragma omp parallel for
+    for (std::size_t i = 0; i < images_.size(); i++)
+    {
+      ObservationPoints observation_points;
+      // Try regular pattern size
+      if (cv::findCirclesGrid(images_[i], pattern_size, observation_points, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING))
+      {
+        observation_data_[i] = observation_points;
+      }
+      else // Try flipped pattern size
+      {
+        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, 
+          cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING))
+        {
+          observation_data_[i] = observation_points;
+        }
+      }
+    }
+
+    // Note(gChiou): Check if any images failed to return observations
+    for (std::size_t i = 0; i < observation_data_.size(); i++)
+    {
+      if (observation_data_[i].size() == 0) {return false;}
+    }
+    return true;
+  }
+}
+
+bool ObservationExtractor::extractSingleCircleGridAsymmetric(const cv::Mat &image, ObservationPoints &observation_points) 
+{
+  cv::Ptr<cv::CircleDetector> circle_detector_ptr = cv::CircleDetector::create();
+  
+  std::size_t cols = this->cols_;
+  std::size_t rows = this->rows_;
+
+  cv::Size pattern_size(cols, rows); // CV uses (cols, rows)
+  cv::Size pattern_size_flipped(rows, cols);
+
+  if (custom_circle_detector_)
+  {
+    // Try regular pattern size
+    if (cv::findCirclesGrid(image, pattern_size, observation_points, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
+    {
+      if (observation_points.size() == (cols*rows)) {return true;}
+    }
+    else // Flipped pattern size
+    {
+      if (cv::findCirclesGrid(image, pattern_size_flipped, observation_points, 
+          cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING,
+          circle_detector_ptr))
+      {
+        if (observation_points.size() == (cols*rows)) {return true;}
+      }
+    }
+    if (observation_points.size() == 0) {return false;}
+  }
+
+  else
+  {
+    // Try regular pattern size
+    if (cv::findCirclesGrid(image, pattern_size, observation_points, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING))
+    {
+      if (observation_points.size() == (cols*rows)) {return true;}
+    }
+    else // Flipped pattern size
+    {
+
+    }
+  }
+
+  return false;
 }
 
 bool ObservationExtractor::extractCircleGridSymmetric(void)
@@ -279,84 +392,6 @@ bool ObservationExtractor::extractCircleGridSymmetric(void)
       if (observation_data_[i].size() == 0) {return false;}
     }
     return true;    
-  }
-}
-
-bool ObservationExtractor::extractSingleCircleGridAsymmetric(ObservationPoints
-  &observation_points) 
-{
-  return false;
-}
-
-bool ObservationExtractor::extractCircleGridAsymmetric(void)
-{
-  cv::Ptr<cv::CircleDetector> circle_detector_ptr = cv::CircleDetector::create();
-
-  std::size_t cols = target_.getData()->target_cols;
-  std::size_t rows = target_.getData()->target_rows;
-
-  observation_data_.clear();
-  observation_data_.resize(images_.size());
-
-  cv::Size pattern_size(cols, rows); // CV uses (cols, rows)
-  cv::Size pattern_size_flipped(rows, cols);
-  
-  if (custom_circle_detector_)
-  {
-    // pragma omp parallel for
-    for (std::size_t i = 0; i < images_.size(); i++)
-    {
-      ObservationPoints observation_points;
-      // Try regular pattern_size
-      if (cv::findCirclesGrid(images_[i], pattern_size, observation_points, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
-      {
-        observation_data_[i] = observation_points;
-      }
-      else // Try flipped pattern size
-      {
-        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, 
-          cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, circle_detector_ptr))
-        {
-          observation_data_[i] = observation_points;
-        }
-      }
-    }
-
-    // Note(gChiou): Check if any images failed to return observations
-    for (std::size_t i = 0; i < observation_data_.size(); i++)
-    {
-      if (observation_data_[i].size() == 0) {return false;}
-    }
-    return true;
-  }
-
-  else
-  {
-    // pragma omp parallel for
-    for (std::size_t i = 0; i < images_.size(); i++)
-    {
-      ObservationPoints observation_points;
-      // Try regular pattern size
-      if (cv::findCirclesGrid(images_[i], pattern_size, observation_points, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING))
-      {
-        observation_data_[i] = observation_points;
-      }
-      else // Try flipped pattern size
-      {
-        if (cv::findCirclesGrid(images_[i], pattern_size_flipped, observation_points, 
-          cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING))
-        {
-          observation_data_[i] = observation_points;
-        }
-      }
-    }
-
-    // Note(gChiou): Check if any images failed to return observations
-    for (std::size_t i = 0; i < observation_data_.size(); i++)
-    {
-      if (observation_data_[i].size() == 0) {return false;}
-    }
-    return true;
   }
 }
 
