@@ -27,13 +27,13 @@ public:
 
   ~CalibrationJob(void);
 
-  virtual void initKnownValues(void);
+  virtual void initKnownValues(void) = 0;
 
-  virtual void initSeedValues(void);
+  virtual void initSeedValues(void) = 0;
 
-  virtual bool runCalibration(void);
+  virtual bool runCalibration(void) = 0;
 
-  virtual void displayCovariance(void);
+  virtual void displayCovariance(void) = 0;
 
 protected:
   bool checkObservations(void);
