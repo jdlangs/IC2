@@ -30,11 +30,11 @@ TEST(Observations, load_observations)
   {
     cv::Mat output_image;
     ASSERT_TRUE(observation_extractor.extractObservation(calibration_images[i], output_image));
-    #if 0
+#if 0 
     cv::namedWindow("Image " + std::to_string(i+1), cv::WINDOW_NORMAL);
     cv::imshow("Image " + std::to_string(i+1), output_image);
     cv::waitKey(0);    
-    #endif
+#endif
   }
 
   industrial_calibration_libs::ObservationData observation_data = observation_extractor.getObservationData();
@@ -43,7 +43,7 @@ TEST(Observations, load_observations)
 
   for (std::size_t i = 0; i < num_images; i++)
   {
-    EXPECT_EQ(observation_data[i].size(), target.getData()->target_points);
+    EXPECT_EQ(observation_data[i].size(), target.getData().target_points);
   }
 
   // TODO(gChiou): Find a way to verify observation data...

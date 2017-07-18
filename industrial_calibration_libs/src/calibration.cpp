@@ -61,7 +61,7 @@ bool ExtrinsicCalibration::calibrate(void)
       double observed_x = observation_data_[i][j].x;
       double observed_y = observation_data_[i][j].y;
       Pose6D link_pose = link_poses_[i];
-      Point3D point = target_.getData()->points[0];
+      Point3D point = target_.getData().points[0];
       double focal_length_x = intrinsics_[0];
       double focal_length_y = intrinsics_[1];
       double optical_center_x = intrinsics_[2];
@@ -181,7 +181,7 @@ bool IntrinsicCalibration::calibrate(void)
       double observed_x = observation_data_[i][j].x;
       double observed_y = observation_data_[i][j].y;
       Pose6D link_pose = link_poses_[i];
-      Point3D point = target_.getData()->points[0];
+      Point3D point = target_.getData().points[0];
 
       ceres::CostFunction *cost_function = 
         CameraOnWristStaticTargetIntrinsic::Create(observed_x, observed_y, 
