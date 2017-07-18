@@ -45,7 +45,7 @@ public:
 
   bool loadTargetFromDefinition(const TargetDefinition &target_definition);
 
-  std::shared_ptr<TargetDefinition> getData(void);
+  TargetDefinition getData(void);
 
 private:
   bool parseYAML(const YAML::Node &node, const std::string &var_name, 
@@ -71,7 +71,7 @@ private:
   bool populatePoints(void);
 
   // Data Members
-  std::shared_ptr<TargetDefinition> target_params_;
+  TargetDefinition target_params_;
 };
 
 

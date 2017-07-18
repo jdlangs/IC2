@@ -5,8 +5,8 @@ namespace industrial_calibration_libs
 ObservationExtractor::ObservationExtractor(const Target &target, bool custom_circle_detector) : target_(target), 
   custom_circle_detector_(custom_circle_detector)
 { 
-  this->target_cols_ = target_.getData()->target_cols;
-  this->target_rows_ = target_.getData()->target_rows;  
+  this->target_cols_ = target_.getData().target_cols;
+  this->target_rows_ = target_.getData().target_rows;  
 }
 
 bool ObservationExtractor::extractObservation(const cv::Mat &input_image, 
@@ -15,7 +15,7 @@ bool ObservationExtractor::extractObservation(const cv::Mat &input_image,
   if (input_image.empty()) {return false;}
 
   ObservationPoints observation_points;
-  switch (target_.getData()->target_type)
+  switch (target_.getData().target_type)
   {
     case Chessboard:
       std::cerr << "The Chessboard target type is not currently supported!" << '\n';
