@@ -15,7 +15,6 @@ struct LinkData
   RotationDeg rotation_deg;
 };
 
-
 bool parseYAML(const YAML::Node &node, const std::string &var_name, 
   std::vector<double> &var_value)
 {
