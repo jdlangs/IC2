@@ -7,19 +7,49 @@
 
 namespace industrial_calibration_libs
 {
+enum CovarianceRequestType
+{
+  IntrinsicParams,
+  ExtrinsicParams,
+  TargetPoseParams,
+};
+
+struct CovarianceRequest
+{
+  CovarianceRequestType request_type;
+  std::string object_name;
+};
+
 class CalibrationJob
 {
 public:
-  virtual bool initKnownValues(void);
+  CalibrationJob(const ObservationData &observation_data, const Target &target);
 
-  virtual bool initSeedValues(void);
+  ~CalibrationJob(void);
 
-  virtual bool calibrate(void);
+  virtual void initKnownValues(void);
 
-  bool computeCovariance(void);
+  virtual void initSeedValues(void);
+
+  virtual bool runCalibration(void);
+
+  virtual void displayCovariance(void);
 
 protected:
+  bool checkObservations(void);
+
+  bool computeCovariance(const std::vector<CovarianceRequest> &requests,
+    double* extrinsics_result = 0, double* target_to_base_result = 0, 
+    double* intrinsics_result = 0);
+
+  std::size_t num_images_;
+  std::size_t observations_per_image_;
+  std::size_t total_observations_;
+
   ceres::Problem problem_;
+  ceres::Solver::Options options_;
+  ceres::Solver::Summary summary_;
+
   std::vector<Pose6D> link_poses_;
   ObservationData observation_data_;
   Target target_;
@@ -31,7 +61,7 @@ protected:
 class MovingCameraOnWristStaticTargetExtrinsic : public CalibrationJob
 {
 public:
-  struct Results
+  struct Result
   {
     double extrinsics[6];
     double target_to_base[6];
@@ -45,30 +75,31 @@ public:
 
   ~MovingCameraOnWristStaticTargetExtrinsic() { }
 
-  void initKnownValues(const std::vector<Pose6D> &link_poses, 
+  virtual void initKnownValues(const std::vector<Pose6D> &link_poses, 
     const double intrinsics[4]);
 
-  void initSeedValues(const double extrinsics[6], const double target_to_base[6]);
+  virtual void initSeedValues(const double extrinsics[6], 
+    const double target_to_base[6]);
 
-  bool calibrate(void);
+  virtual bool runCalibration(void);
 
-  Results getResults(void) {return results_;}
+  virtual void displayCovariance(void);
+
+  Result getResult(void) {return result_;}
 
 private:
   double intrinsics_[4];
-  double extrinsics_seed_[6];
-  double target_to_base_seed_[6];
-  Results results_;
+  Result result_;
 };
 
 class MovingCameraOnWristStaticTargetIntrinsic : public CalibrationJob
 {
 public:
-  struct Results
+  struct Result
   {
     double extrinsics[6];
-    double intrinsics[9];
     double target_to_base[6];
+    double intrinsics[9];
   };
 
   using CalibrationJob::initKnownValues;
@@ -79,100 +110,20 @@ public:
 
   ~MovingCameraOnWristStaticTargetIntrinsic() { }
 
-  void initKnownValues(const std::vector<Pose6D> &link_poses);
+  virtual void initKnownValues(const std::vector<Pose6D> &link_poses);
 
-  void initSeedValues(const double extrinsics[6], const double target_to_base[6],
-    const double intrinsics[9]);
+  virtual void initSeedValues(const double extrinsics[6], 
+    const double target_to_base[6], const double intrinsics[9]);
 
-  bool calibrate(void);
+  virtual bool runCalibration(void);
 
-  Results getResults(void) {return results_;}
+  virtual void displayCovariance(void);
 
-private:
-  double extrinsics_seed_[6];
-  double target_to_base_seed_[6];
-  double intrinsics_seed_[9];
-  Results results_;
-};
-
-#if 0
-// Note(gChiou): This is temporary
-struct ExtrinsicResults
-{
-  double extrinsics[6];
-  double target_to_world[6];
-};
-
-class ExtrinsicCalibration
-{
-public:
-  ExtrinsicCalibration(const ObservationData &observation_data, const Target &target,
-    const std::vector<Pose6D> link_poses, const double intrinsics[4]);
-
-  ~ExtrinsicCalibration(void) { }
-
-  void setSeedValues(const double extrinsics[6], const double target_to_world[6]);
-
-  bool calibrate(void);
-
-  ExtrinsicResults getResults(void);
+  Result getResult(void) {return result_;}
 
 private:
-  void setIntrinsics(const double intrinsics[4]);
-
-  void setResults(const double extrinsics[6], const double target_to_world[6]);
-
-  ExtrinsicResults results_;
-  ObservationData observation_data_;
-  Target target_;
-  std::vector<Pose6D> link_poses_;
-  double intrinsics_[4];
-  double extrinsics_seed_[6];
-  double target_to_world_seed_[6];
-  double initial_cost_;
-  double final_cost_;
+  Result result_;
 };
-#endif
-
-#if 0
-struct IntrinsicResults
-{
-  double extrinsics[6];
-  double intrinsics[9];
-  double target_to_world[6];
-};
-
-class IntrinsicCalibration
-{
-public:
-  IntrinsicCalibration(const ObservationData &observation_data, const Target &target,
-    const std::vector<Pose6D> link_poses);
-
-  ~IntrinsicCalibration(void) { }
-
-  void setSeedValues(const double extrinsics[6], const double target_to_world[6],
-    const double intrinsics[9]);
-
-  bool calibrate(void);
-
-  IntrinsicResults getResults(void);
-
-private:
-  void setResults(const double extrinsics[6], const double intrinsics[9],
-    const double target_to_world[6]);
-
-  IntrinsicResults results_;
-  ObservationData observation_data_;
-  Target target_;
-  std::vector<Pose6D> link_poses_;
-  double extrinsics_seed_[6];
-  double target_to_world_seed_[6];
-  double intrinsics_seed_[9];
-  double initial_cost_;
-  double final_cost_;
-};
-#endif
-
 } // namespace industrial_calibration_libs
 
 #endif
