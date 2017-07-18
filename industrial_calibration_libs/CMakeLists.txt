@@ -226,7 +226,7 @@ if (CATKIN_ENABLE_TESTING)
     test/test_industrial_calibration_libs.cpp
     test/test_targets.cpp
     test/test_observations.cpp
-    # test/test_cost_functions.cpp
+    test/test_calibration.cpp
     WORKING_DIRECTORY 
       ${PROJECT_SOURCE_DIR}/test/resources
   )

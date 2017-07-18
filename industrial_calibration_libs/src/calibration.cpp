@@ -3,234 +3,292 @@
 
 namespace industrial_calibration_libs
 {
-ExtrinsicCalibration::ExtrinsicCalibration(const ObservationData &observation_data,
-  const Target &target, const std::vector<Pose6D> link_poses, 
-  const double intrinsics[4]) : observation_data_(observation_data), 
-  target_(target), link_poses_(link_poses) 
-{
-  setIntrinsics(intrinsics); 
-}
+CalibrationJob::CalibrationJob(const ObservationData &observation_data,
+  const Target &target) : observation_data_(observation_data), target_(target) { }
 
-void ExtrinsicCalibration::setSeedValues(const double extrinsics[6], 
-  const double target_to_world[6])
+bool CalibrationJob::checkObservations(void)
 {
-  for (std::size_t i = 0; i < 6; i++)
+  // Checks if number of observations per image is consistant by setting
+  // observations_per_image_ to the number of observations in the first index
+  // of observation_data_.
+  num_images_ = observation_data_.size();
+  for (std::size_t i = 0; i < num_images_; i++)
   {
-    extrinsics_seed_[i] = extrinsics[i];
-    target_to_world_seed_[i] = target_to_world[i];
-  }
-}
-
-bool ExtrinsicCalibration::calibrate(void)
-{
-  ceres::Problem problem;
-
-  std::size_t num_images = observation_data_.size();
-
-  // Check if number of observations per image is consistent.
-  std::size_t observations_per_image;
-  for (std::size_t i = 0; i < num_images; i++)
-  {
-    if (i == 0) {observations_per_image = observation_data_[i].size();}
+    if (i == 0)
+    {
+      observations_per_image_ = observation_data_[i].size();
+    }
     else
     {
-      if (observations_per_image != observation_data_[i].size()) {return false;}
+      if (observations_per_image_ != observation_data_[i].size()) {return false;}
+    }
+  }
+  // Set total observations
+  total_observations_ = num_images_ * observations_per_image_; 
+  return true; 
+}
+
+bool CalibrationJob::computeCovariance(const std::vector<CovarianceRequest> &requests, double* extrinsics_result, double* target_pose_result,
+  double* intrinsics_result)
+{
+  ceres::Covariance::Options covariance_options;
+  covariance_options.algorithm_type = ceres::DENSE_SVD;
+  ceres::Covariance covariance(covariance_options);
+
+  std::vector<const double*> covariance_blocks;
+  std::vector<int> block_sizes;
+  std::vector<std::string> block_names;
+  std::vector<std::pair<const double*, const double*>> covariance_pairs;
+
+  for (auto &request : requests)
+  {
+    double* intrinsics;
+    double* extrinsics;
+    double* target_pose;
+
+    switch (request.request_type)
+    {
+      case IntrinsicParams:
+        intrinsics = intrinsics_result;
+        covariance_blocks.push_back(intrinsics);
+        block_sizes.push_back(9);
+        block_names.push_back(request.object_name);
+        break;
+
+      case ExtrinsicParams:
+        extrinsics = extrinsics_result;
+        covariance_blocks.push_back(extrinsics);
+        block_sizes.push_back(6);
+        block_names.push_back(request.object_name);
+        break;
+
+      case TargetPoseParams:
+        target_pose = target_pose_result;
+        covariance_blocks.push_back(target_pose);
+        block_sizes.push_back(6);
+        block_names.push_back(request.object_name);
+        break;
+
+      default:
+        return false;
+        break;
     }
   }
 
-  // Calculates the total number of observations across all images
-  std::size_t total_observations = num_images * observations_per_image;
-
-  // Allocate outputs
-  double extrinsics[6];
-  double target_to_world[6];
-
-  // TODO(gChiou): This is temporary, refactor this.
-  for (std::size_t i = 0; i < 6; i++)
+  // Create pairs from every combination of blocks in request
+  for (std::size_t i = 0; i < covariance_blocks.size(); i++)
   {
-    extrinsics[i] = extrinsics_seed_[i];
-    target_to_world[i] = target_to_world_seed_[i];
+    for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+    {
+      covariance_pairs.push_back(std::make_pair(covariance_blocks[i],
+        covariance_blocks[j]));
+    }
   }
 
-  // Iterate through every observation image
-  for (std::size_t i = 0; i < num_images; i++)
+  covariance.Compute(covariance_pairs, &problem_);
+
+  // TEMPORARY (OUTPUT RESULTS TO SCREEN)
+  std::cerr << "Covariance Blocks: " << '\n';
+  for (std::size_t i = 0; i < covariance_blocks.size(); i++)
   {
-    // Itegrate through every observation in the observation image.
-    for (std::size_t j = 0; j < observations_per_image; j++)
+    for (std::size_t j = 0; j < covariance_blocks.size(); j++)
     {
+      std::cerr << "Cov[" << block_names[i] << ", " 
+        << block_names[j] << "]" << '\n';
+
+      int N = block_sizes[i];
+      int M = block_sizes[j];
+      double* ij_cov_block = new double[N*M];
+
+      covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
+        ij_cov_block);
+
+      for (int q = 0; q < N; q++)
+      {
+        for (int k = 0; k < M; k++)
+        {
+          double sigma_i = sqrt(ij_cov_block[q*N+q]);
+          double sigma_j = sqrt(ij_cov_block[k*N+k]);
+          if (q == k)
+          {
+            std::cerr << " " << sigma_i;
+          }
+          else
+          {
+            std::cerr << " " << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+          }
+        }
+        std::cerr << '\n';
+      }
+      delete [] ij_cov_block;
+    }
+  }
+  return true;
+}
+
+MovingCameraOnWristStaticTargetExtrinsic::MovingCameraOnWristStaticTargetExtrinsic(const ObservationData &observation_data, const Target &target) : CalibrationJob(observation_data, target) { }
+
+void MovingCameraOnWristStaticTargetExtrinsic::initKnownValues(const std::vector<Pose6D> &link_poses, const double intrinsics[4])
+{
+  link_poses_ = link_poses;
+  std::memcpy(intrinsics_, intrinsics, sizeof(intrinsics_));
+}
+
+void MovingCameraOnWristStaticTargetExtrinsic::initSeedValues(const double extrinsics[6], const double target_to_base[6])
+{
+  std::memcpy(result_.extrinsics, extrinsics, sizeof(result_.extrinsics));
+  std::memcpy(result_.target_to_base, target_to_base, 
+    sizeof(result_.target_to_base));
+}
+
+bool MovingCameraOnWristStaticTargetExtrinsic::runCalibration(void)
+{
+  if (!checkObservations()) {return false;}
+
+  // Iterate through every observation image
+  for (std::size_t i = 0; i < num_images_; i++)
+  {
+    // Iterate through every observation in each observation image
+    for (std::size_t j = 0; j < observations_per_image_; j++)
+    {
+      Pose6D link_pose = link_poses_[i];
+      Point3D point = target_.getData().points[j];
+      
       double observed_x = observation_data_[i][j].x;
       double observed_y = observation_data_[i][j].y;
-      Pose6D link_pose = link_poses_[i];
-      Point3D point = target_.getData().points[0];
       double focal_length_x = intrinsics_[0];
       double focal_length_y = intrinsics_[1];
       double optical_center_x = intrinsics_[2];
       double optical_center_y = intrinsics_[3];
 
       ceres::CostFunction *cost_function =
-        CameraOnWristStaticTargetExtrinsic::Create(observed_x, observed_y,
-          focal_length_x, focal_length_y, optical_center_x, optical_center_y,
-          link_pose, point);
+        MovingCameraOnWristStaticTargetExtrinsicCF::Create(observed_x,
+        observed_y, focal_length_x, focal_length_y, optical_center_x, 
+        optical_center_y, link_pose, point);
 
-      problem.AddResidualBlock(cost_function, NULL, extrinsics, target_to_world);
+      problem_.AddResidualBlock(cost_function, NULL, result_.extrinsics,
+        result_.target_to_base);
     }
   }
 
   // Solve
-  ceres::Solver::Options options;
-  ceres::Solver::Summary summary;
-  options.linear_solver_type = ceres::DENSE_SCHUR;
-  options.minimizer_progress_to_stdout = true;
-  options.max_num_iterations = 2000;
-  ceres::Solve(options, &problem, &summary);
+  options_.linear_solver_type = ceres::DENSE_SCHUR;
+  options_.minimizer_progress_to_stdout = true; // REMOVE THIS LATER ???
+  options_.max_num_iterations = 9001;
 
-  std::cerr << summary.FullReport() << '\n';
-  
-  if (summary.termination_type != ceres::NO_CONVERGENCE)
+  ceres::Solve(options_, &problem_, &summary_);
+
+  // REMOVE THIS
+  std::cerr << summary_.FullReport() << '\n';
+
+  if (summary_.termination_type != ceres::NO_CONVERGENCE)
   {
-    initial_cost_ = summary.initial_cost / total_observations;
-    final_cost_ = summary.final_cost / total_observations;
-    setResults(extrinsics, target_to_world);
-    return true;
+    initial_cost_ = summary_.initial_cost / total_observations_;
+    final_cost_ = summary_.final_cost / total_observations_;
+    return true;    
   }
 
   return false;
 }
 
-void ExtrinsicCalibration::setIntrinsics(const double intrinsics[4])
+void MovingCameraOnWristStaticTargetExtrinsic::displayCovariance(void)
 {
-  for (std::size_t i = 0; i < 4; i++)
-  {
-    intrinsics_[i] = intrinsics[i];
-  }
+  CovarianceRequest extrinsic_params_request;
+  extrinsic_params_request.request_type = CovarianceRequestType::ExtrinsicParams;
+  extrinsic_params_request.object_name = "Extrinsics";
+
+  CovarianceRequest target_pose_params_request;
+  target_pose_params_request.request_type = CovarianceRequestType::TargetPoseParams;
+  target_pose_params_request.object_name = "Target Pose";
+
+  std::vector<CovarianceRequest> covariance_request;
+  covariance_request.push_back(extrinsic_params_request);
+  covariance_request.push_back(target_pose_params_request);
+
+  this->computeCovariance(covariance_request, result_.extrinsics, 
+    result_.target_to_base); 
 }
 
-ExtrinsicResults ExtrinsicCalibration::getResults(void)
+MovingCameraOnWristStaticTargetIntrinsic::MovingCameraOnWristStaticTargetIntrinsic(const ObservationData &observation_data, const Target &target) : CalibrationJob(observation_data, target) { }
+
+void MovingCameraOnWristStaticTargetIntrinsic::initKnownValues(const std::vector<Pose6D> &link_poses)
 {
-  return results_;
+  link_poses_ = link_poses;
 }
 
-void ExtrinsicCalibration::setResults(const double extrinsics[6],
-  const double target_to_world[6])
+void MovingCameraOnWristStaticTargetIntrinsic::initSeedValues(const double extrinsics[6], const double target_to_base[6], const double intrinsics[9])
 {
-  for (std::size_t i = 0; i < 6; i++)
-  {
-    results_.extrinsics[i] = extrinsics[i];
-    results_.target_to_world[i] = target_to_world[i];
-  }
+  std::memcpy(result_.extrinsics, extrinsics, sizeof(result_.extrinsics));
+  std::memcpy(result_.target_to_base, target_to_base, 
+    sizeof(result_.target_to_base));
+  std::memcpy(result_.intrinsics, intrinsics, sizeof(result_.intrinsics));
 }
 
-IntrinsicCalibration::IntrinsicCalibration(const ObservationData &observation_data, const Target &target, const std::vector<Pose6D> link_poses) : 
-  observation_data_(observation_data), target_(target), link_poses_(link_poses) { }
-
-void IntrinsicCalibration::setSeedValues(const double extrinsics[6],
-  const double target_to_world[6], const double intrinsics[6])
+bool MovingCameraOnWristStaticTargetIntrinsic::runCalibration(void)
 {
-  for (std::size_t i = 0; i < 9; i++)
+  if (!checkObservations()) {return false;}
+
+  // Iterate through every observation image
+  for (std::size_t i = 0; i < num_images_; i++)
   {
-    if (i < 6)
+    // Iterate through every observation in each observation image
+    for (std::size_t j = 0; j < observations_per_image_; j++)
     {
-      extrinsics_seed_[i] = extrinsics[i];
-      target_to_world_seed_[i] = target_to_world[i];
-    }
-    intrinsics_seed_[i] = intrinsics[i];
-  }
-}
+      Pose6D link_pose = link_poses_[i];
+      Point3D point = target_.getData().points[j];
 
-bool IntrinsicCalibration::calibrate(void)
-{
-  ceres::Problem problem;
-
-  std::size_t num_images = observation_data_.size();
-
-  // Check if number of observations per image is consistent.
-  std::size_t observations_per_image;
-  for (std::size_t i = 0; i < num_images; i++)
-  {
-    if (i == 0) {observations_per_image = observation_data_[i].size();}
-    else
-    {
-      if (observations_per_image != observation_data_[i].size()) {return false;}
-    }
-  }
-
-  // Calculates the total number of observations across all images
-  std::size_t total_observations = num_images * observations_per_image;
-
-  // Allocate outputs
-  double extrinsics[6];
-  double intrinsics[9];
-  double target_to_world[6];
-
-  for (std::size_t i = 0; i < 9; i++)
-  {
-    if (i < 6)
-    {
-      extrinsics[i] = extrinsics_seed_[i];
-      target_to_world[i] = target_to_world_seed_[i];
-    }
-    intrinsics[i] = intrinsics_seed_[i];
-  }  
-
-  // Iterate through every observation image.
-  for (std::size_t i = 0; i < num_images; i++)
-  {
-    // Iterate through every observation in the observation image.
-    for (std::size_t j = 0; j < observations_per_image; j++)
-    {
       double observed_x = observation_data_[i][j].x;
       double observed_y = observation_data_[i][j].y;
-      Pose6D link_pose = link_poses_[i];
-      Point3D point = target_.getData().points[0];
 
-      ceres::CostFunction *cost_function = 
-        CameraOnWristStaticTargetIntrinsic::Create(observed_x, observed_y, 
-          link_pose, point);
+      ceres::CostFunction *cost_function =
+        MovingCameraOnWristStaticTargetIntrinsicCF::Create(observed_x,
+        observed_y, link_pose, point);
 
-      problem.AddResidualBlock(cost_function, NULL, extrinsics, 
-        intrinsics, target_to_world);
+      problem_.AddResidualBlock(cost_function, NULL, result_.extrinsics,
+        result_.intrinsics, result_.target_to_base);
     }
   }
 
   // Solve
-  ceres::Solver::Options options;
-  ceres::Solver::Summary summary;
-  options.linear_solver_type = ceres::DENSE_SCHUR;
-  options.minimizer_progress_to_stdout = true;
-  options.max_num_iterations = 2000;
-  ceres::Solve(options, &problem, &summary);
-  
-  std::cerr << summary.FullReport() << '\n';
+  options_.linear_solver_type = ceres::DENSE_SCHUR;
+  options_.minimizer_progress_to_stdout = true; // REMOVE THIS LATER ???
+  options_.max_num_iterations = 9001;
 
-  if (summary.termination_type != ceres::NO_CONVERGENCE)
+  ceres::Solve(options_, &problem_, &summary_);
+
+  // REMOVE THIS ONE DAY
+  std::cerr << summary_.FullReport() << '\n';  
+
+  if (summary_.termination_type != ceres::NO_CONVERGENCE)
   {
-    initial_cost_ = summary.initial_cost / total_observations;
-    final_cost_ = summary.final_cost / total_observations;
-    setResults(extrinsics, intrinsics, target_to_world);
-    return true;
+    initial_cost_ = summary_.initial_cost / total_observations_;
+    final_cost_ = summary_.final_cost / total_observations_;
+    return true;    
   }
 
-  return false;
+  return false;  
 }
 
-IntrinsicResults IntrinsicCalibration::getResults(void)
+void MovingCameraOnWristStaticTargetIntrinsic::displayCovariance(void)
 {
-  return results_;
-}
+  CovarianceRequest extrinsic_params_request;
+  extrinsic_params_request.request_type = CovarianceRequestType::ExtrinsicParams;
+  extrinsic_params_request.object_name = "Extrinsics";
 
-void IntrinsicCalibration::setResults(const double extrinsics[6], 
-  const double intrinsics[9], const double target_to_world[6])
-{
-  // Note(gChiou): This is messy...
-  for (std::size_t i = 0; i < 9; i++)
-  {
-    if (i < 6)
-    {
-      results_.extrinsics[i] = extrinsics[i];
-      results_.target_to_world[i] = target_to_world[i];
-    }
-    results_.intrinsics[i] = intrinsics[i];
-  }
-}
+  CovarianceRequest target_pose_params_request;
+  target_pose_params_request.request_type = CovarianceRequestType::TargetPoseParams;
+  target_pose_params_request.object_name = "Target Pose";
 
+  CovarianceRequest intrinsic_params_request;
+  intrinsic_params_request.request_type = CovarianceRequestType::IntrinsicParams;
+  intrinsic_params_request.object_name = "Intrinsics";
+
+  std::vector<CovarianceRequest> covariance_request;
+  covariance_request.push_back(extrinsic_params_request);
+  covariance_request.push_back(target_pose_params_request);
+  covariance_request.push_back(intrinsic_params_request);
+
+  this->computeCovariance(covariance_request, result_.extrinsics, 
+    result_.target_to_base, result_.intrinsics);   
+}
 } // namespace industrial_calibration_libs
