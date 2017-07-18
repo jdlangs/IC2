@@ -25,8 +25,17 @@ TEST(Observations, load_observations)
   target.loadTargetFromYAML("mcircles_7x5/mcircles_7x5.yaml");
 
   // Create Observation Extractor Object
-  industrial_calibration_libs::ObservationExtractor observation_extractor(calibration_images, target);
-  ASSERT_TRUE(observation_extractor.extractObservations());
+  industrial_calibration_libs::ObservationExtractor observation_extractor(target);
+  for (std::size_t i = 0; i < calibration_images.size(); i++)
+  {
+    cv::Mat output_image;
+    ASSERT_TRUE(observation_extractor.extractObservation(calibration_images[i], output_image));
+    #if 0
+    cv::namedWindow("Image " + std::to_string(i+1), cv::WINDOW_NORMAL);
+    cv::imshow("Image " + std::to_string(i+1), output_image);
+    cv::waitKey(0);    
+    #endif
+  }
 
   industrial_calibration_libs::ObservationData observation_data = observation_extractor.getObservationData();
 

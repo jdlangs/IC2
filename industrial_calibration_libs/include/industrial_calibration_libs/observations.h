@@ -14,82 +14,43 @@
 
 namespace industrial_calibration_libs
 {
-#if 0 
-struct Observation
-{
-  std::shared_ptr<Target> target;
-  int point_id;
-  double point_x;
-  double point_y;
-  // Note(gChiou): May need cost function type associated with observation and
-  // an 'intermediate_frame'. Leaving it out for now.
-  // see: https://github.com/ros-industrial/industrial_calibration/blob/kinetic-devel/
-  // industrial_extrinsic_cal/include/industrial_extrinsic_cal/camera_observer.hpp
-};
-#endif
-
 typedef std::vector<cv::Point2d> ObservationPoints;
 
-// Note(gChiou): I think the above typedef is for a single image.
-// The input of the ObservationExtractor class should be a vector of 
-// all images containing a target and the output should be a vector of:
-// typedef std::vector<CameraObservations> ObservationData 
-// (or something like that) of the same size as input vector of images.
-// Something to test for.
 typedef std::vector<ObservationPoints> ObservationData;
 
-// Note(gChiou): This class should work two ways, the first way is to pass a
-// vector of images and a target definition into the constructor and call the
-// extractObservations() method.
-// The second way will be call the extractSingleObservation() method which will
-// return a bool. This way the user will know if the observations were actually 
-// able to be extracted.
 class ObservationExtractor
 {
 public:
-  ObservationExtractor(const std::vector<cv::Mat> &images, const Target &target);
-
-  ObservationExtractor(const Target &target);
+  ObservationExtractor(const Target &target, bool custom_circle_detector = true);
 
   ~ObservationExtractor(void) { }
 
   ObservationData getObservationData(void) {return observation_data_;}
 
-  bool extractObservations(void);
-
-  bool extractSingleObservation(const cv::Mat &image);
+  bool extractObservation(const cv::Mat &image, cv::Mat &output_image);
 
 private:
-  bool checkData(void) const;
+  template<typename PARAMS, typename DETECTOR_PTR, typename DETECTOR>
+  bool extractModifiedCircleGrid(const cv::Mat &image, 
+    ObservationPoints &observation_points, cv::Mat &output_image);
 
-  bool extractChessboard(void);
-
-  bool extractSingleChessboard(const cv::Mat &image, 
-    ObservationPoints &observation_points);
-
-  bool extractCircleGridAsymmetric(void);
-
-  bool extractSingleCircleGridAsymmetric(ObservationPoints &observation_points);
-
-  bool extractCircleGridSymmetric(void);
-
-  bool extractSingleCircleGridSymmetric(ObservationPoints &observation_points);
-
-  bool extractModifiedCircleGrid(void);
-
-  bool extractSingleModifiedCircleGrid(ObservationPoints &observation_points);
+  template<typename DETECTOR_PTR>
+  bool extractKeyPoints(const ObservationPoints &centers,
+    ObservationPoints &observation_points, cv::Ptr<DETECTOR_PTR> &detector_ptr, 
+    std::size_t rows, std::size_t cols, bool flipped,
+    const cv::Mat &image);
 
   // Data Members
-  std::vector<cv::Mat> images_;
-  ObservationData observation_data_;
   Target target_;
+
+  std::vector<cv::Mat> images_;
+  std::vector<cv::Mat> grid_images_;
+
+  ObservationData observation_data_;
   bool custom_circle_detector_;
 
-  bool extract_all_observations_;
-  bool extract_single_observation_;
-
-  std::size_t cols_;
-  std::size_t rows_;
+  std::size_t target_cols_;
+  std::size_t target_rows_;
 };
 
 } // namespace industrial_calibration_libs
