@@ -11,10 +11,6 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
   {
     target_yaml = YAML::LoadFile(yaml_file_path);
     if (!target_yaml["target_name"]) {return false;}
-    // Note(gChiou): Each target yaml description should only contain
-    // the definition for a single target. The files were structured like
-    // the way they are now when I got them (meant to hold an array of targets.
-    // I will probably redefine the structure later. Keeping the 0 in for now.
   }
   catch (YAML::BadFile &bf) {return false;}
 
@@ -29,16 +25,19 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
   switch (target_params_.target_type)
   {
     case Chessboard:
-      success &= parseYAML(target_yaml, "row_spacing", target_params_.row_spacing);
-      success &= parseYAML(target_yaml, "col_spacing", target_params_.col_spacing);
-      // TODO(gChiou): Should we assume chessboard targets always have even spacing???
+      // success &= parseYAML(target_yaml, "row_spacing", target_params_.row_spacing);
+      // success &= parseYAML(target_yaml, "col_spacing", target_params_.col_spacing);
+      std::cerr << "Chessboard targets are not currently supported" << std::endl;
+      return false;
       break;
       
     case CircleGrid:
-      success &= parseYAML(target_yaml, "circle_diameter", target_params_.circle_diameter);
-      success &= parseYAML(target_yaml, "spacing", target_params_.spacing);
+      // success &= parseYAML(target_yaml, "circle_diameter", target_params_.circle_diameter);
+      // success &= parseYAML(target_yaml, "spacing", target_params_.spacing);
       // TODO(gChiou): Set this to false by default, check if it even exists.
-      success &= parseYAML(target_yaml, "asymmetric_grid", target_params_.asymmetric_grid);
+      // success &= parseYAML(target_yaml, "asymmetric_grid", target_params_.asymmetric_grid);
+      std::cerr << "Circlegrid targets are not currently supported" << std::endl;
+      return false;
       break;
 
     case ModifiedCircleGrid:
@@ -53,11 +52,10 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
 
   if (!parseYAML(target_yaml, "points", target_params_.points))
   {
-    // TODO(gChiou): Populate points from rows, cols, and spacing.
+    this->populatePoints(target_params_.target_rows, target_params_.target_cols,
+      target_params_.spacing, target_params_.points);
   }
 
-
-  // TODO(gChiou): Better implementation of this
   // success &= checkForValidTarget();
   return success;
 }
@@ -160,8 +158,6 @@ bool Target::checkForValidTarget(void)
 {
   if (target_params_.target_type == CircleGrid)
   {
-    // Note(gChiou): Check if total number of points is half of number of rows times number 
-    // of columns for an asymmetric circle grid.
     if (target_params_.asymmetric_grid)
     {
       if (target_params_.target_points != (target_params_.target_rows*target_params_.target_cols) / 2)
@@ -182,9 +178,25 @@ bool Target::checkForValidTarget(void)
 }
 
 // TODO(gChiou): Implement this...
-bool Target::populatePoints(void)
+bool Target::populatePoints(std::size_t rows, std::size_t cols, double spacing, 
+    std::vector<Point3D> &points)
 {
-  return false;
+  points.reserve(rows*cols);
+
+  for (std::size_t i = 1; i < (rows+1); i++)
+  {
+    double y = (rows-i)*spacing;
+    for (std::size_t j = 0; j < cols; j++)
+    {
+      double x = j*spacing;
+      Point3D point(x, y, 0.000);
+      points.push_back(point);
+    }
+  }
+
+  // TODO(gChiou): May need a better check...
+  if (points.size() == (rows*cols)) {return true;}
+  else {return false;}
 }
 
 TargetDefinition Target::getData(void)

@@ -68,7 +68,8 @@ private:
 
   bool checkForValidTarget(void);
 
-  bool populatePoints(void);
+  bool populatePoints(std::size_t rows, std::size_t cols, double spacing, 
+    std::vector<Point3D> &points);
 
   // Data Members
   TargetDefinition target_params_;
