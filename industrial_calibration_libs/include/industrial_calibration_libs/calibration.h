@@ -25,15 +25,7 @@ class CalibrationJob
 public:
   CalibrationJob(const ObservationData &observation_data, const Target &target);
 
-  ~CalibrationJob(void);
-
-  virtual void initKnownValues(void) = 0;
-
-  virtual void initSeedValues(void) = 0;
-
-  virtual bool runCalibration(void) = 0;
-
-  virtual void displayCovariance(void) = 0;
+  ~CalibrationJob(void) { }
 
 protected:
   bool checkObservations(void);
@@ -67,25 +59,22 @@ public:
     double target_to_base[6];
   };
 
-  using CalibrationJob::initKnownValues;
-  using CalibrationJob::initSeedValues;
-
   MovingCameraOnWristStaticTargetExtrinsic(const ObservationData &observation_data,
     const Target &target);
 
-  ~MovingCameraOnWristStaticTargetExtrinsic() { }
+  ~MovingCameraOnWristStaticTargetExtrinsic(void) { }
 
-  virtual void initKnownValues(const std::vector<Pose6D> &link_poses, 
+  void initKnownValues(const std::vector<Pose6D> &link_poses, 
     const double intrinsics[4]);
 
-  virtual void initSeedValues(const double extrinsics[6], 
+  void initSeedValues(const double extrinsics[6], 
     const double target_to_base[6]);
 
-  virtual bool runCalibration(void);
+  bool runCalibration(void);
 
-  virtual void displayCovariance(void);
+  void displayCovariance(void);
 
-  Result getResult(void) {return result_;}
+  Result getResults(void) {return result_;}
 
 private:
   double intrinsics_[4];
@@ -102,24 +91,21 @@ public:
     double intrinsics[9];
   };
 
-  using CalibrationJob::initKnownValues;
-  using CalibrationJob::initSeedValues;
-
   MovingCameraOnWristStaticTargetIntrinsic(const ObservationData &observation_data,
     const Target &target);
 
-  ~MovingCameraOnWristStaticTargetIntrinsic() { }
+  ~MovingCameraOnWristStaticTargetIntrinsic(void) { }
 
-  virtual void initKnownValues(const std::vector<Pose6D> &link_poses);
+  void initKnownValues(const std::vector<Pose6D> &link_poses);
 
-  virtual void initSeedValues(const double extrinsics[6], 
+  void initSeedValues(const double extrinsics[6], 
     const double target_to_base[6], const double intrinsics[9]);
 
-  virtual bool runCalibration(void);
+  bool runCalibration(void);
 
-  virtual void displayCovariance(void);
+  void displayCovariance(void);
 
-  Result getResult(void) {return result_;}
+  Result getResults(void) {return result_;}
 
 private:
   Result result_;
