@@ -8,10 +8,8 @@
 #define CONSOLE_OUTPUT(str) do { } while (false)
 #endif
 
-#include <string>
 #include <industrial_calibration_libs/industrial_calibration_libs.h>
-
-#pragma GCC system_header
+#include <string>
 #include <gtest/gtest.h>
 
 #endif // TEST_UTILS_H

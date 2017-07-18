@@ -6,7 +6,7 @@ TEST(Targets, load_yaml)
   // folder. Assuming this is being built from a catkin_ws, this relative path 
   // should take it directly to the targets directory.
   industrial_calibration_libs::Target my_target;
-  EXPECT_TRUE(my_target.loadTargetFromYAML("cal_targets/mcircles_7x5.yaml"));
+  EXPECT_TRUE(my_target.loadTargetFromYAML("mcircles_7x5/mcircles_7x5.yaml"));
 
   // Note(gChiou): Checking fields for data that matches the input target.
   EXPECT_EQ(my_target.getData()->target_name, "mcircles_7x5");

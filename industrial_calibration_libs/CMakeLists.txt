@@ -3,7 +3,6 @@ project(industrial_calibration_libs)
 
 # Compile with C++ 11
 add_definitions(-std=c++11)
-add_definitions(-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -112,6 +111,7 @@ endif()
 catkin_package(
   INCLUDE_DIRS 
     include
+    test
   LIBRARIES 
     industrial_calibration_libs
   # CATKIN_DEPENDS other_catkin_pkg
@@ -125,7 +125,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include
+include_directories(include test
   ${OpenCV_INCLUDE_DIRS}
   ${CERES_INCLUDE_DIRS}
   SYSTEM ${EIGEN3_INCLUDE_DIRS}
@@ -173,6 +173,8 @@ target_link_libraries(${PROJECT_NAME}
   ${CERES_LIBRARIES}
   yaml-cpp
 )
+
+set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused")
 
 target_compile_options(${PROJECT_NAME}
   PRIVATE
@@ -224,16 +226,17 @@ if (CATKIN_ENABLE_TESTING)
     test/test_industrial_calibration_libs.cpp
     test/test_targets.cpp
     test/test_observations.cpp
+    # test/test_cost_functions.cpp
     WORKING_DIRECTORY 
       ${PROJECT_SOURCE_DIR}/test/resources
   )
 
-  include_directories(test)
-
   if(TARGET ${PROJECT_NAME}_test)
     target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
-  endif()
-endif()
+  endif(TARGET ${PROJECT_NAME}_test)
+
+endif(CATKIN_ENABLE_TESTING)
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+ 

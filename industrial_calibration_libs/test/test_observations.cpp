@@ -2,12 +2,12 @@
 
 TEST(Observations, load_observations)
 {
-  const std::size_t num_images = 5;
+  const std::size_t num_images = 15;
 
   // Load in calibration images
   std::vector<cv::Mat> calibration_images;
   calibration_images.reserve(num_images);
-  std::string cal_image_path = "cal_images/mcircles_7x5/";
+  std::string cal_image_path = "mcircles_7x5/images/";
 
   for (std::size_t i = 0; i < num_images; i++)
   {
@@ -22,11 +22,20 @@ TEST(Observations, load_observations)
 
   // Load in target
   industrial_calibration_libs::Target target;
-  target.loadTargetFromYAML("cal_targets/mcircles_7x5.yaml");
+  target.loadTargetFromYAML("mcircles_7x5/mcircles_7x5.yaml");
 
   // Create Observation Extractor Object
-  industrial_calibration_libs::ObservationExtractor observation_extractor(calibration_images, target);
-  observation_extractor.extractObservations();
+  industrial_calibration_libs::ObservationExtractor observation_extractor(target);
+  for (std::size_t i = 0; i < calibration_images.size(); i++)
+  {
+    cv::Mat output_image;
+    ASSERT_TRUE(observation_extractor.extractObservation(calibration_images[i], output_image));
+    #if 0
+    cv::namedWindow("Image " + std::to_string(i+1), cv::WINDOW_NORMAL);
+    cv::imshow("Image " + std::to_string(i+1), output_image);
+    cv::waitKey(0);    
+    #endif
+  }
 
   industrial_calibration_libs::ObservationData observation_data = observation_extractor.getObservationData();
 
@@ -37,7 +46,7 @@ TEST(Observations, load_observations)
     EXPECT_EQ(observation_data[i].size(), target.getData()->target_points);
   }
 
-  // TODO(gChiou): Find a way to verify observation data... if it is even possible.
+  // TODO(gChiou): Find a way to verify observation data...
 
 #if 0
   CONSOLE_OUTPUT("Total Observations: " << observation_data.size());
