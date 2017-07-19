@@ -2,17 +2,24 @@ cmake_minimum_required(VERSION 2.8.3)
 project(industrial_calibration)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  cv_bridge 
+  image_transport 
+  message_filters 
+  message_generation 
+  roscpp 
+  industrial_calibration_libs
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+find_package(OpenCV REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -101,10 +108,14 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS 
+    include
 #  LIBRARIES industrial_calibration
-#  CATKIN_DEPENDS roscpp
-#  DEPENDS system_lib
+  CATKIN_DEPENDS 
+    roscpp
+    industrial_calibration_libs
+  DEPENDS 
+    OpenCV 
 )
 
 ###########
@@ -114,9 +125,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+  ${yaml_cpp_INCLUDE_DIR}
 )
+
+
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -147,6 +162,17 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+add_executable(cal_data_collector src/cal_data_collector.cpp)
+add_dependencies(cal_data_collector 
+  ${PROJECT_NAME}_EXPORTED_TARGETS 
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(cal_data_collector 
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  yaml-cpp
+)
 
 #############
 ## Install ##
