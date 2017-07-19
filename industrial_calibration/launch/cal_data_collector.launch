@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<launch>
+  <!-- Debug arguments -->
+  <arg name="debug" default="false"/>
+  <arg unless="$(arg debug)" name="launch_prefix" value=""/>
+  <arg if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args"/>
+
+  <node name="cal_data_collector" pkg="industrial_calibration" type="cal_data_collector" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
+  </node>
+</launch>
