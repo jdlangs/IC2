@@ -114,6 +114,7 @@ catkin_package(
   roscpp
   sensor_msgs
   DEPENDS 
+  Boost
   OpenCV 
 )
 
