@@ -2,6 +2,7 @@
 #define CAL_DATA_COLLECTOR_H
 
 #include <ros/ros.h>
+#include <tf/transform_listener.h>
 
 class CalDataCollector
 {
@@ -17,6 +18,7 @@ private:
 
 // Private Variables
 private:
+  ros::NodeHandle nh_;
+  ros::NodeHandle pnh_;
 };
-
 #endif // CAL_DATA_COLLECTOR_H
