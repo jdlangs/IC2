@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS signals thread)
 find_package(OpenCV REQUIRED)
 
 
@@ -126,6 +126,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include
+  ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   ${yaml_cpp_INCLUDE_DIR}
@@ -171,6 +172,7 @@ add_dependencies(cal_data_collector
 target_link_libraries(cal_data_collector 
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
   yaml-cpp
 )
 
