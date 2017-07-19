@@ -459,7 +459,7 @@ TEST(Calibration, MovingCameraOnWristStaticTargetIntrinsic_dataset_1)
 }
 #endif
 
-#ifdef TEST4
+#ifdef TEST_4
 TEST(Calibration, MovingCameraOnWristStaticTargetIntrinsic_dataset_2)
 {
   // Load Target Data
