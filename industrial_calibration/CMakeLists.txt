@@ -106,6 +106,17 @@ find_package(OpenCV REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 
+catkin_package(
+  CATKIN_DEPENDS 
+  cv_bridge 
+  image_transport 
+  industrial_calibration_libs
+  roscpp
+  sensor_msgs
+  DEPENDS 
+  OpenCV 
+)
+
 ###########
 ## Build ##
 ###########
