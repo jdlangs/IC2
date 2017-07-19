@@ -11,8 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge 
   image_transport 
   industrial_calibration_libs
-  message_filters 
-  message_generation 
   roscpp
   sensor_msgs
 )
