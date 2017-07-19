@@ -8,13 +8,13 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
   cv_bridge 
   image_transport 
+  industrial_calibration_libs
   message_filters 
   message_generation 
-  roscpp 
-  industrial_calibration_libs
+  roscpp
+  sensor_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -107,16 +107,6 @@ find_package(OpenCV REQUIRED)
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  INCLUDE_DIRS 
-    include
-#  LIBRARIES industrial_calibration
-  CATKIN_DEPENDS 
-    roscpp
-    industrial_calibration_libs
-  DEPENDS 
-    OpenCV 
-)
 
 ###########
 ## Build ##
