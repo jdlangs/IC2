@@ -1,10 +1,20 @@
 <?xml version="1.0" ?>
 <launch>
+  <arg name="pattern_cols"/>
+  <arg name="pattern_rows"/>
+  <arg name="save_path"/>
+  <arg name="image_topic"/>
+
   <!-- Debug arguments -->
   <arg name="debug" default="false"/>
   <arg unless="$(arg debug)" name="launch_prefix" value=""/>
   <arg if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args"/>
 
   <node name="cal_data_collector" pkg="industrial_calibration" type="cal_data_collector" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
+    <remap from="$(arg image_topic)" to="image_topic"/>
+
+    <param name="pattern_cols" value="$(arg pattern_cols)" type="int"/>
+    <param name="pattern_rows" value="$(arg pattern_rows)" type="int"/>
+    <param name="save_path" value="$(arg save_path)" type="string"/>
   </node>
 </launch>
