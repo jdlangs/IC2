@@ -10,7 +10,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/opencv_modules.hpp>
-#include <opencv2/core/core.hpp>
 
 namespace industrial_calibration_libs
 {
