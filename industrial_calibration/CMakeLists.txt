@@ -171,6 +171,17 @@ set_target_properties(cal_data_collector ${COMPILER_WARNINGS})
 target_link_libraries(cal_data_collector ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
   ${Boost_LIBRARIES} yaml-cpp)
 
+add_executable(extrinsic_example src/extrinsic_example.cpp)
+add_dependencies(extrinsic_example ${catkin_EXPORTED_TARGETS})
+set_target_properties(extrinsic_example ${COMPILER_WARNINGS})
+target_link_libraries(extrinsic_example ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
+  ${Boost_LIBRARIES} yaml-cpp)
+
+add_executable(intrinsic_example src/intrinsic_example.cpp)
+add_dependencies(intrinsic_example ${catkin_EXPORTED_TARGETS})
+set_target_properties(intrinsic_example ${COMPILER_WARNINGS})
+target_link_libraries(intrinsic_example ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
+  ${Boost_LIBRARIES} yaml-cpp)
 
 #############
 ## Install ##
