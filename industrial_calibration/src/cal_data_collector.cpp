@@ -1,11 +1,12 @@
 #include <industrial_calibration/cal_data_collector.h>
 
 CalDataCollector::CalDataCollector(ros::NodeHandle nh, ros::NodeHandle pnh) :
-  nh_(nh), pnh_(pnh), image_transport(pnh_), exit_(false)
+  nh_(nh), pnh_(pnh), image_transport_(pnh_), exit_(false)
 {
   this->initDisplayWindow("Camera View");
 
-  image_subscriber = image_transport.subscribe("image_topic", 1,
+  // image_subscriber_ = image_transport_.subscribe("image_topic", 1,
+  image_subscriber_ = image_transport_.subscribe("/usb_cam/image_raw", 1,
     boost::bind(&CalDataCollector::imageCallback, this, _1));
 
   pnh_.getParam("pattern_cols", pattern_cols_);
@@ -20,7 +21,7 @@ void CalDataCollector::collectData(void)
 }
 
 bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_image)
-{
+{  
   std::size_t cols = static_cast<std::size_t>(pattern_cols_);
   std::size_t rows = static_cast<std::size_t>(pattern_rows_);
 
@@ -30,9 +31,9 @@ bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_imag
   params.maxArea = input_image.cols * input_image.rows;
   const cv::Ptr<cv::FeatureDetector> &blob_detector = cv::SimpleBlobDetector::create(params);
 
-  for (double alpha = 1.0; alpha < 3.0; alpha += 0.1)
+  for (double alpha = 1.0; alpha < 3.0; alpha += 0.5)
   {
-    for (int beta = 0; beta < 100; beta++)
+    for (int beta = 0; beta < 100; beta += 50)
     {
       cv::Mat altered_image;
       input_image.convertTo(altered_image, -1, alpha, beta);
@@ -44,7 +45,7 @@ bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_imag
         cv::Mat center_converted;
         center_image.convertTo(center_converted, CV_32F);
         cv::drawChessboardCorners(output_image, pattern_size, cv::Mat(centers), 
-          pattern_found);
+          pattern_found);      
         return true;
       }
     }
@@ -69,32 +70,53 @@ void CalDataCollector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   grid_image_ = msg_ptr->image;
 
   // Find circlegrid and draw grid
+  cv::Mat display_image;
   if (!raw_image_.empty() && !grid_image_.empty())
   {
     if (this->drawGrid(raw_image_, grid_image_))
     {
-      ROS_INFO_STREAM("Modified Circle Grid Found!");
-      cv::imshow(cv_window_name_, grid_image_);
-      if ((cv::waitKey(30) % 256) == 27) // ESC
-      {
-        cv::destroyWindow(cv_window_name_);
-        exit_ = true;
-        return;
-      } 
+      ROS_INFO_STREAM("CIRCLE GRID FOUND!!!");
+      display_image = grid_image_;
     }
+    else
+    {
+      ROS_INFO_STREAM("NO CIRCLE GRID FOUND!!!");
+      display_image = raw_image_;    
+    }
+
+    cv::imshow(cv_window_name_, display_image);
+    if ((cv::waitKey(30) % 256) == 27) // ESC
+    {
+      cv::destroyWindow(cv_window_name_);
+      exit_ = true;
+      return;
+    } 
+  }
+  else
+  {
+    ROS_ERROR_STREAM("INPUT IMAGE IS EMPTY!");
   }
 }
 
 void CalDataCollector::mouseCallbackInternal(int event, int x, int y, int flags)
 {
   if (event != cv::EVENT_LBUTTONDOWN) {return;}
+
   boost::mutex::scoped_lock lock(MUTEX, boost::try_to_lock);
-  
-  if (!lock.owns_lock()) {return;}
+  if (!lock.owns_lock()) 
+  {
+    ROS_INFO_STREAM("I DONT OWN THIS LOCK");
+    return;
+  }
   else
   {
     // Save Image
     ROS_INFO_STREAM("Saving Image");
+    ROS_INFO_STREAM("Saving Image");
+    ROS_INFO_STREAM("Saving Image");
+    ROS_INFO_STREAM("Saving Image");    
+    ROS_INFO_STREAM("Saving Image");
+    ROS_INFO_STREAM("Saving Image");    
   }
 }
 
@@ -109,6 +131,7 @@ void CalDataCollector::initDisplayWindow(const std::string &window_name)
   cv_window_name_ = window_name;
   cv::namedWindow(cv_window_name_, CV_WINDOW_NORMAL);
   cv::setMouseCallback(cv_window_name_, &mouseCallback);
+  cv::startWindowThread();
 }
 
 bool CalDataCollector::checkSettings(void)

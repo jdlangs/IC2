@@ -43,8 +43,8 @@ private:
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
-  image_transport::ImageTransport image_transport;
-  image_transport::Subscriber image_subscriber;
+  image_transport::ImageTransport image_transport_;
+  image_transport::Subscriber image_subscriber_;
   std::string cv_window_name_;
   std::string save_path_;
   cv::Mat raw_image_;
@@ -52,6 +52,5 @@ private:
   int pattern_cols_;
   int pattern_rows_;
   bool exit_;
-
 };
 #endif // CAL_DATA_COLLECTOR_H
