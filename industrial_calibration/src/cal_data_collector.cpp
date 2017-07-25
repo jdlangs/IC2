@@ -5,9 +5,12 @@ CalDataCollector::CalDataCollector(ros::NodeHandle nh, ros::NodeHandle pnh) :
 {
   this->initDisplayWindow("Camera View");
 
-  // image_subscriber_ = image_transport_.subscribe("image_topic", 1,
-  image_subscriber_ = image_transport_.subscribe("/usb_cam/image_raw", 1,
+  joint_state_subscriber_ = pnh_.subscribe("joint_states", 1,
+    &CalDataCollector::jointStateCallback, this);
+
+  image_subscriber_ = image_transport_.subscribe("/calibration_image", 1,
     boost::bind(&CalDataCollector::imageCallback, this, _1));
+  // image_subscriber_ = image_transport_.subscribe("/usb_cam/image_raw", 1,
 
   pnh_.getParam("pattern_cols", pattern_cols_);
   pnh_.getParam("pattern_rows", pattern_rows_);
@@ -18,6 +21,12 @@ void CalDataCollector::collectData(void)
 {
   if (!this->checkSettings() || this->exit_) {return;}
   ros::spin();
+}
+
+void CalDataCollector::jointStateCallback(const sensor_msgs::JointStateConstPtr &msg)
+{
+  boost::mutex::scoped_lock lock(MUTEX);
+
 }
 
 bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_image)

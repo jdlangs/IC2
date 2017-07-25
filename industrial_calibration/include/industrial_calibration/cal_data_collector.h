@@ -11,6 +11,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/opencv_modules.hpp>
 #include <ros/ros.h>
+#include <sensor_msgs/JointState.h>
 #include <tf/transform_listener.h>
 #include <yaml-cpp/yaml.h>
 
@@ -27,6 +28,8 @@ public:
 
 // Private Methods
 private:
+  void jointStateCallback(const sensor_msgs::JointStateConstPtr &msg);
+
   bool drawGrid(const cv::Mat &input_image, cv::Mat &output_image);
 
   void imageCallback(const sensor_msgs::ImageConstPtr &msg);
@@ -43,6 +46,8 @@ private:
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
+  ros::Subscriber joint_state_subscriber_;
+  sensor_msgs::JointState joint_state_;
   image_transport::ImageTransport image_transport_;
   image_transport::Subscriber image_subscriber_;
   std::string cv_window_name_;
