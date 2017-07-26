@@ -5,8 +5,8 @@ CalDataCollector::CalDataCollector(ros::NodeHandle nh, ros::NodeHandle pnh) :
 {
   this->initDisplayWindow("Camera View");
 
-  // joint_state_subscriber_ = pnh_.subscribe("joint_states", 1,
-    // &CalDataCollector::jointStateCallback, this);
+  joint_state_subscriber_ = pnh_.subscribe("/joint_states", 1,
+    &CalDataCollector::jointStateCallback, this);
 
   image_subscriber_ = image_transport_.subscribe("/calibration_image", 1,
     boost::bind(&CalDataCollector::imageCallback, this, _1));
@@ -20,69 +20,27 @@ CalDataCollector::CalDataCollector(ros::NodeHandle nh, ros::NodeHandle pnh) :
 
 void CalDataCollector::collectData(void)
 {
-  #if 0
-  message_filters::Subscriber<sensor_msgs::Image> image_sub(pnh_, "/calibration_image", 1);
-  message_filters::Subscriber<sensor_msgs::JointState> joint_state_sub(pnh_, "/joint_states", 1);
-  message_filters::Synchronizer<SyncPolicy> synchronizer(SyncPolicy(10), image_sub, 
-    joint_state_sub);
-
-  synchronizer.registerCallback(boost::bind(&CalDataCollector::syncCallback, this, _1, _2));
-  #endif
-  
   if (!this->checkSettings() || this->exit_) {return;}
   ros::spin();
-}
-
-void CalDataCollector::syncCallback(const sensor_msgs::ImageConstPtr &image_msg,
-  const sensor_msgs::JointStateConstPtr &joint_state_msg)
-{
-  // boost::mutex::scoped_lock lock(MUTEX);
-  ROS_INFO_STREAM("Image MSG Received!");
-
-  cv_bridge::CvImageConstPtr msg_ptr;
-
-  try {msg_ptr = cv_bridge::toCvCopy(image_msg);}
-
-  catch (cv_bridge::Exception &ex) 
-  {
-    ROS_ERROR_STREAM("Could not load image from message");
-  }
-
-  raw_image_ = msg_ptr->image;
-  grid_image_ = msg_ptr->image;
-
-  // Find circlegrid and draw grid
-  cv::Mat display_image;
-  if (!raw_image_.empty() && !grid_image_.empty())
-  {
-    if (this->drawGrid(raw_image_, grid_image_))
-    {
-      ROS_INFO_STREAM("CIRCLE GRID FOUND!!!");
-      display_image = grid_image_;
-    }
-    else
-    {
-      ROS_INFO_STREAM("NO CIRCLE GRID FOUND!!!");
-      display_image = raw_image_;    
-    }
-
-    cv::imshow(cv_window_name_, display_image);
-    if ((cv::waitKey(30) % 256) == 27) // ESC
-    {
-      cv::destroyWindow(cv_window_name_);
-      exit_ = true;
-      return;
-    } 
-  }
-  else
-  {
-    ROS_ERROR_STREAM("INPUT IMAGE IS EMPTY!");
-  }  
 }
 
 void CalDataCollector::jointStateCallback(const sensor_msgs::JointStateConstPtr &msg)
 {
   boost::mutex::scoped_lock lock(MUTEX);
+
+  ROS_INFO_STREAM("Joint State MSG Received: " << msg->name.size());
+
+  std::size_t size = msg->name.size();
+  joint_names_.clear();
+  joint_names_.resize(size);
+  joint_state_.clear();
+  joint_state_.resize(size);
+
+  for (std::size_t i = 0; i < size; i++)
+  {
+    joint_names_[i] = msg->name[i];
+    joint_state_[i] = msg->position[i];
+  }
 }
 
 bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_image)
@@ -121,9 +79,7 @@ bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_imag
 }
 
 void CalDataCollector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
-{
-  // boost::mutex::scoped_lock lock(MUTEX);
-
+{  
   cv_bridge::CvImageConstPtr msg_ptr;
 
   try {msg_ptr = cv_bridge::toCvCopy(msg);}
@@ -178,12 +134,11 @@ void CalDataCollector::mouseCallbackInternal(int event, int x, int y, int flags)
   else
   {
     // Save Image
-    ROS_INFO_STREAM("Saving Image");
-    ROS_INFO_STREAM("Saving Image");
-    ROS_INFO_STREAM("Saving Image");
-    ROS_INFO_STREAM("Saving Image");    
-    ROS_INFO_STREAM("Saving Image");
-    ROS_INFO_STREAM("Saving Image");    
+    ROS_INFO_STREAM("Saving Image: " << joint_names_.size() << " " << joint_state_.size());
+    for (std::size_t i = 0; i < joint_names_.size(); i++)
+    {
+      ROS_INFO_STREAM("Name: " << joint_names_[i] << " Position: " << joint_state_[i]);
+    }
   }
 }
 

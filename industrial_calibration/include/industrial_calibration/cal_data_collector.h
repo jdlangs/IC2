@@ -15,14 +15,7 @@
 #include <tf/transform_listener.h>
 #include <yaml-cpp/yaml.h>
 
-// TEMP
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
-
 static boost::mutex MUTEX;
-
-typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::JointState> SyncPolicy;
 
 class CalDataCollector
 {
@@ -57,7 +50,8 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   ros::Subscriber joint_state_subscriber_;
-  sensor_msgs::JointState joint_state_;
+  std::vector<std::string> joint_names_;
+  std::vector<float> joint_state_;
   image_transport::ImageTransport image_transport_;
   image_transport::Subscriber image_subscriber_;
   std::string cv_window_name_;
