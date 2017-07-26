@@ -15,7 +15,14 @@
 #include <tf/transform_listener.h>
 #include <yaml-cpp/yaml.h>
 
+// TEMP
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
 static boost::mutex MUTEX;
+
+typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::JointState> SyncPolicy;
 
 class CalDataCollector
 {
@@ -28,6 +35,9 @@ public:
 
 // Private Methods
 private:
+  void syncCallback(const sensor_msgs::ImageConstPtr &image_msg,
+    const sensor_msgs::JointStateConstPtr &joint_state_msg);
+
   void jointStateCallback(const sensor_msgs::JointStateConstPtr &msg);
 
   bool drawGrid(const cv::Mat &input_image, cv::Mat &output_image);
