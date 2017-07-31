@@ -8,4 +8,6 @@
     <param name="io_method" value="mmap"/>
     <remap from="usb_cam/image_raw" to="/calibration_image"/>
   </node>
+
+  <include file="$(find abb_irb2400_moveit_config)/launch/moveit_planning_execution.launch" />
 </launch>
