@@ -1,27 +1,25 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(industrial_calibration_libs)
+project(industrial_calibration)
 
-# Compile with C++ 11
+## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
-find_package(OpenCV REQUIRED)
-find_package(Ceres REQUIRED)
-find_package(Eigen3 REQUIRED)
-
-# OpenMP
-find_package(OpenMP REQUIRED)
-if(OPENMP_FOUND)
-  message(STATUS "OPENMP FOUND")
-  set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})  # or if you use C: ${OpenMP_C_FLAGS}
-  set(OpenMP_LIBS gomp)
-endif()
+find_package(catkin REQUIRED COMPONENTS
+  cv_bridge 
+  image_transport 
+  industrial_calibration_libs
+  roscpp
+  tf
+  sensor_msgs
+)
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS signals thread)
+find_package(OpenCV REQUIRED)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -108,15 +106,18 @@ endif()
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
+
 catkin_package(
-  INCLUDE_DIRS 
-    include
-    test
-  LIBRARIES 
-    industrial_calibration_libs
-  # CATKIN_DEPENDS other_catkin_pkg
+  CATKIN_DEPENDS 
+  cv_bridge 
+  image_transport 
+  industrial_calibration_libs
+  roscpp
+  tf
+  sensor_msgs
   DEPENDS 
-    CERES
+  Boost
+  OpenCV 
 )
 
 ###########
@@ -125,32 +126,29 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include test
+include_directories(
+  include
+  SYSTEM
+  ${Boost_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${CERES_INCLUDE_DIRS}
-  SYSTEM ${EIGEN3_INCLUDE_DIRS}
+  ${yaml_cpp_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME}
-  src/industrial_calibration_libs.cpp
-  src/targets.cpp
-  src/observations.cpp
-  src/circle_detector.cpp
-  src/calibration.cpp
-  src/types.cpp
-)
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}/industrial_calibration.cpp
+# )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/industrial_calibration_libs_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/industrial_calibration_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -166,20 +164,26 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-  ${OpenMP_LIBS}
-  ${CERES_LIBRARIES}
-  yaml-cpp
-)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused")
+set(COMPILER_WARNINGS PROPERTIES COMPILE_FLAGS "-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused")
 
-target_compile_options(${PROJECT_NAME}
-  PRIVATE
-  ${OpenMP_FLAGS}
-)
+add_executable(cal_data_collector src/cal_data_collector.cpp)
+add_dependencies(cal_data_collector ${catkin_EXPORTED_TARGETS})
+set_target_properties(cal_data_collector ${COMPILER_WARNINGS})
+target_link_libraries(cal_data_collector ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
+  ${Boost_LIBRARIES} yaml-cpp)
+
+add_executable(extrinsic_example src/extrinsic_example.cpp)
+add_dependencies(extrinsic_example ${catkin_EXPORTED_TARGETS})
+set_target_properties(extrinsic_example ${COMPILER_WARNINGS})
+target_link_libraries(extrinsic_example ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
+  ${Boost_LIBRARIES} yaml-cpp)
+
+add_executable(intrinsic_example src/intrinsic_example.cpp)
+add_dependencies(intrinsic_example ${catkin_EXPORTED_TARGETS})
+set_target_properties(intrinsic_example ${COMPILER_WARNINGS})
+target_link_libraries(intrinsic_example ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
+  ${Boost_LIBRARIES} yaml-cpp)
 
 #############
 ## Install ##
@@ -221,22 +225,10 @@ target_compile_options(${PROJECT_NAME}
 #############
 
 ## Add gtest based cpp test target and link libraries
-if (CATKIN_ENABLE_TESTING)
-  catkin_add_gtest(${PROJECT_NAME}_test 
-    test/test_industrial_calibration_libs.cpp
-    test/test_targets.cpp
-    test/test_observations.cpp
-    test/test_calibration.cpp
-    WORKING_DIRECTORY 
-      ${PROJECT_SOURCE_DIR}/test/resources
-  )
-
-  if(TARGET ${PROJECT_NAME}_test)
-    target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
-  endif(TARGET ${PROJECT_NAME}_test)
-
-endif(CATKIN_ENABLE_TESTING)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_industrial_calibration.cpp)
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+# endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
- 

@@ -50,7 +50,7 @@ bool loadLinkData(const std::size_t &index, const std::string &path,
     data_yaml = YAML::LoadFile(file_path);
     if (!data_yaml["joints"]) {return false;}
   }
-  catch (YAML::BadFile &bf) {return false;}\
+  catch (YAML::BadFile &bf) {return false;}
 
   success &= parseYAML(data_yaml, "joints", link_data->joint_states);
   success &= parseYAML(data_yaml, "translation", link_data->translation);
@@ -202,12 +202,12 @@ TEST(Calibration, MovingCameraOnWristStaticTargetExtrinsic_dataset_1)
   CONSOLE_OUTPUT("Rotation z: " << results.extrinsics[2]);
 
   CONSOLE_OUTPUT("Target to Base");
-  CONSOLE_OUTPUT("Translation x: " << results.extrinsics[3]);
-  CONSOLE_OUTPUT("Translation y: " << results.extrinsics[4]);
-  CONSOLE_OUTPUT("Translation z: " << results.extrinsics[5]);
-  CONSOLE_OUTPUT("Rotation x: " << results.extrinsics[0]);
-  CONSOLE_OUTPUT("Rotation y: " << results.extrinsics[1]);
-  CONSOLE_OUTPUT("Rotation z: " << results.extrinsics[2]);
+  CONSOLE_OUTPUT("Translation x: " << results.target_to_base[3]);
+  CONSOLE_OUTPUT("Translation y: " << results.target_to_base[4]);
+  CONSOLE_OUTPUT("Translation z: " << results.target_to_base[5]);
+  CONSOLE_OUTPUT("Rotation x: " << results.target_to_base[0]);
+  CONSOLE_OUTPUT("Rotation y: " << results.target_to_base[1]);
+  CONSOLE_OUTPUT("Rotation z: " << results.target_to_base[2]);
 #endif    
 }
 #endif
@@ -320,12 +320,12 @@ TEST(Calibration, MovingCameraOnWristStaticTargetExtrinsic_dataset_2)
   CONSOLE_OUTPUT("Rotation z: " << results.extrinsics[2]);
 
   CONSOLE_OUTPUT("Target to Base");
-  CONSOLE_OUTPUT("Translation x: " << results.extrinsics[3]);
-  CONSOLE_OUTPUT("Translation y: " << results.extrinsics[4]);
-  CONSOLE_OUTPUT("Translation z: " << results.extrinsics[5]);
-  CONSOLE_OUTPUT("Rotation x: " << results.extrinsics[0]);
-  CONSOLE_OUTPUT("Rotation y: " << results.extrinsics[1]);
-  CONSOLE_OUTPUT("Rotation z: " << results.extrinsics[2]);
+  CONSOLE_OUTPUT("Translation x: " << results.target_to_base[3]);
+  CONSOLE_OUTPUT("Translation y: " << results.target_to_base[4]);
+  CONSOLE_OUTPUT("Translation z: " << results.target_to_base[5]);
+  CONSOLE_OUTPUT("Rotation x: " << results.target_to_base[0]);
+  CONSOLE_OUTPUT("Rotation y: " << results.target_to_base[1]);
+  CONSOLE_OUTPUT("Rotation z: " << results.target_to_base[2]);
 #endif    
 }
 #endif
@@ -438,12 +438,12 @@ TEST(Calibration, MovingCameraOnWristStaticTargetIntrinsic_dataset_1)
   CONSOLE_OUTPUT("Rotation z: " << results.extrinsics[2]);
 
   CONSOLE_OUTPUT("Target to Base");
-  CONSOLE_OUTPUT("Translation x: " << results.extrinsics[3]);
-  CONSOLE_OUTPUT("Translation y: " << results.extrinsics[4]);
-  CONSOLE_OUTPUT("Translation z: " << results.extrinsics[5]);
-  CONSOLE_OUTPUT("Rotation x: " << results.extrinsics[0]);
-  CONSOLE_OUTPUT("Rotation y: " << results.extrinsics[1]);
-  CONSOLE_OUTPUT("Rotation z: " << results.extrinsics[2]);
+  CONSOLE_OUTPUT("Translation x: " << results.target_to_base[3]);
+  CONSOLE_OUTPUT("Translation y: " << results.target_to_base[4]);
+  CONSOLE_OUTPUT("Translation z: " << results.target_to_base[5]);
+  CONSOLE_OUTPUT("Rotation x: " << results.target_to_base[0]);
+  CONSOLE_OUTPUT("Rotation y: " << results.target_to_base[1]);
+  CONSOLE_OUTPUT("Rotation z: " << results.target_to_base[2]);
 
   CONSOLE_OUTPUT("Intrinsic Parameters");
   CONSOLE_OUTPUT("Focal Length x: " << results.intrinsics[0]);
@@ -567,12 +567,12 @@ TEST(Calibration, MovingCameraOnWristStaticTargetIntrinsic_dataset_2)
   CONSOLE_OUTPUT("Rotation z: " << results.extrinsics[2]);
 
   CONSOLE_OUTPUT("Target to Base");
-  CONSOLE_OUTPUT("Translation x: " << results.extrinsics[3]);
-  CONSOLE_OUTPUT("Translation y: " << results.extrinsics[4]);
-  CONSOLE_OUTPUT("Translation z: " << results.extrinsics[5]);
-  CONSOLE_OUTPUT("Rotation x: " << results.extrinsics[0]);
-  CONSOLE_OUTPUT("Rotation y: " << results.extrinsics[1]);
-  CONSOLE_OUTPUT("Rotation z: " << results.extrinsics[2]);
+  CONSOLE_OUTPUT("Translation x: " << results.target_to_base[3]);
+  CONSOLE_OUTPUT("Translation y: " << results.target_to_base[4]);
+  CONSOLE_OUTPUT("Translation z: " << results.target_to_base[5]);
+  CONSOLE_OUTPUT("Rotation x: " << results.target_to_base[0]);
+  CONSOLE_OUTPUT("Rotation y: " << results.target_to_base[1]);
+  CONSOLE_OUTPUT("Rotation z: " << results.target_to_base[2]);
 
   CONSOLE_OUTPUT("Intrinsic Parameters");
   CONSOLE_OUTPUT("Focal Length x: " << results.intrinsics[0]);

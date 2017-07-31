@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="cols" default="5"/>
+  <arg name="rows" default="7"/>
+  <arg name="base_link" default="base_link"/>
+  <arg name="tip_link" default="tool0"/>
+  <arg name="save_path" default="$(find industrial_calibration)"/>
+  <arg name="image_topic" default="/usb_cam/image_raw/"/>
+
+  <!-- Debug arguments -->
+  <arg name="debug" default="false"/>
+  <arg unless="$(arg debug)" name="launch_prefix" value=""/>
+  <arg if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args"/>
+
+  <node name="cal_data_collector" pkg="industrial_calibration" type="cal_data_collector" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
+    <param name="pattern_cols" value="$(arg cols)" type="int"/>
+    <param name="pattern_rows" value="$(arg rows)" type="int"/>
+    <param name="save_path" value="$(arg save_path)/" type="string"/>
+  </node>
+</launch>
