@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport 
   industrial_calibration_libs
   roscpp
+  tf
   sensor_msgs
 )
 
@@ -112,6 +113,7 @@ catkin_package(
   image_transport 
   industrial_calibration_libs
   roscpp
+  tf
   sensor_msgs
   DEPENDS 
   Boost
