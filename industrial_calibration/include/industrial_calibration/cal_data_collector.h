@@ -1,9 +1,8 @@
 #ifndef CAL_DATA_COLLECTOR_H
 #define CAL_DATA_COLLECTOR_H
 
-#include <boost/thread.hpp>
 #include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_transport.h>
+#include <fstream>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -18,7 +17,6 @@
 #include <tf/transform_listener.h>
 #include <yaml-cpp/yaml.h>
 
-// static boost::mutex MUTEX;
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, 
   sensor_msgs::JointState> SyncPolicy;
 
@@ -36,17 +34,18 @@ private:
   void synchronizedMessageCallback(const sensor_msgs::ImageConstPtr &image_msg,
     const sensor_msgs::JointStateConstPtr &joint_state_msg);
 
-  void jointStateCallback(const sensor_msgs::JointStateConstPtr &msg);
+  inline bool drawGrid(const cv::Mat &input_image, cv::Mat &output_image);
 
-  bool drawGrid(const cv::Mat &input_image, cv::Mat &output_image);
+  inline void printTransform(const tf::StampedTransform &transform);
 
-  void imageCallback(const sensor_msgs::ImageConstPtr &msg);
+  inline void writeTransformToYAML(YAML::Emitter &out, const std::string &from_link,
+    const std::string &to_link, const tf::StampedTransform &transform);
 
-  inline void saveData(const cv::Mat &image);
+  inline void writeJointStateToYAML(YAML::Emitter &out, 
+    const std::vector<std::string> &joint_names, const std::vector<float> &joint_state);
 
-  void mouseCallbackInternal(int event, int x, int y, int flags);
-
-  static void mouseCallback(int event, int x, int y, int flags, void* param);
+  inline void saveCalibrationData(const cv::Mat &image, 
+    const std::vector<std::string> &joint_names, const std::vector<float> &joint_state);
 
   void initDisplayWindow(const std::string &window_name);
 
@@ -56,11 +55,8 @@ private:
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
-  ros::Subscriber joint_state_subscriber_;
   std::vector<std::string> joint_names_;
   std::vector<float> joint_state_;
-  image_transport::ImageTransport image_transport_;
-  image_transport::Subscriber image_subscriber_;
   tf::TransformListener tf_;
   std::string cv_window_name_;
   std::string save_path_;

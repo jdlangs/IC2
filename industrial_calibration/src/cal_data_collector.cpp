@@ -1,24 +1,13 @@
 #include <industrial_calibration/cal_data_collector.h>
 
 CalDataCollector::CalDataCollector(ros::NodeHandle nh, ros::NodeHandle pnh) :
-  nh_(nh), pnh_(pnh), image_transport_(pnh_)
+  nh_(nh), pnh_(pnh), i_(0) // RENAME i_ TO SOMETHING ELSE
 {
   this->initDisplayWindow("Camera View");
-
-#if 0
-  joint_state_subscriber_ = pnh_.subscribe("/joint_states", 1,
-    &CalDataCollector::jointStateCallback, this);
-
-  image_subscriber_ = image_transport_.subscribe("/calibration_image", 1,
-    boost::bind(&CalDataCollector::imageCallback, this, _1));
-#endif
 
   pnh_.getParam("pattern_cols", pattern_cols_);
   pnh_.getParam("pattern_rows", pattern_rows_);
   pnh_.getParam("save_path", save_path_);
-
-  // TEMPORARY, REMOVE THIS LATER
-  i_ = 0;
 }
 
 void CalDataCollector::collectData(void)
@@ -33,7 +22,7 @@ void CalDataCollector::collectData(void)
     joint_state_sub);
   synchronizer.registerCallback(boost::bind(&CalDataCollector::synchronizedMessageCallback, 
     this, _1, _2));
-  
+
   ros::spin();
 }
 
@@ -89,7 +78,7 @@ void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConst
 
     if ((key % 256) == 83 || (key % 256) == 115) // S/s
     {
-      saveData(raw_image_);
+      this->saveCalibrationData(raw_image_, joint_names_, joint_state_);
     }
 
     if ((key % 256) == 27) // ESC
@@ -105,26 +94,7 @@ void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConst
   }  
 }
 
-void CalDataCollector::jointStateCallback(const sensor_msgs::JointStateConstPtr &msg)
-{
-  // boost::mutex::scoped_lock lock(MUTEX);
-
-  ROS_INFO_STREAM("Joint State MSG Received: " << msg->name.size());
-
-  std::size_t size = msg->name.size();
-  joint_names_.clear();
-  joint_names_.resize(size);
-  joint_state_.clear();
-  joint_state_.resize(size);
-
-  for (std::size_t i = 0; i < size; i++)
-  {
-    joint_names_[i] = msg->name[i];
-    joint_state_[i] = msg->position[i];
-  }
-}
-
-bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_image)
+inline bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_image)
 {
   std::size_t cols = static_cast<std::size_t>(pattern_cols_);
   std::size_t rows = static_cast<std::size_t>(pattern_rows_);
@@ -157,105 +127,98 @@ bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_imag
   return false;
 }
 
-void CalDataCollector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
-{ 
-  // boost::mutex::scoped_lock lock(MUTEX);
-  ROS_INFO_STREAM("Image MSG Received");
+inline void CalDataCollector::printTransform(const tf::StampedTransform &transform)
+{
+  tf::Vector3 origin = transform.getOrigin();
+  tf::Quaternion quaternion = transform.getRotation();
 
-  cv_bridge::CvImageConstPtr msg_ptr;
-
-  try {msg_ptr = cv_bridge::toCvCopy(msg);}
-
-  catch (cv_bridge::Exception &ex) 
-  {
-    ROS_ERROR_STREAM("Could not load image from message");
-  }
-
-  raw_image_ = msg_ptr->image;
-  grid_image_ = msg_ptr->image;
-
-  // Find circlegrid and draw grid
-  cv::Mat display_image;
-  if (!raw_image_.empty() && !grid_image_.empty())
-  {
-    if (this->drawGrid(raw_image_, grid_image_))
-    {
-      ROS_INFO_STREAM("CIRCLE GRID FOUND!!!");
-      display_image = grid_image_;
-    }
-    else
-    {
-      ROS_INFO_STREAM("NO CIRCLE GRID FOUND!!!");
-      display_image = raw_image_;    
-    }
-
-    cv::imshow(cv_window_name_, display_image);
-
-    int key = cv::waitKey(30);
-
-    if ((key % 256) == 83 || (key % 256) == 115) // S/s
-    {
-      saveData(raw_image_);
-    }
-
-    if ((key % 256) == 27) // ESC
-    {
-      cv::destroyWindow(cv_window_name_);
-      ros::shutdown();
-      return;
-    } 
-  }
-  else
-  {
-    ROS_ERROR_STREAM("INPUT IMAGE IS EMPTY!");
-  }
+  ROS_INFO_STREAM("Translation: [" << origin.getX() << ", " << origin.getY() <<
+    ", " << origin.getZ() << "]");
+  ROS_INFO_STREAM("Quaternion: [" << quaternion.getX() << ", " << quaternion.getY() <<
+    ", " << quaternion.getZ() << ", " << quaternion.getW() << "]");
 }
 
-inline void CalDataCollector::saveData(const cv::Mat &image)
+inline void CalDataCollector::writeTransformToYAML(YAML::Emitter &out, 
+  const std::string &from_link, const std::string &to_link, 
+  const tf::StampedTransform &transform)
 {
-  // TF Transforms
+  std::vector<double> translation; translation.resize(3);
+  std::vector<double> quaternion; quaternion.resize(4);
+
+  translation[0] = transform.getOrigin().getX();
+  translation[1] = transform.getOrigin().getY();
+  translation[2] = transform.getOrigin().getZ();
+
+  quaternion[0] = transform.getRotation().getX();
+  quaternion[1] = transform.getRotation().getY();
+  quaternion[2] = transform.getRotation().getZ();
+  quaternion[3] = transform.getRotation().getW();
+
+  std::string name = from_link + "_to_" + to_link;
+
+  out << YAML::Key << name;
+  out << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << "From";
+      out << YAML::Value << from_link;
+    out << YAML::Key << "To";
+      out << YAML::Value << to_link;
+    out << YAML::Key << "Translation";
+      out << YAML::Value << translation;
+    out << YAML::Key << "Quaternion";
+      out << YAML::Value << quaternion;
+  out << YAML::EndMap;
+}
+
+inline void CalDataCollector::writeJointStateToYAML(YAML::Emitter &out,
+  const std::vector<std::string> &joint_names, const std::vector<float> &joint_state)
+{
+  out << YAML::Key << "Joint Names";
+  out << YAML::Value << joint_names;
+  out << YAML::Key << "Joint State";
+  out << YAML::Value << joint_state;
+}
+
+inline void CalDataCollector::saveCalibrationData(const cv::Mat &image,
+  const std::vector<std::string> &joint_names, const std::vector<float> &joint_state)
+{
+  // THESE NEED TO NOT BE HARD CODED IN.
   std::string base_link = "base_link";
   std::string link_6 = "link_6";
   std::string tool0 = "tool0";
-  tf_.waitForTransform(base_link, tool0, ros::Time(), ros::Duration(1.0));
 
+  // TF Transforms
+  tf_.waitForTransform(base_link, tool0, ros::Time(), ros::Duration(0.5));
+  tf_.waitForTransform(base_link, link_6, ros::Time(), ros::Duration(0.5));
+
+  tf::StampedTransform tool0_transform;
+  tf::StampedTransform link_6_transform;
+  
   try
   {
-    tf::StampedTransform transform;
-    tf_.lookupTransform(base_link, tool0, ros::Time(), transform);
+    tf_.lookupTransform(base_link, tool0, ros::Time(), tool0_transform);
 
-    tf::Vector3 origin = transform.getOrigin();
-    tf::Quaternion quaternion = transform.getRotation();
-#if 1
-    ROS_INFO_STREAM("Translation: [" << origin.getX() << ", " << origin.getY() <<
-      ", " << origin.getZ() << "]");
-    ROS_INFO_STREAM("Quaternion: [" << quaternion.getX() << ", " << quaternion.getY() <<
-      ", " << quaternion.getZ() << ", " << quaternion.getW() << "]");    
-#endif
-  #include <iomanip>
-  #include <iostream>
-  std::cout.precision(3);
-  std::cout.setf(std::ios::fixed,std::ios::floatfield);
-  std::cout << "- Translation: [" << origin.getX() << ", " << origin.getY() 
-    << ", " << origin.getZ() << "]" <<   std::endl;
-  std::cout << "- Rotation: in Quaternion [" << quaternion.getX() << ", " 
-    << quaternion.getY() << ", " << quaternion.getZ() << ", " 
-    << quaternion.getW() << "]" << std::endl;
-
+    tf_.lookupTransform(base_link, link_6, ros::Time(), link_6_transform);
   }
   catch (tf::TransformException &ex)
   {
     ROS_ERROR_STREAM("TF Exception: " << ex.what());
   }
 
+  YAML::Emitter out;
+  out << YAML::BeginMap;
+    this->writeTransformToYAML(out, base_link, tool0, tool0_transform);
+    this->writeTransformToYAML(out, base_link, link_6, link_6_transform);
+    this->writeJointStateToYAML(out, joint_names, joint_state);
+  out << YAML::EndMap;
 
-  ROS_INFO_STREAM("Saving Joints: " << joint_names_.size() << " " << joint_state_.size());
-  for (std::size_t i = 0; i < joint_names_.size(); i++)
+  if (out.good())
   {
-    ROS_INFO_STREAM("Name: " << joint_names_[i] << " Position: " << joint_state_[i]);
-  }  
+    std::string yaml_file_name = save_path_ + std::to_string(i_) + ".yaml";
+    ROS_INFO_STREAM("Saving YAML to: " << yaml_file_name);
+    std::ofstream yaml_file(yaml_file_name);
+    yaml_file << out.c_str();
+  }
 
-  ROS_INFO_STREAM("Saving Image");
   try
   {
     // No compression for png
@@ -264,7 +227,6 @@ inline void CalDataCollector::saveData(const cv::Mat &image)
     png_params.push_back(0);
 
     std::string image_file_name = save_path_ + std::to_string(i_) + ".png";
-    ROS_INFO_STREAM(save_path_);
     if (cv::imwrite(image_file_name, raw_image_, png_params))
     {
       ROS_INFO_STREAM("Saving Image: " << image_file_name);
@@ -281,68 +243,10 @@ inline void CalDataCollector::saveData(const cv::Mat &image)
   }  
 }
 
-void CalDataCollector::mouseCallbackInternal(int event, int x, int y, int flags)
-{
-  #if 0
-  if (event != cv::EVENT_LBUTTONDOWN) {return;}
-
-  boost::mutex::scoped_lock lock(MUTEX, boost::try_to_lock);
-  if (!lock.owns_lock()) 
-  {
-    ROS_INFO_STREAM("I DONT OWN THIS LOCK");
-    return;
-  }
-
-  else
-  {
-    try
-    {
-      // No compression for png
-      std::vector<int> png_params;
-      png_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-      png_params.push_back(0);
-
-      if (cv::imwrite(save_path_ + std::to_string(i_), raw_image_, png_params))
-      {
-        ROS_INFO_STREAM("Saving Image: " << i_ << ".png");
-        i_++;
-      }
-      else
-      {
-        ROS_ERROR_STREAM("Fail");
-      }
-    }
-    catch (std::exception &ex)
-    {
-      ROS_ERROR_STREAM("More Fail");
-    }
-    
-  }
-
-  // else
-  // {
-    // Save Image
-    // ROS_INFO_STREAM("Saving Images");
-    // ROS_INFO_STREAM("Saving Image: " << joint_names_.size() << " " << joint_state_.size());
-    // for (std::size_t i = 0; i < joint_names_.size(); i++)
-    // {
-      // ROS_INFO_STREAM("Name: " << joint_names_[i] << " Position: " << joint_state_[i]);
-    // }
-  // }
-  #endif
-}
-
-void CalDataCollector::mouseCallback(int event, int x, int y, int flags, void* param)
-{
-  CalDataCollector *cal_data_collector = static_cast<CalDataCollector*>(param);
-  cal_data_collector->mouseCallbackInternal(event, x, y, flags);
-}
-
 void CalDataCollector::initDisplayWindow(const std::string &window_name)
 {
   cv_window_name_ = window_name;
   cv::namedWindow(cv_window_name_, CV_WINDOW_NORMAL);
-  // cv::setMouseCallback(cv_window_name_, &mouseCallback);
   cv::startWindowThread();
 }
 
