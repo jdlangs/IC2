@@ -5,25 +5,104 @@ CalDataCollector::CalDataCollector(ros::NodeHandle nh, ros::NodeHandle pnh) :
 {
   this->initDisplayWindow("Camera View");
 
-  // joint_state_subscriber_ = pnh_.subscribe("/joint_states", 1,
-    // &CalDataCollector::jointStateCallback, this);
+#if 0
+  joint_state_subscriber_ = pnh_.subscribe("/joint_states", 1,
+    &CalDataCollector::jointStateCallback, this);
 
   image_subscriber_ = image_transport_.subscribe("/calibration_image", 1,
     boost::bind(&CalDataCollector::imageCallback, this, _1));
-  // image_subscriber_ = image_transport_.subscribe("/usb_cam/image_raw", 1,
+#endif
 
   pnh_.getParam("pattern_cols", pattern_cols_);
   pnh_.getParam("pattern_rows", pattern_rows_);
   pnh_.getParam("save_path", save_path_);
 
-  // TEMP
+  // TEMPORARY, REMOVE THIS LATER
   i_ = 0;
 }
 
 void CalDataCollector::collectData(void)
 {
   if (!this->checkSettings()) {return;}
+
+  message_filters::Subscriber<sensor_msgs::Image> image_sub(pnh_, 
+    "/calibration_image", 1);
+  message_filters::Subscriber<sensor_msgs::JointState> joint_state_sub(pnh_, 
+    "/joint_states", 1);
+  message_filters::Synchronizer<SyncPolicy> synchronizer(SyncPolicy(10), image_sub, 
+    joint_state_sub);
+  synchronizer.registerCallback(boost::bind(&CalDataCollector::synchronizedMessageCallback, 
+    this, _1, _2));
+  
   ros::spin();
+}
+
+void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConstPtr &image_msg,
+  const sensor_msgs::JointStateConstPtr &joint_state_msg)
+{
+  ROS_INFO_STREAM("Joint State MSG Received: " << joint_state_msg->name.size());
+
+  std::size_t size = joint_state_msg->name.size();
+  joint_names_.clear();
+  joint_names_.resize(size);
+  joint_state_.clear();
+  joint_state_.resize(size);
+
+  for (std::size_t i = 0; i < size; i++)
+  {
+    joint_names_[i] = joint_state_msg->name[i];
+    joint_state_[i] = joint_state_msg->position[i];
+  }
+
+  ROS_INFO_STREAM("Image MSG Received");
+
+  cv_bridge::CvImageConstPtr msg_ptr;
+
+  try {msg_ptr = cv_bridge::toCvCopy(image_msg);}
+
+  catch (cv_bridge::Exception &ex) 
+  {
+    ROS_ERROR_STREAM("Could not load image from message");
+  }
+
+  raw_image_ = msg_ptr->image;
+  grid_image_ = msg_ptr->image;
+
+  // Find circlegrid and draw grid
+  cv::Mat display_image;
+  if (!raw_image_.empty() && !grid_image_.empty())
+  {
+    if (this->drawGrid(raw_image_, grid_image_))
+    {
+      ROS_INFO_STREAM("CIRCLE GRID FOUND!!!");
+      display_image = grid_image_;
+    }
+    else
+    {
+      ROS_INFO_STREAM("NO CIRCLE GRID FOUND!!!");
+      display_image = raw_image_;    
+    }
+
+    cv::imshow(cv_window_name_, display_image);
+
+    int key = cv::waitKey(30);
+
+    if ((key % 256) == 83 || (key % 256) == 115) // S/s
+    {
+      saveData(raw_image_);
+    }
+
+    if ((key % 256) == 27) // ESC
+    {
+      cv::destroyWindow(cv_window_name_);
+      ros::shutdown();
+      return;
+    } 
+  }
+  else
+  {
+    ROS_ERROR_STREAM("INPUT IMAGE IS EMPTY!");
+  }  
 }
 
 void CalDataCollector::jointStateCallback(const sensor_msgs::JointStateConstPtr &msg)
@@ -81,6 +160,7 @@ bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_imag
 void CalDataCollector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
 { 
   // boost::mutex::scoped_lock lock(MUTEX);
+  ROS_INFO_STREAM("Image MSG Received");
 
   cv_bridge::CvImageConstPtr msg_ptr;
 
@@ -133,7 +213,49 @@ void CalDataCollector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
 
 inline void CalDataCollector::saveData(const cv::Mat &image)
 {
-  ROS_INFO_STREAM("Saving Image!");
+  // TF Transforms
+  std::string base_link = "base_link";
+  std::string link_6 = "link_6";
+  std::string tool0 = "tool0";
+  tf_.waitForTransform(base_link, tool0, ros::Time(), ros::Duration(1.0));
+
+  try
+  {
+    tf::StampedTransform transform;
+    tf_.lookupTransform(base_link, tool0, ros::Time(), transform);
+
+    tf::Vector3 origin = transform.getOrigin();
+    tf::Quaternion quaternion = transform.getRotation();
+#if 1
+    ROS_INFO_STREAM("Translation: [" << origin.getX() << ", " << origin.getY() <<
+      ", " << origin.getZ() << "]");
+    ROS_INFO_STREAM("Quaternion: [" << quaternion.getX() << ", " << quaternion.getY() <<
+      ", " << quaternion.getZ() << ", " << quaternion.getW() << "]");    
+#endif
+  #include <iomanip>
+  #include <iostream>
+  std::cout.precision(3);
+  std::cout.setf(std::ios::fixed,std::ios::floatfield);
+  std::cout << "- Translation: [" << origin.getX() << ", " << origin.getY() 
+    << ", " << origin.getZ() << "]" <<   std::endl;
+  std::cout << "- Rotation: in Quaternion [" << quaternion.getX() << ", " 
+    << quaternion.getY() << ", " << quaternion.getZ() << ", " 
+    << quaternion.getW() << "]" << std::endl;
+
+  }
+  catch (tf::TransformException &ex)
+  {
+    ROS_ERROR_STREAM("TF Exception: " << ex.what());
+  }
+
+
+  ROS_INFO_STREAM("Saving Joints: " << joint_names_.size() << " " << joint_state_.size());
+  for (std::size_t i = 0; i < joint_names_.size(); i++)
+  {
+    ROS_INFO_STREAM("Name: " << joint_names_[i] << " Position: " << joint_state_[i]);
+  }  
+
+  ROS_INFO_STREAM("Saving Image");
   try
   {
     // No compression for png

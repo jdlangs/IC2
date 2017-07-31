@@ -4,6 +4,9 @@
 #include <boost/thread.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/features2d/features2d.hpp>
@@ -15,7 +18,9 @@
 #include <tf/transform_listener.h>
 #include <yaml-cpp/yaml.h>
 
-static boost::mutex MUTEX;
+// static boost::mutex MUTEX;
+typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, 
+  sensor_msgs::JointState> SyncPolicy;
 
 class CalDataCollector
 {
@@ -28,7 +33,7 @@ public:
 
 // Private Methods
 private:
-  void syncCallback(const sensor_msgs::ImageConstPtr &image_msg,
+  void synchronizedMessageCallback(const sensor_msgs::ImageConstPtr &image_msg,
     const sensor_msgs::JointStateConstPtr &joint_state_msg);
 
   void jointStateCallback(const sensor_msgs::JointStateConstPtr &msg);
@@ -56,6 +61,7 @@ private:
   std::vector<float> joint_state_;
   image_transport::ImageTransport image_transport_;
   image_transport::Subscriber image_subscriber_;
+  tf::TransformListener tf_;
   std::string cv_window_name_;
   std::string save_path_;
   cv::Mat raw_image_;
