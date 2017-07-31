@@ -27,6 +27,10 @@ public:
 
   ~CalibrationJob(void) { }
 
+  double getInitialCost(void) {return initial_cost_;}
+  
+  double getFinalCost(void) {return final_cost_;}
+
 protected:
   bool checkObservations(void);
 
