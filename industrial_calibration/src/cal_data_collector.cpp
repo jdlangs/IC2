@@ -7,6 +7,8 @@ CalDataCollector::CalDataCollector(ros::NodeHandle nh, ros::NodeHandle pnh) :
 
   pnh_.getParam("pattern_cols", pattern_cols_);
   pnh_.getParam("pattern_rows", pattern_rows_);
+  pnh_.getParam("from_link", from_link_);
+  pnh_.getParam("to_link", to_link_);
   pnh_.getParam("save_path", save_path_);
 }
 
@@ -181,23 +183,13 @@ inline void CalDataCollector::writeJointStateToYAML(YAML::Emitter &out,
 inline void CalDataCollector::saveCalibrationData(const cv::Mat &image,
   const std::vector<std::string> &joint_names, const std::vector<float> &joint_state)
 {
-  // THESE NEED TO NOT BE HARD CODED IN.
-  std::string base_link = "base_link";
-  std::string link_6 = "link_6";
-  std::string tool0 = "tool0";
-
   // TF Transforms
-  tf_.waitForTransform(base_link, tool0, ros::Time(), ros::Duration(0.5));
-  tf_.waitForTransform(base_link, link_6, ros::Time(), ros::Duration(0.5));
-
-  tf::StampedTransform tool0_transform;
-  tf::StampedTransform link_6_transform;
+  tf_.waitForTransform(from_link_, to_link_, ros::Time(), ros::Duration(0.5));
+  tf::StampedTransform transform;
   
   try
   {
-    tf_.lookupTransform(base_link, tool0, ros::Time(), tool0_transform);
-
-    tf_.lookupTransform(base_link, link_6, ros::Time(), link_6_transform);
+    tf_.lookupTransform(from_link_, to_link_, ros::Time(), transform);
   }
   catch (tf::TransformException &ex)
   {
@@ -206,8 +198,7 @@ inline void CalDataCollector::saveCalibrationData(const cv::Mat &image,
 
   YAML::Emitter out;
   out << YAML::BeginMap;
-    this->writeTransformToYAML(out, base_link, tool0, tool0_transform);
-    this->writeTransformToYAML(out, base_link, link_6, link_6_transform);
+    this->writeTransformToYAML(out, from_link_, to_link_, transform);
     this->writeJointStateToYAML(out, joint_names, joint_state);
   out << YAML::EndMap;
 
