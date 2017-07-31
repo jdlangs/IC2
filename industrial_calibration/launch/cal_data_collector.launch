@@ -13,6 +13,6 @@
   <node name="cal_data_collector" pkg="industrial_calibration" type="cal_data_collector" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
     <param name="pattern_cols" value="$(arg cols)" type="int"/>
     <param name="pattern_rows" value="$(arg rows)" type="int"/>
-    <param name="save_path" value="$(arg save_path)" type="string"/>
+    <param name="save_path" value="$(arg save_path)/" type="string"/>
   </node>
 </launch>

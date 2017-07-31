@@ -37,6 +37,8 @@ private:
 
   void imageCallback(const sensor_msgs::ImageConstPtr &msg);
 
+  inline void saveData(const cv::Mat &image);
+
   void mouseCallbackInternal(int event, int x, int y, int flags);
 
   static void mouseCallback(int event, int x, int y, int flags, void* param);
@@ -60,6 +62,6 @@ private:
   cv::Mat grid_image_;
   int pattern_cols_;
   int pattern_rows_;
-  bool exit_;
+  std::size_t i_;
 };
 #endif // CAL_DATA_COLLECTOR_H

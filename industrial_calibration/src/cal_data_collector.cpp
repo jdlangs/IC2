@@ -1,32 +1,34 @@
 #include <industrial_calibration/cal_data_collector.h>
 
 CalDataCollector::CalDataCollector(ros::NodeHandle nh, ros::NodeHandle pnh) :
-  nh_(nh), pnh_(pnh), image_transport_(pnh_), exit_(false)
+  nh_(nh), pnh_(pnh), image_transport_(pnh_)
 {
   this->initDisplayWindow("Camera View");
 
-  joint_state_subscriber_ = pnh_.subscribe("/joint_states", 1,
-    &CalDataCollector::jointStateCallback, this);
+  // joint_state_subscriber_ = pnh_.subscribe("/joint_states", 1,
+    // &CalDataCollector::jointStateCallback, this);
 
   image_subscriber_ = image_transport_.subscribe("/calibration_image", 1,
     boost::bind(&CalDataCollector::imageCallback, this, _1));
-
   // image_subscriber_ = image_transport_.subscribe("/usb_cam/image_raw", 1,
 
   pnh_.getParam("pattern_cols", pattern_cols_);
   pnh_.getParam("pattern_rows", pattern_rows_);
   pnh_.getParam("save_path", save_path_);
+
+  // TEMP
+  i_ = 0;
 }
 
 void CalDataCollector::collectData(void)
 {
-  if (!this->checkSettings() || this->exit_) {return;}
+  if (!this->checkSettings()) {return;}
   ros::spin();
 }
 
 void CalDataCollector::jointStateCallback(const sensor_msgs::JointStateConstPtr &msg)
 {
-  boost::mutex::scoped_lock lock(MUTEX);
+  // boost::mutex::scoped_lock lock(MUTEX);
 
   ROS_INFO_STREAM("Joint State MSG Received: " << msg->name.size());
 
@@ -45,8 +47,6 @@ void CalDataCollector::jointStateCallback(const sensor_msgs::JointStateConstPtr 
 
 bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_image)
 {
-  boost::mutex::scoped_lock lock(MUTEX);
-
   std::size_t cols = static_cast<std::size_t>(pattern_cols_);
   std::size_t rows = static_cast<std::size_t>(pattern_rows_);
 
@@ -70,7 +70,7 @@ bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_imag
         cv::Mat center_converted;
         center_image.convertTo(center_converted, CV_32F);
         cv::drawChessboardCorners(output_image, pattern_size, cv::Mat(centers), 
-          pattern_found);      
+          pattern_found);
         return true;
       }
     }
@@ -79,7 +79,9 @@ bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_imag
 }
 
 void CalDataCollector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
-{  
+{ 
+  // boost::mutex::scoped_lock lock(MUTEX);
+
   cv_bridge::CvImageConstPtr msg_ptr;
 
   try {msg_ptr = cv_bridge::toCvCopy(msg);}
@@ -108,10 +110,18 @@ void CalDataCollector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     }
 
     cv::imshow(cv_window_name_, display_image);
-    if ((cv::waitKey(30) % 256) == 27) // ESC
+
+    int key = cv::waitKey(30);
+
+    if ((key % 256) == 83 || (key % 256) == 115) // S/s
+    {
+      saveData(raw_image_);
+    }
+
+    if ((key % 256) == 27) // ESC
     {
       cv::destroyWindow(cv_window_name_);
-      exit_ = true;
+      ros::shutdown();
       return;
     } 
   }
@@ -121,8 +131,37 @@ void CalDataCollector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   }
 }
 
+inline void CalDataCollector::saveData(const cv::Mat &image)
+{
+  ROS_INFO_STREAM("Saving Image!");
+  try
+  {
+    // No compression for png
+    std::vector<int> png_params;
+    png_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+    png_params.push_back(0);
+
+    std::string image_file_name = save_path_ + std::to_string(i_) + ".png";
+    ROS_INFO_STREAM(save_path_);
+    if (cv::imwrite(image_file_name, raw_image_, png_params))
+    {
+      ROS_INFO_STREAM("Saving Image: " << image_file_name);
+      i_++;
+    }
+    else
+    {
+      ROS_ERROR_STREAM("Fail");
+    }
+  }
+  catch (std::exception &ex)
+  {
+    ROS_ERROR_STREAM("More Fail");
+  }  
+}
+
 void CalDataCollector::mouseCallbackInternal(int event, int x, int y, int flags)
 {
+  #if 0
   if (event != cv::EVENT_LBUTTONDOWN) {return;}
 
   boost::mutex::scoped_lock lock(MUTEX, boost::try_to_lock);
@@ -131,15 +170,44 @@ void CalDataCollector::mouseCallbackInternal(int event, int x, int y, int flags)
     ROS_INFO_STREAM("I DONT OWN THIS LOCK");
     return;
   }
+
   else
   {
-    // Save Image
-    ROS_INFO_STREAM("Saving Image: " << joint_names_.size() << " " << joint_state_.size());
-    for (std::size_t i = 0; i < joint_names_.size(); i++)
+    try
     {
-      ROS_INFO_STREAM("Name: " << joint_names_[i] << " Position: " << joint_state_[i]);
+      // No compression for png
+      std::vector<int> png_params;
+      png_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+      png_params.push_back(0);
+
+      if (cv::imwrite(save_path_ + std::to_string(i_), raw_image_, png_params))
+      {
+        ROS_INFO_STREAM("Saving Image: " << i_ << ".png");
+        i_++;
+      }
+      else
+      {
+        ROS_ERROR_STREAM("Fail");
+      }
     }
+    catch (std::exception &ex)
+    {
+      ROS_ERROR_STREAM("More Fail");
+    }
+    
   }
+
+  // else
+  // {
+    // Save Image
+    // ROS_INFO_STREAM("Saving Images");
+    // ROS_INFO_STREAM("Saving Image: " << joint_names_.size() << " " << joint_state_.size());
+    // for (std::size_t i = 0; i < joint_names_.size(); i++)
+    // {
+      // ROS_INFO_STREAM("Name: " << joint_names_[i] << " Position: " << joint_state_[i]);
+    // }
+  // }
+  #endif
 }
 
 void CalDataCollector::mouseCallback(int event, int x, int y, int flags, void* param)
@@ -152,7 +220,7 @@ void CalDataCollector::initDisplayWindow(const std::string &window_name)
 {
   cv_window_name_ = window_name;
   cv::namedWindow(cv_window_name_, CV_WINDOW_NORMAL);
-  cv::setMouseCallback(cv_window_name_, &mouseCallback);
+  // cv::setMouseCallback(cv_window_name_, &mouseCallback);
   cv::startWindowThread();
 }
 
