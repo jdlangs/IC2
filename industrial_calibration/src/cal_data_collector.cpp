@@ -17,7 +17,7 @@ void CalDataCollector::collectData(void)
   if (!this->checkSettings()) {return;}
 
   message_filters::Subscriber<sensor_msgs::Image> image_sub(pnh_, 
-    "/calibration_image", 1);
+    "/camera/rgb/image_rect_color", 1);
   message_filters::Subscriber<sensor_msgs::JointState> joint_state_sub(pnh_, 
     "/joint_states", 1);
   message_filters::Synchronizer<SyncPolicy> synchronizer(SyncPolicy(10), image_sub, 
@@ -26,6 +26,9 @@ void CalDataCollector::collectData(void)
     this, _1, _2));
 
   ros::spin();
+
+  ros::Rate rate(60);
+  rate.sleep();
 }
 
 void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConstPtr &image_msg,
@@ -34,15 +37,19 @@ void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConst
   ROS_INFO_STREAM("Joint State MSG Received: " << joint_state_msg->name.size());
 
   std::size_t size = joint_state_msg->name.size();
-  joint_names_.clear();
-  joint_names_.resize(size);
-  joint_state_.clear();
-  joint_state_.resize(size);
+  
+  std::vector<std::string> joint_names;
+  std::vector<float> joint_state;
+
+  joint_names.clear();
+  joint_names.resize(size);
+  joint_state.clear();
+  joint_state.resize(size);
 
   for (std::size_t i = 0; i < size; i++)
   {
-    joint_names_[i] = joint_state_msg->name[i];
-    joint_state_[i] = joint_state_msg->position[i];
+    joint_names[i] = joint_state_msg->name[i];
+    joint_state[i] = joint_state_msg->position[i];
   }
 
   ROS_INFO_STREAM("Image MSG Received");
@@ -50,37 +57,39 @@ void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConst
   cv_bridge::CvImageConstPtr msg_ptr;
 
   try {msg_ptr = cv_bridge::toCvCopy(image_msg);}
-
   catch (cv_bridge::Exception &ex) 
   {
     ROS_ERROR_STREAM("Could not load image from message");
   }
 
-  raw_image_ = msg_ptr->image;
-  grid_image_ = msg_ptr->image;
+  cv::Mat raw_image;
+  msg_ptr->image.copyTo(raw_image);
+
+  cv::Mat grid_image;
+  msg_ptr->image.copyTo(grid_image);
 
   // Find circlegrid and draw grid
   cv::Mat display_image;
-  if (!raw_image_.empty() && !grid_image_.empty())
+  if (!raw_image.empty() && !grid_image.empty())
   {
-    if (this->drawGrid(raw_image_, grid_image_))
+    if (this->drawGrid(grid_image))
     {
       ROS_INFO_STREAM("CIRCLE GRID FOUND!!!");
-      display_image = grid_image_;
+      display_image = grid_image;
     }
     else
     {
       ROS_INFO_STREAM("NO CIRCLE GRID FOUND!!!");
-      display_image = raw_image_;    
+      display_image = raw_image;    
     }
 
     cv::imshow(cv_window_name_, display_image);
 
     int key = cv::waitKey(30);
 
-    if ((key % 256) == 83 || (key % 256) == 115) // S/s
+    if ((key % 256) == 83 || (key % 256) == 115) // ASCII S / s
     {
-      this->saveCalibrationData(raw_image_, joint_names_, joint_state_);
+      this->saveCalibrationData(raw_image, joint_names, joint_state);
     }
 
     if ((key % 256) == 27) // ESC
@@ -96,7 +105,7 @@ void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConst
   }  
 }
 
-inline bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &output_image)
+inline bool CalDataCollector::drawGrid(cv::Mat &image)
 {
   std::size_t cols = static_cast<std::size_t>(pattern_cols_);
   std::size_t rows = static_cast<std::size_t>(pattern_rows_);
@@ -104,7 +113,7 @@ inline bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &outp
   std::vector<cv::Point2f> centers;
   cv::Size pattern_size(cols, rows);
   cv::SimpleBlobDetector::Params params;
-  params.maxArea = input_image.cols * input_image.rows;
+  params.maxArea = image.cols * image.rows;
   const cv::Ptr<cv::FeatureDetector> &blob_detector = cv::SimpleBlobDetector::create(params);
 
   for (double alpha = 1.0; alpha < 3.0; alpha += 0.5)
@@ -112,7 +121,7 @@ inline bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &outp
     for (int beta = 0; beta < 100; beta += 50)
     {
       cv::Mat altered_image;
-      input_image.convertTo(altered_image, -1, alpha, beta);
+      image.convertTo(altered_image, -1, alpha, beta);
       bool pattern_found = cv::findCirclesGrid(altered_image, pattern_size, centers,
         cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blob_detector);
       if (pattern_found && centers.size() == (cols*rows))
@@ -120,7 +129,7 @@ inline bool CalDataCollector::drawGrid(const cv::Mat &input_image, cv::Mat &outp
         cv::Mat center_image = cv::Mat(centers);
         cv::Mat center_converted;
         center_image.convertTo(center_converted, CV_32F);
-        cv::drawChessboardCorners(output_image, pattern_size, cv::Mat(centers), 
+        cv::drawChessboardCorners(image, pattern_size, cv::Mat(centers), 
           pattern_found);
         return true;
       }
@@ -218,7 +227,7 @@ inline void CalDataCollector::saveCalibrationData(const cv::Mat &image,
     png_params.push_back(0);
 
     std::string image_file_name = save_path_ + std::to_string(i_) + ".png";
-    if (cv::imwrite(image_file_name, raw_image_, png_params))
+    if (cv::imwrite(image_file_name, image, png_params))
     {
       ROS_INFO_STREAM("Saving Image: " << image_file_name);
       i_++;
@@ -238,7 +247,7 @@ void CalDataCollector::initDisplayWindow(const std::string &window_name)
 {
   cv_window_name_ = window_name;
   cv::namedWindow(cv_window_name_, CV_WINDOW_NORMAL);
-  cv::startWindowThread();
+  // cv::startWindowThread();
 }
 
 bool CalDataCollector::checkSettings(void)

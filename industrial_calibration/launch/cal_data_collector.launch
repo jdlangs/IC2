@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
-  <arg name="cols" default="5"/>
-  <arg name="rows" default="7"/>
+  <arg name="cols" default="10"/>
+  <arg name="rows" default="10"/>
   <arg name="from_link" default="base_link"/>
   <arg name="to_link" default="tool0"/>
   <arg name="save_path" default="$(find industrial_calibration)"/>
