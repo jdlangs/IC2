@@ -31,6 +31,7 @@ bool convertToPose6D(const std::vector<LinkData> &link_data,
 bool parseYAML(const YAML::Node &node, const std::string &var_name, 
   std::vector<double> &var_value)
 {
+
   var_value.clear();
   if (node[var_name])
   {
@@ -50,22 +51,18 @@ bool loadLinkData(const std::size_t &index, const std::string &path,
   LinkData *link_data)
 {
   bool success = true;
-  std::string file_path = path + std::to_string(index+1) + ".yaml";
+  std::string file_path = path + std::to_string(index) + ".yaml";
 
   YAML::Node data_yaml;
   try
   {
     data_yaml = YAML::LoadFile(file_path);
-    if (!data_yaml["joints"]) {return false;}
+    if (!data_yaml["base_link_to_tool0"]) {return false;}
   }
   catch (YAML::BadFile &bf) {return false;}
 
-  success &= parseYAML(data_yaml, "joints", link_data->joint_states);
-  success &= parseYAML(data_yaml, "translation", link_data->translation);
-  success &= parseYAML(data_yaml, "rotation_quat", link_data->rotation_quat);
-  success &= parseYAML(data_yaml, "rotation_rad", link_data->rotation_rad);
-  success &= parseYAML(data_yaml, "rotation_deg", link_data->rotation_deg);
-
+  success &= parseYAML(data_yaml["base_link_to_tool0"], "Translation", link_data->translation);
+  success &= parseYAML(data_yaml["base_link_to_tool0"], "Quaternion", link_data->rotation_quat);
   return success;
 }
 
@@ -112,18 +109,17 @@ int main(int argc, char** argv)
 
   // Load Target Data
   industrial_calibration_libs::Target target;
-  target.loadTargetFromYAML(data_path + "mcircles_7x5/mcircles_7x5.yaml");
+  target.loadTargetFromYAML(data_path + "mcircles_10x10/mcircles_10x10.yaml");
 
   // Load Calibration Images
-  const std::size_t num_images = 24;
+  const std::size_t num_images = 11;
   std::vector<cv::Mat> calibration_images;
   calibration_images.reserve(num_images);
-  std::string cal_image_path = data_path + "mcircles_7x5/dataset_2/images/";
-
+  std::string cal_image_path = data_path + "mcircles_10x10/extrinsic/images/";
 
   for (std::size_t i = 0; i < num_images; i++)
   {
-    std::string image_path = cal_image_path + std::to_string(i+1) + ".jpg";
+    std::string image_path = cal_image_path + std::to_string(i) + ".png";
     cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_COLOR);
     calibration_images.push_back(image);    
   }
@@ -145,21 +141,71 @@ int main(int argc, char** argv)
   for (std::size_t i = 0; i < num_images; i++)
   {
     LinkData temp_link_data;
-    loadLinkData(i, data_path + "mcircles_7x5/dataset_2/tf/", &temp_link_data);
+    loadLinkData(i, data_path + "mcircles_10x10/extrinsic/tf/", &temp_link_data);
     link_data.push_back(temp_link_data);
   }
 
+#if 0
+  for (std::size_t i = 0; i < link_data.size(); i++)
+  {
+    ROS_INFO_STREAM("Translation");
+    for (std::size_t j = 0; j < link_data[i].translation.size(); j++)
+    {
+      ROS_INFO_STREAM(link_data[i].translation[j]);
+    }
+    ROS_INFO_STREAM("Quaternion");
+    for (std::size_t j = 0; j < link_data[i].rotation_quat.size(); j++)
+    {
+      ROS_INFO_STREAM(link_data[i].rotation_quat[j]);
+    }
+  }
+#endif
+
+#if 0
+  for (std::size_t i = 0; i < target.getData().points.size(); i++)
+  {
+    industrial_calibration_libs::Point3D point(target.getData().points[i]);
+    ROS_INFO_STREAM(std::setprecision(4) << std::fixed << "Point: " << i+1 << " x: " << point.x << " y: " << point.y << " z:" << point.z);
+  }
+#endif
+
+#if 0
+  ROS_INFO_STREAM("Total Observations: " << observation_data.size());
+  for (std::size_t i = 0; i < observation_data.size(); i++)
+  {
+    ROS_INFO_STREAM("Observations for Image " << i << " Size: " << observation_data[i].size());
+    ROS_INFO_STREAM("Observations for Image " << i << " Points:");
+    for (std::size_t j = 0; j < observation_data[i].size(); j++)
+    {
+      ROS_INFO_STREAM(observation_data[i][j]);
+    }
+  }
+#endif
+
+#if 0
+Camera Info Matrix
+  [570.3422241210938, 0.0, 319.5, 0.0]
+  [0.0, 570.3422241210938, 239.5, 0.0]
+  [0.0, 0.0, 1.0, 0.0]
+
+<xacro:property name="ensenso_optical_x" value="0.0197"/> <!--tool0 to color camera lens-->
+<xacro:property name="ensenso_optical_y" value="0.0908"/> <!--tool0 to sensor centerline-->
+<xacro:property name="ensenso_optical_z" value="0.112141"/> <!--tool0 to xtion front face-->  
+#endif
+
+#if 1
   // Convert Link Data to a vector of Pose6D poses
   double intrinsics[4];
-  intrinsics[0] = 944.72;
-  intrinsics[1] = 940.92;
-  intrinsics[2] = 925.56;
-  intrinsics[3] = 518.89;
+  intrinsics[0] = 570.3422;
+  intrinsics[1] = 570.3422;
+  intrinsics[2] = 319.5;
+  intrinsics[3] = 239.5;
 
   // Set camera extrinsics seed
   industrial_calibration_libs::Pose6D link_6_to_camera;
-  link_6_to_camera.setOrigin(0.125, 0.000, 0.091);
-  link_6_to_camera.setQuaternion(0.500, 0.500, 0.500, 0.500);
+
+  link_6_to_camera.setOrigin(0.0197, 0.0908, 0.112141);
+  link_6_to_camera.setAngleAxis(0.0, 0.0, 0.0);
 
   double extrinsics[6];
   extrinsics[0] = link_6_to_camera.ax;
@@ -205,4 +251,8 @@ int main(int argc, char** argv)
   ROS_INFO_STREAM("Rotation x: " << results.target_to_base[0]);
   ROS_INFO_STREAM("Rotation y: " << results.target_to_base[1]);
   ROS_INFO_STREAM("Rotation z: " << results.target_to_base[2]);
+
+  ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
+  ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
+#endif
 }
