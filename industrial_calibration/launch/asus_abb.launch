@@ -1,0 +1,12 @@
+<launch>
+  <arg name="robot_ip" value="192.168.125.1"/>
+  <include file="$(find openni2_launch)/launch/openni2.launch"/>
+  
+  <include file="$(find abb_irb2400_moveit_config)/launch/moveit_planning_execution.launch">
+    <arg name="sim" value="false"/>
+    <arg name="robot_ip" value="$(arg robot_ip)"/>
+  </include>
+  
+</launch>
+
+

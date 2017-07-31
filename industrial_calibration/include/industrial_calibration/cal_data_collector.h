@@ -34,7 +34,7 @@ private:
   void synchronizedMessageCallback(const sensor_msgs::ImageConstPtr &image_msg,
     const sensor_msgs::JointStateConstPtr &joint_state_msg);
 
-  inline bool drawGrid(const cv::Mat &input_image, cv::Mat &output_image);
+  inline bool drawGrid(cv::Mat &image);
 
   inline void printTransform(const tf::StampedTransform &transform);
 
@@ -55,15 +55,15 @@ private:
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
-  std::vector<std::string> joint_names_;
-  std::vector<float> joint_state_;
+  // std::vector<std::string> joint_names_;
+  // std::vector<float> joint_state_;
   tf::TransformListener tf_;
   std::string cv_window_name_;
   std::string save_path_;
   std::string from_link_;
   std::string to_link_;
-  cv::Mat raw_image_;
-  cv::Mat grid_image_;
+  // cv::Mat raw_image_;
+  // cv::Mat grid_image_;
   int pattern_cols_;
   int pattern_rows_;
   std::size_t i_;
