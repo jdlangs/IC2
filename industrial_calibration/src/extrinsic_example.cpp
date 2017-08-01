@@ -159,17 +159,13 @@ int main(int argc, char** argv)
       ROS_INFO_STREAM(link_data[i].rotation_quat[j]);
     }
   }
-#endif
 
-#if 0
   for (std::size_t i = 0; i < target.getData().points.size(); i++)
   {
     industrial_calibration_libs::Point3D point(target.getData().points[i]);
     ROS_INFO_STREAM(std::setprecision(4) << std::fixed << "Point: " << i+1 << " x: " << point.x << " y: " << point.y << " z:" << point.z);
   }
-#endif
 
-#if 0
   ROS_INFO_STREAM("Total Observations: " << observation_data.size());
   for (std::size_t i = 0; i < observation_data.size(); i++)
   {
@@ -180,9 +176,7 @@ int main(int argc, char** argv)
       ROS_INFO_STREAM(observation_data[i][j]);
     }
   }
-#endif
 
-#if 0
 Camera Info Matrix
   [570.3422241210938, 0.0, 319.5, 0.0]
   [0.0, 570.3422241210938, 239.5, 0.0]
@@ -193,7 +187,6 @@ Camera Info Matrix
 <xacro:property name="ensenso_optical_z" value="0.112141"/> <!--tool0 to xtion front face-->  
 #endif
 
-#if 1
   // Convert Link Data to a vector of Pose6D poses
   double intrinsics[4];
   intrinsics[0] = 570.3422;
@@ -254,5 +247,4 @@ Camera Info Matrix
 
   ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
   ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
-#endif
 }
