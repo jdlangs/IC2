@@ -185,6 +185,12 @@ set_target_properties(intrinsic_example ${COMPILER_WARNINGS})
 target_link_libraries(intrinsic_example ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
   ${Boost_LIBRARIES} yaml-cpp)
 
+add_executable(sim_extrinsic src/sim_extrinsic.cpp)
+add_dependencies(sim_extrinsic ${catkin_EXPORTED_TARGETS})
+set_target_properties(sim_extrinsic ${COMPILER_WARNINGS})
+target_link_libraries(sim_extrinsic ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
+  ${Boost_LIBRARIES} yaml-cpp)
+
 #############
 ## Install ##
 #############
