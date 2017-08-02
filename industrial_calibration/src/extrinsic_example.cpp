@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <yaml-cpp/yaml.h>
+#include <opencv2/highgui/highgui.hpp>
 #include <industrial_calibration_libs/industrial_calibration_libs.h>
 
 typedef std::vector<double> JointStates;
@@ -27,6 +28,10 @@ void printVector(const std::vector<double> &vec);
 
 bool convertToPose6D(const std::vector<LinkData> &link_data, 
   std::vector<industrial_calibration_libs::Pose6D> *link_poses);
+
+void drawResultPoints(const cv::Mat &input_image, cv::Mat &output_image,
+  const industrial_calibration_libs::ObservationPoints &observation_points,
+  std::size_t rows, std::size_t cols);
 
 bool parseYAML(const YAML::Node &node, const std::string &var_name, 
   std::vector<double> &var_value)
@@ -97,6 +102,22 @@ bool convertToPose6D(const std::vector<LinkData> &link_data,
 
   if (link_poses->size() == link_data.size()) {return true;}
   else {return false;}
+}
+
+void drawResultPoints(const cv::Mat &input_image, cv::Mat &output_image,
+  const industrial_calibration_libs::ObservationPoints &observation_points,
+  std::size_t rows, std::size_t cols)
+{
+  const int RADIUS = 5;
+  input_image.copyTo(output_image);
+
+  for (std::size_t i = 0; i < observation_points.size(); i++)
+  {
+    if (i == (rows*cols) - cols)
+      cv::circle(output_image, observation_points[i], 2*RADIUS, cv::Scalar(0, 0, 255), -1);
+    else
+      cv::circle(output_image, observation_points[i], RADIUS, cv::Scalar(0, 255, 0), -1);
+  }
 }
 
 int main(int argc, char** argv)
@@ -247,4 +268,66 @@ Camera Info Matrix
 
   ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
   ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
+
+  // Draw the results back onto the image
+  const double* camera_angle_axis(&results.extrinsics[0]);
+  const double* camera_position(&results.extrinsics[3]);
+  const double* target_angle_axis(&results.target_to_base[0]);
+  const double* target_position(&results.target_to_base[3]);
+
+  double fx = intrinsics[0];
+  double fy = intrinsics[1];
+  double cx = intrinsics[2];
+  double cy = intrinsics[3];
+
+  for (std::size_t i = 0; i < link_poses.size(); i++)
+  {
+    industrial_calibration_libs::ObservationPoints observation_points;
+    industrial_calibration_libs::Pose6D link_pose_inverse = link_poses[i].getInverse();
+
+    for (std::size_t j = 0; j < target.getData().points.size(); j++)
+    {
+      industrial_calibration_libs::Point3D target_point(target.getData().points[j]);
+
+      double world_point[3];
+      double link_point[3];
+      double camera_point[3];
+
+      industrial_calibration_libs::transformPoint3D(target_angle_axis, target_position,
+        target_point.asVector(), world_point);
+      industrial_calibration_libs::poseTransformPoint(link_pose_inverse, world_point,
+        link_point);
+      industrial_calibration_libs::transformPoint(camera_angle_axis, camera_position,
+        link_point, camera_point);
+
+      double xp1 = camera_point[0];
+      double yp1 = camera_point[1];
+      double zp1 = camera_point[2];
+
+      double xp, yp;
+      if (zp1 == 0.0)
+      {
+        xp = xp1;
+        yp = yp1;
+      }
+      else
+      {
+        xp = xp1 / zp1;
+        yp = yp1 / zp1;
+      }
+
+      double point_x = fx * xp + cx;
+      double point_y = fy * yp + cy;
+
+      cv::Point2d cv_point(point_x, point_y);
+      observation_points.push_back(cv_point);
+    }
+
+    cv::Mat result_image;
+    drawResultPoints(calibration_images[i], result_image, observation_points,
+      target.getData().target_rows, target.getData().target_cols);
+    cv::imshow("Result Image", result_image);
+    cv::waitKey(0);
+    cv::imwrite(data_path + std::to_string(i+1) + ".jpg", result_image);
+  }
 }
