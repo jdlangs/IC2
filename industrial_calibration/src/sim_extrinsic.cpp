@@ -148,7 +148,6 @@ int main(int argc, char** argv)
   double target_to_base[6] = {0};
   target_to_base[3] = 0.75;
 
-
   const double* camera_angle_axis(&extrinsics[0]);
   const double* camera_position(&extrinsics[3]);
   const double* target_angle_axis(&target_to_base[0]);
