@@ -77,56 +77,42 @@ bool ObservationExtractor::extractModifiedCircleGrid(const cv::Mat &image,
 
   ObservationPoints centers;
 
-  // Iterate through a series of alphas and betas to find best result
-  for (double alpha = 1.0; alpha <= 3.0; alpha += 0.01)
-  {
-    bool found = false;
-    for (int beta = 0; beta <= 100; beta++)
-    {
-      cv::Mat grid_image;
-      image.convertTo(grid_image, -1, alpha, beta);
+  cv::Mat grid_image;
+  image.copyTo(grid_image);
 
-      // Try regular pattern size
-      centers.clear();
-      bool regular_pattern_found = cv::findCirclesGrid(grid_image, 
-        pattern_size, centers, cv::CALIB_CB_SYMMETRIC_GRID | 
-        cv::CALIB_CB_CLUSTERING, detector_ptr);
-      if (regular_pattern_found && (centers.size() == rows*cols))
-      {
-        cv::Mat center_image = cv::Mat(centers);
-        cv::Mat center_converted;
-        center_image.convertTo(center_converted, CV_32F);
-        cv::drawChessboardCorners(grid_image, pattern_size, center_converted,
-          regular_pattern_found);        
-        output_image = grid_image;
-        found = true;
-        break;
-      }
-      else // Try flipped pattern size
-      {
-        centers.clear();
-        bool flipped_pattern_found = cv::findCirclesGrid(grid_image,
-          pattern_size_flipped, centers, cv::CALIB_CB_SYMMETRIC_GRID | 
-          cv::CALIB_CB_CLUSTERING, detector_ptr);
-        if (flipped_pattern_found && (centers.size() == rows*cols))
-        {
-          cv::Mat center_image = cv::Mat(centers);
-          cv::Mat center_converted;
-          center_image.convertTo(center_converted, CV_32F);
-          cv::drawChessboardCorners(grid_image, pattern_size_flipped, center_converted, flipped_pattern_found);           
-          output_image = grid_image;       
-          flipped = true;
-          found = true;
-          break;
-        }    
-      }  
-    } // for beta
-    if (found) {break;}
-  } // for alpha
+  bool regular_pattern_found = cv::findCirclesGrid(grid_image, 
+    pattern_size, centers, cv::CALIB_CB_SYMMETRIC_GRID | 
+    cv::CALIB_CB_CLUSTERING, detector_ptr);
+  if (regular_pattern_found && (centers.size() == rows*cols))
+  {
+    // Do nothing, there used to be something in here, may have
+    // to re-structure this in the future.
+  }
+  else // Try flipped pattern size
+  {
+
+    bool flipped_pattern_found = cv::findCirclesGrid(grid_image,
+      pattern_size_flipped, centers, cv::CALIB_CB_SYMMETRIC_GRID | 
+      cv::CALIB_CB_CLUSTERING, detector_ptr);
+    if (flipped_pattern_found && (centers.size() == rows*cols))
+    {
+      flipped = true;
+    }    
+  }  
+
   if (centers.size() == 0) {return false;}
   observation_points.reserve(centers.size());
 
-  if (extractKeyPoints(centers, observation_points, detector_ptr, rows, cols, flipped, image)) {return true;}
+  if (extractKeyPoints(centers, observation_points, detector_ptr, rows, cols, flipped, image)) 
+  {
+    cv::Mat center_image = cv::Mat(observation_points);
+    cv::Mat center_converted;
+    center_image.convertTo(center_converted, CV_32F);
+    cv::drawChessboardCorners(grid_image, pattern_size, center_converted,
+      true);        
+    output_image = grid_image;    
+    return true;
+  }
   else {return false;}
 }
 
