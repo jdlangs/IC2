@@ -5,7 +5,8 @@
   <arg name="from_link" default="base_link"/>
   <arg name="to_link" default="tool0"/>
   <arg name="save_path" default="$(find industrial_calibration)"/>
-  <arg name="image_topic" default="/usb_cam/image_raw/"/>
+  <arg name="image_topic" default="/camera/rgb/image_rect_color"/>
+  <arg name="joint_state_topic" default="/joint_states"/>
 
   <!-- Debug arguments -->
   <arg name="debug" default="false"/>
@@ -18,5 +19,7 @@
     <param name="from_link" value="$(arg from_link)" type="string"/>
     <param name="to_link" value="$(arg to_link)" type="string"/>
     <param name="save_path" value="$(arg save_path)/" type="string"/>
+    <remap from="~/image" to="$(arg image_topic)"/>
+    <remap from="~/joint_states" to="$(arg joint_state_topic)"/>
   </node>
 </launch>

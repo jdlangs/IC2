@@ -17,9 +17,9 @@ void CalDataCollector::collectData(void)
   if (!this->checkSettings()) {return;}
 
   message_filters::Subscriber<sensor_msgs::Image> image_sub(pnh_, 
-    "/camera/rgb/image_rect_color", 1);
+    "image", 1);
   message_filters::Subscriber<sensor_msgs::JointState> joint_state_sub(pnh_, 
-    "/joint_states", 1);
+    "joint_states", 1);
   message_filters::Synchronizer<SyncPolicy> synchronizer(SyncPolicy(10), image_sub, 
     joint_state_sub);
   synchronizer.registerCallback(boost::bind(&CalDataCollector::synchronizedMessageCallback, 
@@ -247,7 +247,6 @@ void CalDataCollector::initDisplayWindow(const std::string &window_name)
 {
   cv_window_name_ = window_name;
   cv::namedWindow(cv_window_name_, CV_WINDOW_NORMAL);
-  // cv::startWindowThread();
 }
 
 bool CalDataCollector::checkSettings(void)

@@ -55,15 +55,11 @@ private:
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
-  // std::vector<std::string> joint_names_;
-  // std::vector<float> joint_state_;
   tf::TransformListener tf_;
   std::string cv_window_name_;
   std::string save_path_;
   std::string from_link_;
   std::string to_link_;
-  // cv::Mat raw_image_;
-  // cv::Mat grid_image_;
   int pattern_cols_;
   int pattern_rows_;
   std::size_t i_;
