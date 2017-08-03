@@ -6,9 +6,7 @@
   
   <include file="$(find abb_irb2400_moveit_config)/launch/moveit_planning_execution.launch">
     <arg name="sim" value="$(arg sim)"/>
-    <group unless="$(arg sim)">
-      <arg name="robot_ip" value="$(arg robot_ip)"/>
-    </group>
+    <arg name="robot_ip" value="$(arg robot_ip)" unless="$(arg sim)"/>
   </include>
   
 </launch>
