@@ -132,25 +132,18 @@ inline bool CalDataCollector::drawGrid(cv::Mat &image)
   params.maxArea = image.cols * image.rows;
   const cv::Ptr<cv::FeatureDetector> &blob_detector = cv::SimpleBlobDetector::create(params);
 
-  for (double alpha = 1.0; alpha < 3.0; alpha += 0.5)
+  bool pattern_found = cv::findCirclesGrid(image, pattern_size, centers,
+    cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blob_detector);
+  if (pattern_found && centers.size() == (cols*rows))
   {
-    for (int beta = 0; beta < 100; beta += 50)
-    {
-      cv::Mat altered_image;
-      image.convertTo(altered_image, -1, alpha, beta);
-      bool pattern_found = cv::findCirclesGrid(altered_image, pattern_size, centers,
-        cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blob_detector);
-      if (pattern_found && centers.size() == (cols*rows))
-      {
-        cv::Mat center_image = cv::Mat(centers);
-        cv::Mat center_converted;
-        center_image.convertTo(center_converted, CV_32F);
-        cv::drawChessboardCorners(image, pattern_size, cv::Mat(centers), 
-          pattern_found);
-        return true;
-      }
-    }
+    cv::Mat center_image = cv::Mat(centers);
+    cv::Mat center_converted;
+    center_image.convertTo(center_converted, CV_32F);
+    cv::drawChessboardCorners(image, pattern_size, cv::Mat(centers), 
+      pattern_found);
+    return true;
   }
+
   return false;
 }
 
