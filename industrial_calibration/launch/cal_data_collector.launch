@@ -6,6 +6,7 @@
   <arg name="to_link" default="tool0"/>
   <arg name="save_path" default="$(find industrial_calibration)"/>
   <arg name="image_topic" default="/camera/rgb/image_rect_color"/>
+  <arg name="camera_info_topic" default="/camera/rgb/camera_info"/>
   <arg name="joint_state_topic" default="/joint_states"/>
 
   <!-- Debug arguments -->
@@ -21,5 +22,6 @@
     <param name="save_path" value="$(arg save_path)/" type="string"/>
     <remap from="~/image" to="$(arg image_topic)"/>
     <remap from="~/joint_states" to="$(arg joint_state_topic)"/>
+    <remap from="~/camera_info" to="$(arg camera_info_topic)"/>
   </node>
 </launch>

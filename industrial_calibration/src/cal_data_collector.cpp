@@ -10,6 +10,9 @@ CalDataCollector::CalDataCollector(ros::NodeHandle nh, ros::NodeHandle pnh) :
   pnh_.getParam("from_link", from_link_);
   pnh_.getParam("to_link", to_link_);
   pnh_.getParam("save_path", save_path_);
+
+  camera_info_sub_ = pnh_.subscribe("camera_info", 1, 
+    &CalDataCollector::cameraInfoCallback, this);
 }
 
 void CalDataCollector::collectData(void)
@@ -105,6 +108,19 @@ void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConst
   }  
 }
 
+void CalDataCollector::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg)
+{
+  ROS_INFO_STREAM("CameraInfo MSG Received!");
+  intrinsic_matrix_.resize(9);
+  for (std::size_t i = 0; i < 9; i++)
+  {
+    intrinsic_matrix_[i] = msg->K[i];
+  }
+
+  // Only want to subscribe once since this shouldn't change.
+  camera_info_sub_.shutdown();
+}
+
 inline bool CalDataCollector::drawGrid(cv::Mat &image)
 {
   std::size_t cols = static_cast<std::size_t>(pattern_cols_);
@@ -189,6 +205,13 @@ inline void CalDataCollector::writeJointStateToYAML(YAML::Emitter &out,
   out << YAML::Value << joint_state;
 }
 
+inline void CalDataCollector::writeIntrinsicMatrixToYAML(YAML::Emitter &out,
+  const std::vector<double> &intrinsic_matrix)
+{
+  out << YAML::Key << "Intrinsic Matrix";
+  out << YAML::Value << intrinsic_matrix;
+}
+
 inline void CalDataCollector::saveCalibrationData(const cv::Mat &image,
   const std::vector<std::string> &joint_names, const std::vector<float> &joint_state)
 {
@@ -209,6 +232,7 @@ inline void CalDataCollector::saveCalibrationData(const cv::Mat &image,
   out << YAML::BeginMap;
     this->writeTransformToYAML(out, from_link_, to_link_, transform);
     this->writeJointStateToYAML(out, joint_names, joint_state);
+    this->writeIntrinsicMatrixToYAML(out, intrinsic_matrix_);
   out << YAML::EndMap;
 
   if (out.good())

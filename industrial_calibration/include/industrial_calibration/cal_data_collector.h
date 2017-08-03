@@ -13,6 +13,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/opencv_modules.hpp>
 #include <ros/ros.h>
+#include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_listener.h>
 #include <yaml-cpp/yaml.h>
@@ -34,6 +35,8 @@ private:
   void synchronizedMessageCallback(const sensor_msgs::ImageConstPtr &image_msg,
     const sensor_msgs::JointStateConstPtr &joint_state_msg);
 
+  void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
+
   inline bool drawGrid(cv::Mat &image);
 
   inline void printTransform(const tf::StampedTransform &transform);
@@ -43,6 +46,9 @@ private:
 
   inline void writeJointStateToYAML(YAML::Emitter &out, 
     const std::vector<std::string> &joint_names, const std::vector<float> &joint_state);
+
+  inline void writeIntrinsicMatrixToYAML(YAML::Emitter &out,
+    const std::vector<double> &intrinsic_matrix);
 
   inline void saveCalibrationData(const cv::Mat &image, 
     const std::vector<std::string> &joint_names, const std::vector<float> &joint_state);
@@ -63,5 +69,7 @@ private:
   int pattern_cols_;
   int pattern_rows_;
   std::size_t i_;
+  ros::Subscriber camera_info_sub_;
+  std::vector<double> intrinsic_matrix_;
 };
 #endif // CAL_DATA_COLLECTOR_H
