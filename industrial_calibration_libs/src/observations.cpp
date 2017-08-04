@@ -266,7 +266,7 @@ bool ObservationExtractor::extractKeyPoints(const ObservationPoints &centers,
     large_point.y = end_first_row_pt.y;
     if (usual_ordering)
     {
-      for (std::size_t j = 0; j < centers.size(); j++)
+      for (int j = (centers.size() - 1); j >= 0; j--)
       {
         observation_points.push_back(centers[j]);
       }
