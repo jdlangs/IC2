@@ -154,9 +154,10 @@ int main(int argc, char** argv)
     cv::Mat output_image;
     observation_extractor.extractObservation(calibration_images[i],
       output_image);
+
     // Visualize the "corners"
-    // cv::imshow("grid", output_image);
-    // cv::waitKey(0);
+    cv::imshow("grid", output_image);
+    cv::waitKey(0);
   }
 
   industrial_calibration_libs::ObservationData observation_data = observation_extractor.getObservationData(); 
@@ -231,11 +232,11 @@ int main(int argc, char** argv)
 
   industrial_calibration_libs::Pose6D target_pose;
 
-  // target_pose.setOrigin(0.62, 0.15, -0.15);
-  // target_pose.setEulerZYX(-3.14/2.0, 0.0, 0.0);
+  target_pose.setOrigin(0.62, 0.15, -0.15);
+  target_pose.setEulerZYX(-3.14/2.0, 0.0, 0.0);
 
-  target_pose.setOrigin(0.0, 0.0, 0.0);
-  target_pose.setEulerZYX(0.0, 0.0, 0.0);
+  // target_pose.setOrigin(0.0, 0.0, 0.0);
+  // target_pose.setEulerZYX(0.0, 0.0, 0.0);
 
   double target_to_base[6];
 
@@ -361,8 +362,6 @@ int main(int argc, char** argv)
 
   for (std::size_t i = 0; i < link_poses.size(); i++)
   {
-    // if (i == 0 || i == 1 || i == 2 || i == 10 || i == 11 || i == 12) {continue;}
-
     industrial_calibration_libs::ObservationPoints observation_points;
     industrial_calibration_libs::Pose6D link_pose_inverse = link_poses[i].getInverse();
 
