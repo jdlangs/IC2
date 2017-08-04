@@ -63,6 +63,7 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
 bool Target::loadTargetFromDefinition(const TargetDefinition &target_definition)
 {
   // TODO(gChiou): ...
+  target_params_ = target_definition;
   return false;
 }
 
