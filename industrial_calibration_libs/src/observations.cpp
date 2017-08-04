@@ -77,10 +77,7 @@ bool ObservationExtractor::extractModifiedCircleGrid(const cv::Mat &image,
 
   ObservationPoints centers;
 
-  cv::Mat grid_image;
-  image.copyTo(grid_image);
-
-  bool regular_pattern_found = cv::findCirclesGrid(grid_image, 
+  bool regular_pattern_found = cv::findCirclesGrid(image, 
     pattern_size, centers, cv::CALIB_CB_SYMMETRIC_GRID | 
     cv::CALIB_CB_CLUSTERING, detector_ptr);
   if (regular_pattern_found && (centers.size() == rows*cols))
@@ -91,7 +88,7 @@ bool ObservationExtractor::extractModifiedCircleGrid(const cv::Mat &image,
   else // Try flipped pattern size
   {
 
-    bool flipped_pattern_found = cv::findCirclesGrid(grid_image,
+    bool flipped_pattern_found = cv::findCirclesGrid(image,
       pattern_size_flipped, centers, cv::CALIB_CB_SYMMETRIC_GRID | 
       cv::CALIB_CB_CLUSTERING, detector_ptr);
     if (flipped_pattern_found && (centers.size() == rows*cols))
@@ -108,9 +105,17 @@ bool ObservationExtractor::extractModifiedCircleGrid(const cv::Mat &image,
     cv::Mat center_image = cv::Mat(observation_points);
     cv::Mat center_converted;
     center_image.convertTo(center_converted, CV_32F);
-    cv::drawChessboardCorners(grid_image, pattern_size, center_converted,
-      true);        
-    output_image = grid_image;    
+    cv::drawChessboardCorners(output_image, pattern_size, center_converted,
+      true);
+
+    // Draw point labels
+    this->drawPointLabel("First Point", observation_points[0], CvScalar(0, 255, 0), 
+      output_image);
+    this->drawPointLabel("Origin", observation_points[rows*cols-cols], CvScalar(255, 0, 0),
+      output_image);
+    this->drawPointLabel("Last Point", observation_points[observation_points.size() -1], 
+      CvScalar(0, 0, 255), output_image);
+
     return true;
   }
   else {return false;}
@@ -354,4 +359,25 @@ bool ObservationExtractor::extractKeyPoints(const ObservationPoints &centers,
   return true;
 }
 
+inline void ObservationExtractor::drawPointLabel(const std::string &label, 
+  const cv::Point2d &position, const CvScalar &color, cv::Mat &image)
+{
+  CvFont font;
+  cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 0.5, 0.5);
+  const double font_scale = 0.75;
+  const int line_thickness = 2;
+
+  CvSize label_size;
+  int label_baseline;
+  cvGetTextSize(label.c_str(), &font, &label_size, &label_baseline);
+
+  cv::Point label_origin = cv::Point(position.x, position.y);
+
+  cv::putText(image, label, label_origin, cv::FONT_HERSHEY_SIMPLEX, font_scale,
+    color, line_thickness);
+
+  // Draw dot
+  const int RADIUS = 5.0;
+  cv::circle(image, position, RADIUS, color, -1);
+}
 } // namespace industrial_calibration_libs

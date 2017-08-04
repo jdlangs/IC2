@@ -39,6 +39,9 @@ private:
     std::size_t rows, std::size_t cols, bool flipped,
     const cv::Mat &image);
 
+  inline void drawPointLabel(const std::string &label, const cv::Point2d &position, 
+    const CvScalar &color, cv::Mat &image);
+
   // Data Members
   Target target_;
 
