@@ -288,9 +288,9 @@ int main(int argc, char** argv)
 
   ROS_INFO_STREAM("");
   ROS_INFO_STREAM("Target to Base");
-  ROS_INFO_STREAM("Expected Tx: " << 0.02 << " | Result Tx: " << results.target_to_base[3]);
-  ROS_INFO_STREAM("Expected Ty: " << 0.10 << " | Result Ty: " << results.target_to_base[4]);
-  ROS_INFO_STREAM("Expected Tz: " << 0.15 << " | Result Tz: " << results.target_to_base[5]);
+  ROS_INFO_STREAM("Expected Tx: " << 0.75 << " | Result Tx: " << results.target_to_base[3]);
+  ROS_INFO_STREAM("Expected Ty: " << 0.00 << " | Result Ty: " << results.target_to_base[4]);
+  ROS_INFO_STREAM("Expected Tz: " << 0.00 << " | Result Tz: " << results.target_to_base[5]);
   ROS_INFO_STREAM("Expected Rx: " << 0.00 << " | Result Rx: " << results.target_to_base[0]);
   ROS_INFO_STREAM("Expected Ry: " << 0.00 << " | Result Ry: " << results.target_to_base[1]);
   ROS_INFO_STREAM("Expected Rz: " << 0.00 << " | Result Rz: " << results.target_to_base[2]);
