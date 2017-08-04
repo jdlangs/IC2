@@ -14,6 +14,8 @@ bool ObservationExtractor::extractObservation(const cv::Mat &input_image,
 {
   if (input_image.empty()) {return false;}
 
+  input_image.copyTo(output_image);
+
   ObservationPoints observation_points;
   switch (target_.getData().target_type)
   {
@@ -105,8 +107,7 @@ bool ObservationExtractor::extractModifiedCircleGrid(const cv::Mat &image,
     cv::Mat center_image = cv::Mat(observation_points);
     cv::Mat center_converted;
     center_image.convertTo(center_converted, CV_32F);
-    cv::drawChessboardCorners(output_image, pattern_size, center_converted,
-      true);
+    cv::drawChessboardCorners(output_image, pattern_size, center_converted, true);
 
     // Draw point labels
     this->drawPointLabel("First Point", observation_points[0], CvScalar(0, 255, 0), 
