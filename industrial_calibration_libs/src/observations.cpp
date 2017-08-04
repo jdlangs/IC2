@@ -268,7 +268,7 @@ bool ObservationExtractor::extractKeyPoints(const ObservationPoints &centers,
     {
       for (int j = (centers.size() - 1); j >= 0; j--)
       {
-        observation_points.push_back(centers[j]);
+        observation_points.push_back(centers[static_cast<std::size_t>(j)]);
       }
     }
     else // unusual ordering
