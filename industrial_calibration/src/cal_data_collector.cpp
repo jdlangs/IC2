@@ -66,10 +66,12 @@ void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConst
   }
 
   cv::Mat raw_image;
-  msg_ptr->image.copyTo(raw_image);
+  cv::cvtColor(msg_ptr->image, raw_image, CV_RGB2BGR);
+  // msg_ptr->image.copyTo(raw_image);
 
   cv::Mat grid_image;
-  msg_ptr->image.copyTo(grid_image);
+  cv::cvtColor(msg_ptr->image, grid_image, CV_RGB2BGR);
+  // msg_ptr->image.copyTo(grid_image);
 
   // Find circlegrid and draw grid
   cv::Mat display_image;
