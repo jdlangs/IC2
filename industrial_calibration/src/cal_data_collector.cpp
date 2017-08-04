@@ -126,23 +126,16 @@ inline bool CalDataCollector::drawGrid(cv::Mat &image)
   std::size_t cols = static_cast<std::size_t>(pattern_cols_);
   std::size_t rows = static_cast<std::size_t>(pattern_rows_);
 
-  std::vector<cv::Point2f> centers;
-  cv::Size pattern_size(cols, rows);
-  cv::SimpleBlobDetector::Params params;
-  params.maxArea = image.cols * image.rows;
-  const cv::Ptr<cv::FeatureDetector> &blob_detector = cv::SimpleBlobDetector::create(params);
+  industrial_calibration_libs::TargetDefinition target_definition;
+  target_definition.target_rows = rows;
+  target_definition.target_cols = cols;
+  target_definition.target_type = industrial_calibration_libs::ModifiedCircleGrid;
 
-  bool pattern_found = cv::findCirclesGrid(image, pattern_size, centers,
-    cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blob_detector);
-  if (pattern_found && centers.size() == (cols*rows))
-  {
-    cv::Mat center_image = cv::Mat(centers);
-    cv::Mat center_converted;
-    center_image.convertTo(center_converted, CV_32F);
-    cv::drawChessboardCorners(image, pattern_size, cv::Mat(centers), 
-      pattern_found);
-    return true;
-  }
+  industrial_calibration_libs::Target target;
+  target.loadTargetFromDefinition(target_definition);
+  
+  industrial_calibration_libs::ObservationExtractor observation_extractor(target);
+  if (observation_extractor.extractObservation(image, image)) {return true;}
 
   return false;
 }
