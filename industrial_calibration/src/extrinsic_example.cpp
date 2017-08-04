@@ -135,7 +135,7 @@ int main(int argc, char** argv)
   target.loadTargetFromYAML(data_path + "mcircles_10x10/mcircles_10x10.yaml");
 
   // Load Calibration Images
-  const std::size_t num_images = 9;
+  const std::size_t num_images = 10;
   std::vector<cv::Mat> calibration_images;
   calibration_images.reserve(num_images);
   std::string cal_image_path = data_path + "mcircles_10x10/extrinsic/images/";
@@ -156,8 +156,8 @@ int main(int argc, char** argv)
       output_image);
 
     // Visualize the "corners"
-    cv::imshow("grid", output_image);
-    cv::waitKey(0);
+    // cv::imshow("grid", output_image);
+    // cv::waitKey(0);
   }
 
   industrial_calibration_libs::ObservationData observation_data = observation_extractor.getObservationData(); 
@@ -232,11 +232,11 @@ int main(int argc, char** argv)
 
   industrial_calibration_libs::Pose6D target_pose;
 
-  target_pose.setOrigin(0.62, 0.15, -0.15);
-  target_pose.setEulerZYX(-3.14/2.0, 0.0, 0.0);
+  // target_pose.setOrigin(0.62, 0.15, -0.15);
+  // target_pose.setEulerZYX(-3.14/2.0, 0.0, 0.0);
 
-  // target_pose.setOrigin(0.0, 0.0, 0.0);
-  // target_pose.setEulerZYX(0.0, 0.0, 0.0);
+  target_pose.setOrigin(0.0, 0.0, 0.0);
+  target_pose.setEulerZYX(0.0, 0.0, 0.0);
 
   double target_to_base[6];
 
@@ -348,6 +348,24 @@ int main(int argc, char** argv)
 
   ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
   ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
+
+  industrial_calibration_libs::Pose6D result_pose_(results.extrinsics[3],
+    results.extrinsics[4], results.extrinsics[5], results.extrinsics[0], 
+    results.extrinsics[1], results.extrinsics[2]);
+
+  industrial_calibration_libs::Pose6D result_pose = result_pose_.getInverse();
+
+  double ez, ey, ex;
+  result_pose.getEulerZYX(ez, ey, ex);
+
+  ROS_INFO_STREAM("Extrinsic Parameters");
+  ROS_INFO_STREAM("Translation x: " << result_pose.x);
+  ROS_INFO_STREAM("Translation y: " << result_pose.y);
+  ROS_INFO_STREAM("Translation z: " << result_pose.z);
+  ROS_INFO_STREAM("Rotation x: " << ex);
+  ROS_INFO_STREAM("Rotation y: " << ey);
+  ROS_INFO_STREAM("Rotation z: " << ez);  
+
 
   // Draw the results back onto the image
   const double* camera_angle_axis(&results.extrinsics[0]);
