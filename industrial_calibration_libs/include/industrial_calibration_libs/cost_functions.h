@@ -256,9 +256,9 @@ struct MovingCameraOnWristStaticTargetIntrinsicCF
     T observed_x = T(observed_x_);
     T observed_y = T(observed_y_);
 
-    cameraPointResidualWithDistortion(camera_point, distortion_k1, distortion_k2, distortion_k3, 
-      distortion_p1, distortion_p2, focal_length_x, focal_length_y, optical_center_x, 
-      optical_center_y, observed_x, observed_y, residual);
+    cameraPointResidualWithDistortion(camera_point, distortion_k1, distortion_k2, 
+      distortion_k3, distortion_p1, distortion_p2, focal_length_x, focal_length_y,
+      optical_center_x, optical_center_y, observed_x, observed_y, residual);
 
     return true;
   }
