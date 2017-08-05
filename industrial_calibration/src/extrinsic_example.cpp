@@ -135,7 +135,7 @@ int main(int argc, char** argv)
   target.loadTargetFromYAML(data_path + "mcircles_10x10/mcircles_10x10.yaml");
 
   // Load Calibration Images
-  const std::size_t num_images = 10;
+  const std::size_t num_images = 15;
   std::vector<cv::Mat> calibration_images;
   calibration_images.reserve(num_images);
   std::string cal_image_path = data_path + "mcircles_10x10/extrinsic/images/";
@@ -346,6 +346,7 @@ int main(int argc, char** argv)
   ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
   ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
 
+#if 0
   industrial_calibration_libs::Pose6D result_pose_(results.extrinsics[3],
     results.extrinsics[4], results.extrinsics[5], results.extrinsics[0], 
     results.extrinsics[1], results.extrinsics[2]);
@@ -362,7 +363,7 @@ int main(int argc, char** argv)
   ROS_INFO_STREAM("Rotation x: " << ex);
   ROS_INFO_STREAM("Rotation y: " << ey);
   ROS_INFO_STREAM("Rotation z: " << ez);  
-
+#endif
 
   // Draw the results back onto the image
   const double* camera_angle_axis(&results.extrinsics[0]);
