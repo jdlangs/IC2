@@ -88,12 +88,12 @@ bool CalibrationJob::computeCovariance(const std::vector<CovarianceRequest> &req
   covariance.Compute(covariance_pairs, &problem_);
 
   // TEMPORARY (OUTPUT RESULTS TO SCREEN)
-  std::out << "Covariance Blocks: " << '\n';
+  std::cout << "Covariance Blocks: " << '\n';
   for (std::size_t i = 0; i < covariance_blocks.size(); i++)
   {
     for (std::size_t j = 0; j < covariance_blocks.size(); j++)
     {
-      std::out << "Cov[" << block_names[i] << ", " 
+      std::cout << "Cov[" << block_names[i] << ", " 
         << block_names[j] << "]" << '\n';
 
       int N = block_sizes[i];
@@ -111,11 +111,11 @@ bool CalibrationJob::computeCovariance(const std::vector<CovarianceRequest> &req
           double sigma_j = sqrt(ij_cov_block[k*N+k]);
           if (q == k)
           {
-            std::out << " " << sigma_i;
+            std::cout << " " << sigma_i;
           }
           else
           {
-            std::out << " " << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+            std::cout << " " << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
           }
         }
         std::cout << '\n';
