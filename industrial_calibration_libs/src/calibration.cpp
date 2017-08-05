@@ -1,5 +1,6 @@
 #include <industrial_calibration_libs/cost_functions.h>
 #include <industrial_calibration_libs/calibration.h>
+#include <iomanip>
 
 namespace industrial_calibration_libs
 {
@@ -93,7 +94,7 @@ bool CalibrationJob::computeCovariance(const std::vector<CovarianceRequest> &req
   {
     for (std::size_t j = 0; j < covariance_blocks.size(); j++)
     {
-      std::cout << "Cov[" << block_names[i] << ", " 
+      std::cout << "Covariance [" << block_names[i] << ", " 
         << block_names[j] << "]" << '\n';
 
       int N = block_sizes[i];
@@ -105,20 +106,23 @@ bool CalibrationJob::computeCovariance(const std::vector<CovarianceRequest> &req
 
       for (int q = 0; q < N; q++)
       {
+        std::cout << "[";
         for (int k = 0; k < M; k++)
         {
           double sigma_i = sqrt(ij_cov_block[q*N+q]);
           double sigma_j = sqrt(ij_cov_block[k*N+k]);
           if (q == k)
           {
-            std::cout << " " << sigma_i;
+            std::cout << " " << std::right << std::setw(8) << std::fixed
+              << std::setprecision(5) << sigma_i;
           }
           else
           {
-            std::cout << " " << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+            std::cout << " " << std::right << std::setw(8) << std::fixed 
+              << std::setprecision(5) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
           }
         }
-        std::cout << '\n';
+        std::cout << "]" << '\n';
       }
       delete [] ij_cov_block;
     }
