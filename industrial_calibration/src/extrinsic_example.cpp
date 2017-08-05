@@ -364,7 +364,7 @@ int main(int argc, char** argv)
   ROS_INFO_STREAM("Rotation y: " << ey);
   ROS_INFO_STREAM("Rotation z: " << ez);  
 #endif
-
+  
   // Draw the results back onto the image
   const double* camera_angle_axis(&results.extrinsics[0]);
   const double* camera_position(&results.extrinsics[3]);
