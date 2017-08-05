@@ -113,13 +113,30 @@ bool CalibrationJob::computeCovariance(const std::vector<CovarianceRequest> &req
           double sigma_j = sqrt(ij_cov_block[k*N+k]);
           if (q == k)
           {
-            std::cout << " " << std::right << std::setw(8) << std::fixed
-              << std::setprecision(5) << sigma_i;
+            if (sigma_i > 1.0 || sigma_i < -1.0)
+            {
+              std::cout << " " << std::right << std::setw(9) << std::scientific 
+                << std::setprecision(1) << sigma_i;              
+            }
+            else
+            {
+              std::cout << " " << std::right << std::setw(9) << std::fixed
+                << std::setprecision(5) << sigma_i;
+            }
           }
           else
           {
-            std::cout << " " << std::right << std::setw(8) << std::fixed 
-              << std::setprecision(5) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+            if (ij_cov_block[q*N + k]/(sigma_i * sigma_j) > 1.0 ||
+              ij_cov_block[q*N + k]/(sigma_i * sigma_j) < -1.0)
+            {
+              std::cout << " " << std::right << std::setw(9) << std::scientific
+                << std::setprecision(1) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+            }
+            else
+            {
+              std::cout << " " << std::right << std::setw(9) << std::fixed 
+                << std::setprecision(5) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+            }
           }
         }
         std::cout << "]" << '\n';
