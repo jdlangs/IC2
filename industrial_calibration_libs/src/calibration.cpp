@@ -88,12 +88,12 @@ bool CalibrationJob::computeCovariance(const std::vector<CovarianceRequest> &req
   covariance.Compute(covariance_pairs, &problem_);
 
   // TEMPORARY (OUTPUT RESULTS TO SCREEN)
-  std::cerr << "Covariance Blocks: " << '\n';
+  std::out << "Covariance Blocks: " << '\n';
   for (std::size_t i = 0; i < covariance_blocks.size(); i++)
   {
     for (std::size_t j = 0; j < covariance_blocks.size(); j++)
     {
-      std::cerr << "Cov[" << block_names[i] << ", " 
+      std::out << "Cov[" << block_names[i] << ", " 
         << block_names[j] << "]" << '\n';
 
       int N = block_sizes[i];
@@ -111,14 +111,14 @@ bool CalibrationJob::computeCovariance(const std::vector<CovarianceRequest> &req
           double sigma_j = sqrt(ij_cov_block[k*N+k]);
           if (q == k)
           {
-            std::cerr << " " << sigma_i;
+            std::out << " " << sigma_i;
           }
           else
           {
-            std::cerr << " " << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+            std::out << " " << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
           }
         }
-        std::cerr << '\n';
+        std::cout << '\n';
       }
       delete [] ij_cov_block;
     }
@@ -179,7 +179,7 @@ bool MovingCameraOnWristStaticTargetExtrinsic::runCalibration(void)
   ceres::Solve(options_, &problem_, &summary_);
 
   // REMOVE THIS
-  std::cerr << summary_.FullReport() << '\n';
+  std::cout << summary_.FullReport() << '\n';
 
   if (summary_.termination_type != ceres::NO_CONVERGENCE)
   {
@@ -257,7 +257,7 @@ bool MovingCameraOnWristStaticTargetIntrinsic::runCalibration(void)
   ceres::Solve(options_, &problem_, &summary_);
 
   // REMOVE THIS ONE DAY
-  std::cerr << summary_.FullReport() << '\n';  
+  std::cout << summary_.FullReport() << '\n';  
 
   if (summary_.termination_type != ceres::NO_CONVERGENCE)
   {
