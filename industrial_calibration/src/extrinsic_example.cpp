@@ -206,8 +206,6 @@ int main(int argc, char** argv)
 #endif 
 
   // Setting initial conditions:
-
-  // Convert Link Data to a vector of Pose6D poses
   double intrinsics[4];
   intrinsics[0] = 509.5179;
   intrinsics[1] = 511.6581;
@@ -312,7 +310,6 @@ int main(int argc, char** argv)
       target.getData().target_rows, target.getData().target_cols);
     cv::imshow("Result Image", result_image);
     cv::waitKey(0);
-    // cv::imwrite(data_path + std::to_string(i+1) + ".jpg", result_image);
   }
 }
 #endif
