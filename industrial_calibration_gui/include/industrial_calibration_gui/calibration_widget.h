@@ -23,11 +23,10 @@ protected Q_SLOTS:
   void startCalibrationButton(void);
   
 protected:
-  // UI
   Ui::CalibrationWidget* ui_;
-
-  // ROS specific stuff
   ros::NodeHandle nh_;
+
+private:
 };
 } // namespace industrial_calibration_gui
 
