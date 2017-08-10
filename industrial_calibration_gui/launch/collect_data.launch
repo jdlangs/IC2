@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="debug_rviz" default="false"/>
+
+  <group if="$(arg debug_rviz)">
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find industrial_calibration_gui)/rviz/industrial_calibration_gui.rviz" output="screen" launch-prefix="xterm -e gdb --args" required="true"/>
+  </group>
+  <group unless="$(arg debug_rviz)">
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find industrial_calibration_gui)/rviz/industrial_calibration_gui.rviz" output="screen" launch-prefix="nice" required="true"/>
+  </group>  
+  
+</launch>
