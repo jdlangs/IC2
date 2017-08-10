@@ -14,7 +14,12 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent)
   ui_->tabWidget->setTabEnabled(2, false);
 
   connect(ui_->pushButton, SIGNAL(clicked()), this, SLOT(startCalibrationButton()));
+  connect(ui_->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(comboBoxDisplayText()));
+
+  this->updateInstructionText(ui_->comboBox->currentIndex());
 }
+
+CalibrationWidget::~CalibrationWidget() { }
 
 void CalibrationWidget::startCalibrationButton(void)
 {
@@ -24,5 +29,33 @@ void CalibrationWidget::startCalibrationButton(void)
   ui_->tabWidget->setTabEnabled(0, false);
 }
 
-CalibrationWidget::~CalibrationWidget() { }
+void CalibrationWidget::comboBoxDisplayText(void)
+{
+  int current_index = ui_->comboBox->currentIndex();
+  ROS_INFO_STREAM("Combo Box State Changed " << current_index);
+  this->updateInstructionText(current_index);
+}
+
+void CalibrationWidget::updateInstructionText(int current_index)
+{
+  switch (current_index)
+  {
+    case 0:
+      ui_->textBrowser->setText("Welcome to the industrial_calibration_gui.");
+      break;
+
+    case 1:
+      ui_->textBrowser->setText("Static Target Moving Camera on Wrist (Extrinsic)");
+      break;
+
+    case 2:
+      ui_->textBrowser->setText("Static Target Moving Camera on Wrist (Extrinsic + Intrinsic)");
+      break;
+
+    default:
+      ui_->textBrowser->setText("Welcome to the industrial_calibration_gui.");
+      break;
+  }
+}
+
 } // namespace industrial_calibration_gui

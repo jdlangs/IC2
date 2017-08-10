@@ -21,12 +21,15 @@ public:
 
 protected Q_SLOTS:
   void startCalibrationButton(void);
+  void comboBoxDisplayText(void);
+  void updateInstructionText(int current_index);  
   
 protected:
   Ui::CalibrationWidget* ui_;
   ros::NodeHandle nh_;
 
 private:
+  // int combo_box_index_;
 };
 } // namespace industrial_calibration_gui
 
