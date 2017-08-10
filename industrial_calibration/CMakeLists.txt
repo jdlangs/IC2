@@ -14,22 +14,12 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf
   sensor_msgs
-
-  # GUI related (might be split off in the future)
-  rqt_gui
-  rqt_gui_cpp
-  rviz
 )
 
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS signals thread)
 find_package(OpenCV REQUIRED)
-
-# GUI related (might be split off in the future)
-find_package(Qt5Widgets REQUIRED)
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Gui REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -125,11 +115,6 @@ catkin_package(
   roscpp
   tf
   sensor_msgs
-  
-  # GUI related (might be split off in the future)
-  rqt_gui 
-  rqt_gui_cpp
-  rviz  
 
   DEPENDS 
   Boost
@@ -182,41 +167,6 @@ include_directories(
 # )
 
 set(COMPILER_WARNINGS PROPERTIES COMPILE_FLAGS "-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused")
-
-# GUI related (might be split off in the future)
-set(industrial_calibration_gui_SRCS
-
-)
-
-set(industrial_calibration_gui_HEADERS
-
-)
-
-set(industrial_calibration_gui_UI
-
-)
-
-qt5_wrap_cpp(industrial_calibration_gui_MOCS ${industrial_calibration_gui_HEADERS})
-qt5_wrap_ui(industrial_calibration_UIS_H ${industrial_calibration_gui_UI})
-
-add_library(industrial_calibration_gui
-  ${industrial_calibration_UIS_H}
-  ${industrial_calibration_gui_MOCS}
-  ${industrial_calibration_gui_SRCS}
-)
-
-target_link_libraries(industrial_calibration_gui
-  ${catkin_LIBRARIES}
-  Qt5::Widgets
-  Qt5::Gui
-)
-
-add_dependencies(industrial_calibration_gui ${catkin_EXPORTED_TARGETS})
-set_target_properties(industrial_calibration_gui ${COMPILER_WARNINGS})
-target_link_libraries(industrial_calibration_gui ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
-  ${Boost_LIBRARIES} yaml-cpp)
-# End GUI related
-
 
 # Other nodes
 add_executable(cal_data_collector src/cal_data_collector.cpp)
