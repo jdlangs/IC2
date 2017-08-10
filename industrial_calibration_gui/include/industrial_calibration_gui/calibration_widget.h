@@ -20,7 +20,8 @@ public:
   virtual ~CalibrationWidget();
 
 protected Q_SLOTS:
-
+  void startCalibrationButton(void);
+  
 protected:
   // UI
   Ui::CalibrationWidget* ui_;

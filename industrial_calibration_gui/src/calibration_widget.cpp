@@ -9,6 +9,13 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent)
   // UI setup
   ui_ = new Ui::CalibrationWidget;
   ui_->setupUi(this);
+
+  connect(ui_->pushButton, SIGNAL(clicked()), this, SLOT(startCalibrationButton()));
+}
+
+void CalibrationWidget::startCalibrationButton(void)
+{
+  ROS_INFO_STREAM("BUTTON PUSHED");
 }
 
 CalibrationWidget::~CalibrationWidget() { }
