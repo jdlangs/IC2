@@ -38,7 +38,7 @@
       <enum>QLayout::SetDefaultConstraint</enum>
      </property>
      <item row="0" column="0">
-      <widget class="QTabWidget" name="tabWidget">
+      <widget class="QStackedWidget" name="stackedWidget">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -51,22 +51,10 @@
          <height>475</height>
         </size>
        </property>
-       <property name="tabShape">
-        <enum>QTabWidget::Triangular</enum>
-       </property>
        <property name="currentIndex">
         <number>0</number>
        </property>
-       <widget class="QWidget" name="tab">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <attribute name="title">
-         <string>Instructions</string>
-        </attribute>
+       <widget class="QWidget" name="stackedWidgetPage1" native="true">
         <widget class="QWidget" name="gridLayoutWidget_2">
          <property name="geometry">
           <rect>
@@ -190,28 +178,8 @@ p, li { white-space: pre-wrap; }
          </layout>
         </widget>
        </widget>
-       <widget class="QWidget" name="tab_2">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <attribute name="title">
-         <string>Data Collection</string>
-        </attribute>
-       </widget>
-       <widget class="QWidget" name="tab_3">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <attribute name="title">
-         <string>Run Calibration</string>
-        </attribute>
-       </widget>
+       <widget class="QWidget" name="stackedWidgetPage2" native="true"/>
+       <widget class="QWidget" name="stackedWidgetPage3" native="true"/>
       </widget>
      </item>
     </layout>
