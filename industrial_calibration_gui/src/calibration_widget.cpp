@@ -10,9 +10,6 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent)
   ui_ = new Ui::CalibrationWidget;
   ui_->setupUi(this);
 
-  // ui_->tabWidget->setTabEnabled(1, false);
-  // ui_->tabWidget->setTabEnabled(2, false);
-
   connect(ui_->pushButton, SIGNAL(clicked()), this, SLOT(startCalibrationButton()));
   connect(ui_->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(comboBoxDisplayText()));
 
@@ -25,8 +22,6 @@ void CalibrationWidget::startCalibrationButton(void)
 {
   ROS_INFO_STREAM("BUTTON PUSHED");
   ui_->stackedWidget->setCurrentIndex(1);
-  // ui_->tabWidget->setTabEnabled(1, true);
-  // ui_->tabWidget->setTabEnabled(0, false);
 }
 
 void CalibrationWidget::comboBoxDisplayText(void)
