@@ -61,11 +61,13 @@ set(COMPILER_WARNINGS PROPERTIES COMPILE_FLAGS "-pedantic -Wall -Wextra -Wcast-a
 set(${PROJECT_NAME}_SRCS
   src/calibration_panel.cpp
   src/calibration_widget.cpp
+  src/calibration_data_collector.cpp
 )
 
 set(${PROJECT_NAME}_HEADERS
   include/industrial_calibration_gui/calibration_panel.h
   include/industrial_calibration_gui/calibration_widget.h
+  include/industrial_calibration_gui/calibration_data_collector.h
 )
 
 set(${PROJECT_NAME}_UI
