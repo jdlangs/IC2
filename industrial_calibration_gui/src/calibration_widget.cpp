@@ -228,8 +228,8 @@ void CalibrationWidget::setInputsButton(void)
   std::string image_topic = ui_->image_topic_line->text().toStdString();
   std::string camera_info_topic = ui_->camera_info_topic_line->text().toStdString();
 
-  // CalDataCollector cal_data_collector(nh_, pnh_);
-  // cal_data_collector.collectData();
+  this->collecting_data_ = true;
+  this->collectData(base_link, tip_link, camera_frame, image_topic, camera_info_topic);
 }
 
 bool CalibrationWidget::checkEmptyLines(void)
@@ -292,5 +292,37 @@ bool CalibrationWidget::checkTarget(const
     return false;
   }
   return true;
+}
+
+void CalibrationWidget::collectData(const std::string &base_link, 
+  const std::string &tip_link, const std::string &camera_frame, 
+  const std::string &image_topic, const std::string &camera_info_topic)
+{
+  image_transport::ImageTransport it(pnh_);
+  image_transport::Subscriber image_subscriber = it.subscribe(image_topic, 
+    1, boost::bind(&CalibrationWidget::imageCallback, this, _1));
+  image_transport::Publisher image_publisher = it.advertise("grid_image", 1);
+
+  while (collecting_data_)
+  {
+    ros::spinOnce();
+    ros::Rate rate(60);
+    rate.sleep();  
+  }
+}
+
+void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
+{
+  ROS_INFO_STREAM("Image MSG Received!");
+
+  cv_bridge::CvImageConstPtr msg_ptr;
+  try
+  {
+    msg_ptr = cv_bridge::toCvCopy(msg);
+  }
+  catch (cv_bridge::Exception &ex)
+  {
+    ROS_ERROR_STREAM("Could not load image from message!");
+  }
 }
 } // namespace industrial_calibration_gui
