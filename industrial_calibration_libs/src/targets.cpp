@@ -200,7 +200,7 @@ bool Target::populatePoints(std::size_t rows, std::size_t cols, double spacing,
   else {return false;}
 }
 
-TargetDefinition Target::getData(void)
+TargetDefinition Target::getData(void) const
 {
   return target_params_;
 }
