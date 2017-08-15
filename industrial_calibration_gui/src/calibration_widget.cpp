@@ -10,45 +10,73 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent)
   ui_ = new Ui::CalibrationWidget;
   ui_->setupUi(this);
 
-  connect(ui_->pushButton, SIGNAL(clicked()), this, SLOT(startCalibrationButton()));
-  connect(ui_->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(comboBoxDisplayText()));
+  this->instructions_checkbox_state_ = false;
+  this->updateCalibrationTypeText(ui_->calibration_type_combo_box->currentIndex());
 
-  this->updateInstructionText(ui_->comboBox->currentIndex());
+  // Start page
+  connect(ui_->instructions_checkbox, SIGNAL(stateChanged(int)),
+    this, SLOT(instructionsCheckbox()));
+  connect(ui_->start_calibration_button, SIGNAL(clicked()), 
+    this, SLOT(startCalibrationButton()));
+  connect(ui_->calibration_type_combo_box, SIGNAL(currentIndexChanged(int)), 
+    this, SLOT(selectCalibrationTypeComboBox()));
+
 }
 
 CalibrationWidget::~CalibrationWidget() { }
 
+
+void CalibrationWidget::instructionsCheckbox(void)
+{
+  if (ui_->instructions_checkbox->isChecked())
+  {
+    this->instructions_checkbox_state_ = true;
+  }
+  else
+  {
+    this->instructions_checkbox_state_ = false;
+  }
+}
+
 void CalibrationWidget::startCalibrationButton(void)
 {
-  ROS_INFO_STREAM("BUTTON PUSHED");
-  ui_->stackedWidget->setCurrentIndex(1);
+  if (this->instructions_checkbox_state_)
+  {
+    ui_->stackedWidget->setCurrentIndex(1);
+  }
 }
 
-void CalibrationWidget::comboBoxDisplayText(void)
+void CalibrationWidget::selectCalibrationTypeComboBox(void)
 {
-  int current_index = ui_->comboBox->currentIndex();
+  int current_index = ui_->calibration_type_combo_box->currentIndex();
   ROS_INFO_STREAM("Combo Box State Changed " << current_index);
-  this->updateInstructionText(current_index);
+  this->updateCalibrationTypeText(current_index);
 }
 
-void CalibrationWidget::updateInstructionText(int current_index)
+void CalibrationWidget::updateCalibrationTypeText(int current_index)
 {
   switch (current_index)
   {
     case 0:
-      ui_->textBrowser->setText("Welcome to the industrial_calibration_gui.");
+      ui_->calibration_type_text_browser->setText("Welcome to the industrial_calibration_gui.");
       break;
 
     case 1:
-      ui_->textBrowser->setText("Static Target Moving Camera on Wrist (Extrinsic)");
+      ui_->calibration_type_text_browser->setText("Static Target Moving Camera on Wrist (Extrinsic)");
       break;
 
     case 2:
-      ui_->textBrowser->setText("Static Target Moving Camera on Wrist (Extrinsic + Intrinsic)");
+      ui_->calibration_type_text_browser->setText("Static Target Moving Camera on Wrist (Extrinsic + Intrinsic) [EXPERIMENTAL]");
       break;
 
+    case 3:
+      ui_->calibration_type_text_browser->setText("Static Camera Moving Target on Wrist (Extrinsic)");
+
+    case 4:
+      ui_->calibration_type_text_browser->setText("Static Camera Moving Target on Wrist (Extrinsic + Intrinsic) [EXPERIMENTAL]");
+
     default:
-      ui_->textBrowser->setText("Welcome to the industrial_calibration_gui.");
+      ui_->calibration_type_text_browser->setText("Welcome to the industrial_calibration_gui.");
       break;
   }
 }

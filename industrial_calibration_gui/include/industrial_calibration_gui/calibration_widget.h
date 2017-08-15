@@ -20,16 +20,17 @@ public:
   virtual ~CalibrationWidget();
 
 protected Q_SLOTS:
+  void instructionsCheckbox(void);
   void startCalibrationButton(void);
-  void comboBoxDisplayText(void);
-  void updateInstructionText(int current_index);  
+  void selectCalibrationTypeComboBox(void);
+  void updateCalibrationTypeText(int current_index);  
   
 protected:
   Ui::CalibrationWidget* ui_;
   ros::NodeHandle nh_;
 
 private:
-  // int combo_box_index_;
+  bool instructions_checkbox_state_;
 };
 } // namespace industrial_calibration_gui
 
