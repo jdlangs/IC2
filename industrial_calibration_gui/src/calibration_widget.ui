@@ -498,7 +498,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
     </widget>
-    <widget class="QLabel" name="label_10">
+    <widget class="QLabel" name="base_link_label">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -530,7 +530,7 @@ p, li { white-space: pre-wrap; }
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
-    <widget class="QLabel" name="label_11">
+    <widget class="QLabel" name="tip_link_label">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -549,7 +549,7 @@ p, li { white-space: pre-wrap; }
       <string>Tip Link of Robot:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_12">
+    <widget class="QLabel" name="camera_calibration_frame_label">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -568,7 +568,7 @@ p, li { white-space: pre-wrap; }
       <string>Camera Calibration Frame:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_13">
+    <widget class="QLabel" name="image_topic_label">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -587,7 +587,7 @@ p, li { white-space: pre-wrap; }
       <string>Image Topic:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_14">
+    <widget class="QLabel" name="camera_info_topic_label">
      <property name="geometry">
       <rect>
        <x>20</x>
