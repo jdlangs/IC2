@@ -68,7 +68,6 @@
    </property>
    <property name="windowIcon">
     <iconset>
-     <normaloff>res/calibration_scientist.png</normaloff>res/calibration_scientist.png</iconset>
    </property>
    <property name="currentIndex">
     <number>1</number>
@@ -684,7 +683,6 @@ Inputs</string>
   </widget>
  </widget>
  <resources>
-  <include location="res/res.qrc"/>
  </resources>
  <connections/>
 </ui>
