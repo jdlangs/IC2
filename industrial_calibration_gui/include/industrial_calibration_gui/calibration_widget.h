@@ -55,8 +55,25 @@ protected Q_SLOTS:
   void selectCalibrationTypeComboBox(void);
   void updateCalibrationTypeText(int current_index);  
   
-  // Data collection page
-  void consoleOutput(const std::string &message);
+  // Manual data collection page
+  #define CONSOLE_LOG_INFO(args) \
+  { \
+    ROS_INFO_STREAM(args); \
+    std::stringstream ss; \
+    ss << args; \
+    consoleLogInfo(ss.str()); \
+  }
+
+  #define CONSOLE_LOG_ERROR(args) \
+  { \
+    ROS_ERROR_STREAM(args); \
+    std::stringstream ss; \
+    ss << args; \
+    consoleLogError(ss.str()); \
+  }
+
+  void consoleLogInfo(const std::string &message);
+  void consoleLogError(const std::string &message);
   void outputLocationButton(void);
   void outputLocationLine(void);
   void loadTargetLine(void);

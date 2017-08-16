@@ -33,12 +33,11 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~
     this, SLOT(loadTargetButton()));
   connect(ui_->set_inputs_button, SIGNAL(clicked()),
     this, SLOT(setInputsButton()));
-
 }
 
 CalibrationWidget::~CalibrationWidget() { }
 
-
+// Start Page
 void CalibrationWidget::instructionsCheckbox(void)
 {
   if (ui_->instructions_checkbox->isChecked())
@@ -94,16 +93,20 @@ void CalibrationWidget::updateCalibrationTypeText(int current_index)
   }
 }
 
-void CalibrationWidget::outputLocationLine(void)
+// Manual data collection page
+void CalibrationWidget::consoleLogInfo(const std::string &message)
 {
-  save_data_directory_ = ui_->output_location_line->text();
-  ROS_INFO_STREAM("Data will be saved to: " << save_data_directory_.toStdString());  
+  QString qmessage = QString::fromStdString("[INFO]: " + message);
+
+  ui_->console_logger->setTextColor(QColor("green"));
+  ui_->console_logger->append(qmessage);
 }
 
-void CalibrationWidget::consoleOutput(const std::string &message)
+void CalibrationWidget::consoleLogError(const std::string &message)
 {
-  QString qmessage = QString::fromStdString(message);
-  // ui_->console_logger->append(qmessage);
+  QString qmessage = QString::fromStdString("[ERROR]: " + message);
+  ui_->console_logger->setTextColor(QColor("red"));
+  ui_->console_logger->append(qmessage);
 }
 
 void CalibrationWidget::outputLocationButton(void)
@@ -111,22 +114,28 @@ void CalibrationWidget::outputLocationButton(void)
   save_data_directory_ = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
     "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
   ui_->output_location_line->setText(save_data_directory_); 
-  ROS_INFO_STREAM("Data will be saved to: " << save_data_directory_.toStdString());
+  CONSOLE_LOG_INFO("Data will be saved to: " << save_data_directory_.toStdString());
+}
+
+void CalibrationWidget::outputLocationLine(void)
+{
+  save_data_directory_ = ui_->output_location_line->text();
+  CONSOLE_LOG_INFO("Data will be saved to: " << save_data_directory_.toStdString());  
 }
 
 void CalibrationWidget::loadTargetLine(void)
 {
   QString target_file = ui_->load_target_line->text();
-  ROS_INFO_STREAM("Loading target from: " << target_file.toStdString());
+  CONSOLE_LOG_INFO("Loading target from: " << target_file.toStdString());
   if (target_.loadTargetFromYAML(target_file.toStdString()))
   {
-    ROS_INFO_STREAM("Target successfully loaded from: " << target_file.toStdString());
+    CONSOLE_LOG_INFO("Target successfully loaded from: " << target_file.toStdString());
     this->setTargetLines(target_);
     this->target_set_from_file_ = true;
   }
   else
   {
-    ROS_ERROR_STREAM("Unable to load target from: " << target_file.toStdString());
+    CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
   }
 
 }
@@ -136,16 +145,16 @@ void CalibrationWidget::loadTargetButton(void)
   QString target_file = QFileDialog::getOpenFileName(this, tr("Open File"),
     "/home", tr("YAML Files (*.yaml *.yml)"));
   ui_->load_target_line->setText(target_file);
-  ROS_INFO_STREAM("Loading target from: " << target_file.toStdString());
+  CONSOLE_LOG_INFO("Loading target from: " << target_file.toStdString());
   if (target_.loadTargetFromYAML(target_file.toStdString()))
   {
-    ROS_INFO_STREAM("Target successfully loaded from: " << target_file.toStdString());
+    CONSOLE_LOG_INFO("Target successfully loaded from: " << target_file.toStdString());
     this->setTargetLines(target_);
     this->target_set_from_file_ = true;
   }
   else
   {
-    ROS_ERROR_STREAM("Unable to load target from: " << target_file.toStdString());
+    CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
   }  
 }
 
@@ -215,7 +224,7 @@ void CalibrationWidget::setInputsButton(void)
     {
       if (target_.loadTargetFromDefinition(target_definition))
       {
-        ROS_INFO_STREAM("Successfully loaded target definition of name = " <<
+        CONSOLE_LOG_INFO("Successfully loaded target definition of name = " <<
           target_definition.target_name << ", of type = " 
           << target_definition.target_type <<
           ", with rows = " << target_definition.target_rows << ", and cols = " <<
@@ -235,7 +244,14 @@ void CalibrationWidget::setInputsButton(void)
   std::string image_topic = ui_->image_topic_line->text().toStdString();
   std::string camera_info_topic = ui_->camera_info_topic_line->text().toStdString();
 
+  CONSOLE_LOG_INFO("Setting parameters | base_link = " << base_link <<
+    ", tip_link = " << tip_link << ", camera_frame = " << camera_frame << 
+    ", image_topic = " << image_topic << ", camera_info_topic = " << 
+    camera_info_topic << ".");
+
   this->collecting_data_ = true;
+  CONSOLE_LOG_INFO("Subscribing to image topic: " << image_topic << 
+    " and publishing images to ~grid_image");
   this->collectData(base_link, tip_link, camera_frame, image_topic, camera_info_topic);
 }
 
@@ -250,12 +266,12 @@ bool CalibrationWidget::checkEmptyLines(void)
       ui_->target_circle_diameter_line->text().isEmpty() ||
       ui_->target_point_spacing_line->text().isEmpty())
     {
-      ROS_ERROR_STREAM("Please set all target input fields or load a target from a YAML file!");
+      CONSOLE_LOG_ERROR("Please set all target input fields or load a target from a YAML file!");
       return true;
     }
     if (ui_->target_type_combo_box->currentIndex() != 2)
     {
-      ROS_ERROR_STREAM("The modified circle grid target type is the only " <<
+      CONSOLE_LOG_ERROR("The modified circle grid target type is the only " <<
         "target supported at this time");
       return true;
     }
@@ -266,7 +282,7 @@ bool CalibrationWidget::checkEmptyLines(void)
     ui_->image_topic_line->text().isEmpty() ||
     ui_->camera_info_topic_line->text().isEmpty())
   {
-    ROS_ERROR_STREAM("Please set all link names and topics!");
+    CONSOLE_LOG_ERROR("Please set all link names and topics!");
     return true;
   }
   return false;
@@ -277,25 +293,25 @@ bool CalibrationWidget::checkTarget(const
 {
   if (target_definition.target_name.empty()) 
   {
-    ROS_ERROR_STREAM("The 'Target Name' field is empty!");
+    CONSOLE_LOG_ERROR("The 'Target Name' field is empty!");
     return false;
   }
   if (target_definition.target_type != 2) 
   {
-    ROS_ERROR_STREAM("Target type must be set to Modified Circle Grid!");
+    CONSOLE_LOG_ERROR("Target type must be set to Modified Circle Grid!");
     return false;
   }
   if (target_definition.target_rows == 0 || target_definition.target_cols == 0 ||
     target_definition.target_points == 0 || target_definition.circle_diameter == 0 ||
     target_definition.spacing == 0) 
   {
-    ROS_ERROR_STREAM("One of the input fields has a non-numeric value or is set to zero!");
+    CONSOLE_LOG_ERROR("One of the input fields has a non-numeric value or is set to zero!");
     return false;
   }
   if (target_definition.target_rows*target_definition.target_cols != 
     target_definition.target_points) 
   {
-    ROS_ERROR_STREAM("Target rows * cols do not match total number of points!");
+    CONSOLE_LOG_ERROR("Target rows * cols do not match total number of points!");
     return false;
   }
   return true;
@@ -322,7 +338,7 @@ void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   }
   catch (cv_bridge::Exception &ex)
   {
-    ROS_ERROR_STREAM("Could not load image from message!");
+    CONSOLE_LOG_ERROR("Could not load image from message!");
   }
 
   cv::Mat raw_image;
@@ -347,14 +363,13 @@ void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     }
     cv_bridge::CvImage out_msg;
     out_msg.header = msg_ptr->header;
-    ROS_INFO_STREAM(msg_ptr->encoding);
-    out_msg.encoding = "bgr8";
+    out_msg.encoding = "bgr8"; // This should probably be set differently.
     out_msg.image = display_image;
     grid_image_publisher_.publish(out_msg.toImageMsg());
   }
   else
   {
-    ROS_ERROR_STREAM("Input Image is Empty!");
+    CONSOLE_LOG_ERROR("Input Image is Empty!");
   }  
 }
 
