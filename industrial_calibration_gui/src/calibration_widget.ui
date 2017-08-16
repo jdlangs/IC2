@@ -67,7 +67,6 @@
     <string>Industrial Calibration UI</string>
    </property>
    <property name="windowIcon">
-    <iconset>
    </property>
    <property name="currentIndex">
     <number>1</number>
