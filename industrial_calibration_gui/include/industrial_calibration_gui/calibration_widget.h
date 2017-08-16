@@ -4,30 +4,32 @@
 #include <QWidget>
 #include <QFileDialog>
 
-#include <ros/ros.h>
-#include <ros/console.h>
+// Industrial Calibration
 #include <ui_calibration_widget.h>
 #include <industrial_calibration_libs/industrial_calibration_libs.h>
 
-// CUT THESE DOWN
-#include <cv_bridge/cv_bridge.h>
+// Standard Library
 #include <fstream>
+#include <thread>
+
+// ROS
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
-#include <image_transport/image_transport.h>
-#include <industrial_calibration_libs/industrial_calibration_libs.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/calib3d/calib3d.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/opencv_modules.hpp>
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/JointState.h>
-#include <thread>
 #include <tf/transform_listener.h>
+
+// OpenCV
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv_modules.hpp>
+
+// YAML
 #include <yaml-cpp/yaml.h>
 
 namespace Ui
@@ -51,7 +53,7 @@ public:
 protected Q_SLOTS:
   // Start page
   void instructionsCheckbox(void);
-  void startCalibrationButton(void);
+  void startDataCollectionButton(void);
   void selectCalibrationTypeComboBox(void);
   void updateCalibrationTypeText(int current_index);  
   
@@ -87,6 +89,9 @@ protected Q_SLOTS:
     const std::string &camera_info_topic);
   void imageCallback(const sensor_msgs::ImageConstPtr &msg);
   bool drawGrid(cv::Mat &image);
+  void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
+  void saveImageButton(void);
+  void startCalibrationButton(void);
 
 protected:
   Ui::CalibrationWidget* ui_;
@@ -106,9 +111,18 @@ private:
   image_transport::ImageTransport it_;
   image_transport::Subscriber camera_image_subscriber_;
   image_transport::Publisher grid_image_publisher_;
+  ros::Subscriber camera_info_subscriber_;
+  sensor_msgs::CameraInfo camera_info_;
 
   // Calibration variables
   industrial_calibration_libs::Target target_;
+  std::string base_link_;
+  std::string tip_link_;
+  std::string camera_frame_;
+  cv::Mat camera_image_;
+  std::vector<cv::Mat> observation_images_;
+  std::vector<tf::StampedTransform> base_to_tool_transforms_;
+  std::vector<tf::StampedTransform> tool_to_camera_transforms_;
 };
 } // namespace industrial_calibration_gui
 

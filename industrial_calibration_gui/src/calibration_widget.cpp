@@ -17,8 +17,8 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~
   // Start page
   connect(ui_->instructions_checkbox, SIGNAL(stateChanged(int)),
     this, SLOT(instructionsCheckbox()));
-  connect(ui_->start_calibration_button, SIGNAL(clicked()), 
-    this, SLOT(startCalibrationButton()));
+  connect(ui_->start_data_collection_button, SIGNAL(clicked()), 
+    this, SLOT(startDataCollectionButton()));
   connect(ui_->calibration_type_combo_box, SIGNAL(currentIndexChanged(int)), 
     this, SLOT(selectCalibrationTypeComboBox()));
 
@@ -33,6 +33,10 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~
     this, SLOT(loadTargetButton()));
   connect(ui_->set_inputs_button, SIGNAL(clicked()),
     this, SLOT(setInputsButton()));
+  connect(ui_->save_image_button, SIGNAL(clicked()),
+    this, SLOT(saveImageButton()));
+  connect(ui_->start_calibration_button, SIGNAL(clicked()),
+    this, SLOT(startCalibrationButton()));
 }
 
 CalibrationWidget::~CalibrationWidget() { }
@@ -50,7 +54,7 @@ void CalibrationWidget::instructionsCheckbox(void)
   }
 }
 
-void CalibrationWidget::startCalibrationButton(void)
+void CalibrationWidget::startDataCollectionButton(void)
 {
   if (this->instructions_checkbox_state_)
   {
@@ -321,10 +325,21 @@ void CalibrationWidget::collectData(const std::string &base_link,
   const std::string &tip_link, const std::string &camera_frame, 
   const std::string &image_topic, const std::string &camera_info_topic)
 {
+  // Subscribe to the camera image
   camera_image_subscriber_ = it_.subscribe(image_topic, 1, 
     boost::bind(&CalibrationWidget::imageCallback, this, _1));
 
+  // Advertise output image from observation finder
   grid_image_publisher_ = it_.advertise("grid_image", 1);
+
+  // Subscribe to camera info message
+  camera_info_subscriber_ = pnh_.subscribe(camera_info_topic, 1, 
+    &CalibrationWidget::cameraInfoCallback, this);
+
+  // Set link names
+  this->base_link_ = base_link;
+  this->tip_link_ = tip_link;
+  this->camera_frame_ = camera_frame;
 }
 
 void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
@@ -355,12 +370,15 @@ void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     {
       ROS_INFO_STREAM("Circle Grid Found!");
       display_image = grid_image;
+      raw_image.copyTo(camera_image_);
     }
     else
     {
       ROS_INFO_STREAM("No Circle Grid FOund!");
       display_image = raw_image;
     }
+
+    // Publish the 'display_image'.
     cv_bridge::CvImage out_msg;
     out_msg.header = msg_ptr->header;
     out_msg.encoding = "bgr8"; // This should probably be set differently.
@@ -379,5 +397,68 @@ bool CalibrationWidget::drawGrid(cv::Mat &image)
   if (observation_extractor.extractObservation(image, image)) {return true;}
   else {return false;}
 }
+
+void CalibrationWidget::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg)
+{
+  CONSOLE_LOG_INFO("camera_info MSG Received");
+  camera_info_ = *msg;
+
+  // Shut down subscriber once we get a single message.
+  camera_info_subscriber_.shutdown();
+}
+
+void CalibrationWidget::saveImageButton(void)
+{
+  // Get image
+  cv::Mat image;
+  camera_image_.copyTo(image); // Need to do mutex locking here.
+
+  // Get tf transforms
+  tf_.waitForTransform(base_link_, tip_link_, ros::Time(), ros::Duration(0.5));
+  tf_.waitForTransform(tip_link_, camera_frame_, ros::Time(), ros::Duration(0.5));
+  
+  tf::StampedTransform base_link_to_tip_link;
+  tf::StampedTransform tip_link_to_camera_frame;
+
+  try
+  {
+    tf_.lookupTransform(base_link_, tip_link_, ros::Time(), base_link_to_tip_link);
+    tf_.lookupTransform(tip_link_, camera_frame_, ros::Time(), tip_link_to_camera_frame);
+  }
+  catch (tf::TransformException &ex)
+  {
+    CONSOLE_LOG_ERROR("tf Exception: " << ex.what());
+    CONSOLE_LOG_ERROR("Unable to capture tf data, data not saved");
+    return;
+  }
+
+  observation_images_.push_back(image);
+  base_to_tool_transforms_.push_back(base_link_to_tip_link);
+  tool_to_camera_transforms_.push_back(tip_link_to_camera_frame);
+  CONSOLE_LOG_INFO("Observation Saved!");
+}
+
+void CalibrationWidget::startCalibrationButton(void)
+{
+  std::string save_data_directory = this->save_data_directory_.toStdString();
+  if (save_data_directory.empty()) {save_data_directory = "~/Desktop/";}
+  CONSOLE_LOG_INFO("Saving calibration data to: " << save_data_directory);
+
+  // Compression params for png (set to none)
+  std::vector<int> png_params;
+  png_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+  png_params.push_back(0);
+
+  // Saving images
+  for (std::size_t i = 0; i < observation_images_.size(); i++)
+  {
+    std::string file_name = save_data_directory + std::to_string(i) + ".png";
+    cv::imwrite(file_name, observation_images_[i], png_params);
+  }
+
+  // Shut down all subscribers and publishers
+  CONSOLE_LOG_INFO("Starting Calibration [does nothing]");
+}
+
 } // namespace industrial_calibration_gui
 

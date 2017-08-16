@@ -186,7 +186,7 @@ p, li { white-space: pre-wrap; }
       <string>By checking this box, I agree that I have read the instructions.</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="start_calibration_button">
+    <widget class="QPushButton" name="start_data_collection_button">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -196,12 +196,12 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="text">
-      <string>Start Calibration</string>
+      <string>Start Data Collection</string>
      </property>
     </widget>
    </widget>
    <widget class="QWidget" name="data_collection">
-    <widget class="QPushButton" name="pushButton">
+    <widget class="QPushButton" name="start_calibration_button">
      <property name="geometry">
       <rect>
        <x>349</x>
@@ -214,7 +214,7 @@ p, li { white-space: pre-wrap; }
       <string>Start Calibration</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_2">
+    <widget class="QPushButton" name="save_image_button">
      <property name="geometry">
       <rect>
        <x>19</x>
