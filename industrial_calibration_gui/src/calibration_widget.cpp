@@ -2,7 +2,8 @@
 
 namespace industrial_calibration_gui
 {
-CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~")
+CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~"),
+  it_(pnh_)
 {
   // UI setup
   ui_ = new Ui::CalibrationWidget;
@@ -97,6 +98,12 @@ void CalibrationWidget::outputLocationLine(void)
 {
   save_data_directory_ = ui_->output_location_line->text();
   ROS_INFO_STREAM("Data will be saved to: " << save_data_directory_.toStdString());  
+}
+
+void CalibrationWidget::consoleOutput(const std::string &message)
+{
+  QString qmessage = QString::fromStdString(message);
+  // ui_->console_logger->append(qmessage);
 }
 
 void CalibrationWidget::outputLocationButton(void)
@@ -298,17 +305,10 @@ void CalibrationWidget::collectData(const std::string &base_link,
   const std::string &tip_link, const std::string &camera_frame, 
   const std::string &image_topic, const std::string &camera_info_topic)
 {
-  image_transport::ImageTransport it(pnh_);
-  image_transport::Subscriber image_subscriber = it.subscribe(image_topic, 
-    1, boost::bind(&CalibrationWidget::imageCallback, this, _1));
-  image_transport::Publisher image_publisher = it.advertise("grid_image", 1);
+  camera_image_subscriber_ = it_.subscribe(image_topic, 1, 
+    boost::bind(&CalibrationWidget::imageCallback, this, _1));
 
-  while (collecting_data_)
-  {
-    ros::spinOnce();
-    ros::Rate rate(60);
-    rate.sleep();  
-  }
+  grid_image_publisher_ = it_.advertise("grid_image", 1);
 }
 
 void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
@@ -324,5 +324,45 @@ void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   {
     ROS_ERROR_STREAM("Could not load image from message!");
   }
+
+  cv::Mat raw_image;
+  cv::cvtColor(msg_ptr->image, raw_image, CV_RGB2BGR);
+
+  cv::Mat grid_image;
+  cv::cvtColor(msg_ptr->image, grid_image, CV_RGB2BGR);
+
+  // Find circlegrid and draw grid
+  cv::Mat display_image;
+  if (!raw_image.empty() && !grid_image.empty())
+  {
+    if (this->drawGrid(grid_image))
+    {
+      ROS_INFO_STREAM("Circle Grid Found!");
+      display_image = grid_image;
+    }
+    else
+    {
+      ROS_INFO_STREAM("No Circle Grid FOund!");
+      display_image = raw_image;
+    }
+    cv_bridge::CvImage out_msg;
+    out_msg.header = msg_ptr->header;
+    ROS_INFO_STREAM(msg_ptr->encoding);
+    out_msg.encoding = "bgr8";
+    out_msg.image = display_image;
+    grid_image_publisher_.publish(out_msg.toImageMsg());
+  }
+  else
+  {
+    ROS_ERROR_STREAM("Input Image is Empty!");
+  }  
+}
+
+bool CalibrationWidget::drawGrid(cv::Mat &image)
+{
+  industrial_calibration_libs::ObservationExtractor observation_extractor(target_);
+  if (observation_extractor.extractObservation(image, image)) {return true;}
+  else {return false;}
 }
 } // namespace industrial_calibration_gui
+

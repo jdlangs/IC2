@@ -681,7 +681,7 @@ p, li { white-space: pre-wrap; }
 Inputs</string>
      </property>
     </widget>
-    <widget class="QTextBrowser" name="textBrowser_2">
+    <widget class="QTextBrowser" name="console_logger">
      <property name="geometry">
       <rect>
        <x>20</x>

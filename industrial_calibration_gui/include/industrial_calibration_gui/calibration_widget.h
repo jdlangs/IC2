@@ -56,6 +56,7 @@ protected Q_SLOTS:
   void updateCalibrationTypeText(int current_index);  
   
   // Data collection page
+  void consoleOutput(const std::string &message);
   void outputLocationButton(void);
   void outputLocationLine(void);
   void loadTargetLine(void);
@@ -68,6 +69,7 @@ protected Q_SLOTS:
     const std::string &camera_frame, const std::string &image_topic, 
     const std::string &camera_info_topic);
   void imageCallback(const sensor_msgs::ImageConstPtr &msg);
+  bool drawGrid(cv::Mat &image);
 
 protected:
   Ui::CalibrationWidget* ui_;
@@ -84,6 +86,9 @@ private:
   // Data collection variables
   ros::Subscriber camera_info_sub_;
   tf::TransformListener tf_;
+  image_transport::ImageTransport it_;
+  image_transport::Subscriber camera_image_subscriber_;
+  image_transport::Publisher grid_image_publisher_;
 
   // Calibration variables
   industrial_calibration_libs::Target target_;
