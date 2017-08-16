@@ -612,7 +612,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="text">
-      <string>base_link</string>
+      <string/>
      </property>
     </widget>
     <widget class="QLineEdit" name="tip_link_line">
@@ -625,7 +625,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="text">
-      <string>tool0</string>
+      <string/>
      </property>
     </widget>
     <widget class="QLineEdit" name="camera_calibration_frame_line">
@@ -638,7 +638,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="text">
-      <string>temp_frame</string>
+      <string/>
      </property>
     </widget>
     <widget class="QLineEdit" name="image_topic_line">
@@ -651,7 +651,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="text">
-      <string>/usb_cam/image_raw</string>
+      <string/>
      </property>
     </widget>
     <widget class="QLineEdit" name="camera_info_topic_line">
@@ -664,7 +664,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="text">
-      <string>/camera_info</string>
+      <string/>
      </property>
     </widget>
     <widget class="QPushButton" name="set_inputs_button">
