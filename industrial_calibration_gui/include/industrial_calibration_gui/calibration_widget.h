@@ -11,6 +11,7 @@
 // Standard Library
 #include <fstream>
 #include <thread>
+#include <mutex>
 
 // ROS
 #include <cv_bridge/cv_bridge.h>
@@ -31,7 +32,7 @@
 
 namespace Ui
 {
-  class CalibrationWidget;
+class CalibrationWidget;
 }
 
 namespace industrial_calibration_gui
@@ -107,13 +108,14 @@ private:
   image_transport::Publisher grid_image_publisher_;
   ros::Subscriber camera_info_subscriber_;
   sensor_msgs::CameraInfo camera_info_;
+  cv::Mat camera_image_;
+  std::mutex camera_image_mutex_;
 
   // Calibration variables
   industrial_calibration_libs::Target target_;
   std::string base_link_;
   std::string tip_link_;
   std::string camera_frame_;
-  cv::Mat camera_image_;
   std::vector<cv::Mat> observation_images_;
   std::vector<tf::StampedTransform> base_to_tool_transforms_;
   std::vector<tf::StampedTransform> tool_to_camera_transforms_;

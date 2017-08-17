@@ -117,6 +117,12 @@ void CalibrationWidget::outputLocationButton(void)
 {
   save_data_directory_ = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
     "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+  if (!save_data_directory_.endsWith("/"))
+  {
+    save_data_directory_.append("/");
+  }
+
   ui_->output_location_line->setText(save_data_directory_); 
   CONSOLE_LOG_INFO("Data will be saved to: " << save_data_directory_.toStdString());
 }
@@ -124,6 +130,12 @@ void CalibrationWidget::outputLocationButton(void)
 void CalibrationWidget::outputLocationLine(void)
 {
   save_data_directory_ = ui_->output_location_line->text();
+
+  if (!save_data_directory_.endsWith("/"))
+  {
+    save_data_directory_.append("/");
+  }
+
   CONSOLE_LOG_INFO("Data will be saved to: " << save_data_directory_.toStdString());  
 }
 
@@ -131,17 +143,23 @@ void CalibrationWidget::loadTargetLine(void)
 {
   QString target_file = ui_->load_target_line->text();
   CONSOLE_LOG_INFO("Loading target from: " << target_file.toStdString());
-  if (target_.loadTargetFromYAML(target_file.toStdString()))
+  try
   {
-    CONSOLE_LOG_INFO("Target successfully loaded from: " << target_file.toStdString());
-    this->setTargetLines(target_);
-    this->target_set_from_file_ = true;
+    if (target_.loadTargetFromYAML(target_file.toStdString()))
+    {
+      CONSOLE_LOG_INFO("Target successfully loaded from: " << target_file.toStdString());
+      this->setTargetLines(target_);
+      this->target_set_from_file_ = true;
+    }
+    else
+    {
+      CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
+    }
   }
-  else
+  catch (std::exception &ex)
   {
-    CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
+      CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
   }
-
 }
 
 void CalibrationWidget::loadTargetButton(void)
@@ -150,16 +168,23 @@ void CalibrationWidget::loadTargetButton(void)
     "/home", tr("YAML Files (*.yaml *.yml)"));
   ui_->load_target_line->setText(target_file);
   CONSOLE_LOG_INFO("Loading target from: " << target_file.toStdString());
-  if (target_.loadTargetFromYAML(target_file.toStdString()))
+  try
   {
-    CONSOLE_LOG_INFO("Target successfully loaded from: " << target_file.toStdString());
-    this->setTargetLines(target_);
-    this->target_set_from_file_ = true;
+    if (target_.loadTargetFromYAML(target_file.toStdString()))
+    {
+      CONSOLE_LOG_INFO("Target successfully loaded from: " << target_file.toStdString());
+      this->setTargetLines(target_);
+      this->target_set_from_file_ = true;
+    }
+    else
+    {
+      CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
+    }  
   }
-  else
+  catch (std::exception &ex)
   {
-    CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
-  }  
+      CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
+  }
 }
 
 void CalibrationWidget::setTargetLines(const industrial_calibration_libs::Target &target)
@@ -326,20 +351,44 @@ void CalibrationWidget::collectData(const std::string &base_link,
   const std::string &image_topic, const std::string &camera_info_topic)
 {
   // Subscribe to the camera image
-  camera_image_subscriber_ = it_.subscribe(image_topic, 1, 
-    boost::bind(&CalibrationWidget::imageCallback, this, _1));
+  try
+  {
+    camera_image_subscriber_ = it_.subscribe(image_topic, 1, 
+      boost::bind(&CalibrationWidget::imageCallback, this, _1));  
+  }
+  catch (std::exception &ex)
+  {
+    CONSOLE_LOG_ERROR("Unable to subscribe to image topic: " << image_topic);
+  }
 
   // Advertise output image from observation finder
-  grid_image_publisher_ = it_.advertise("grid_image", 1);
+  try
+  {
+    grid_image_publisher_ = it_.advertise("grid_image", 1);
+  }
+  catch (std::exception &ex)
+  {
+    CONSOLE_LOG_ERROR("Unable to advertise grid_image topic!");
+  }
 
   // Subscribe to camera info message
-  camera_info_subscriber_ = pnh_.subscribe(camera_info_topic, 1, 
-    &CalibrationWidget::cameraInfoCallback, this);
+  try
+  {
+    camera_info_subscriber_ = pnh_.subscribe(camera_info_topic, 1, 
+      &CalibrationWidget::cameraInfoCallback, this);
+  }
+  catch (std::exception &ex)
+  {
+    CONSOLE_LOG_ERROR("Unable to subscribe to camera_info topic: " << camera_info_topic);
+  }
 
   // Set link names
-  this->base_link_ = base_link;
-  this->tip_link_ = tip_link;
-  this->camera_frame_ = camera_frame;
+  {
+    std::lock_guard<std::mutex> lock(this->camera_image_mutex_);
+    this->base_link_ = base_link;
+    this->tip_link_ = tip_link;
+    this->camera_frame_ = camera_frame;
+  }
 }
 
 void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
@@ -362,6 +411,11 @@ void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   cv::Mat grid_image;
   cv::cvtColor(msg_ptr->image, grid_image, CV_RGB2BGR);
 
+  {
+    std::lock_guard<std::mutex> lock(this->camera_image_mutex_);
+    raw_image.copyTo(this->camera_image_);
+  }
+
   // Find circlegrid and draw grid
   cv::Mat display_image;
   if (!raw_image.empty() && !grid_image.empty())
@@ -370,7 +424,6 @@ void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     {
       ROS_INFO_STREAM("Circle Grid Found!");
       display_image = grid_image;
-      raw_image.copyTo(camera_image_);
     }
     else
     {
@@ -401,6 +454,7 @@ bool CalibrationWidget::drawGrid(cv::Mat &image)
 void CalibrationWidget::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg)
 {
   CONSOLE_LOG_INFO("camera_info MSG Received");
+
   camera_info_ = *msg;
 
   // Shut down subscriber once we get a single message.
@@ -411,7 +465,11 @@ void CalibrationWidget::saveImageButton(void)
 {
   // Get image
   cv::Mat image;
-  camera_image_.copyTo(image); // Need to do mutex locking here.
+
+  {
+    std::lock_guard<std::mutex> lock(this->camera_image_mutex_);
+    camera_image_.copyTo(image); 
+  }
 
   // Get tf transforms
   tf_.waitForTransform(base_link_, tip_link_, ros::Time(), ros::Duration(0.5));
@@ -435,13 +493,24 @@ void CalibrationWidget::saveImageButton(void)
   observation_images_.push_back(image);
   base_to_tool_transforms_.push_back(base_link_to_tip_link);
   tool_to_camera_transforms_.push_back(tip_link_to_camera_frame);
-  CONSOLE_LOG_INFO("Observation Saved!");
+
+  std::size_t index = observation_images_.size();
+  CONSOLE_LOG_INFO("Observation #" << index << " Saved!");
 }
 
 void CalibrationWidget::startCalibrationButton(void)
 {
+  // Shutdown subscribers and publishers
+  camera_image_subscriber_.shutdown();
+  grid_image_publisher_.shutdown();
+
   std::string save_data_directory = this->save_data_directory_.toStdString();
-  if (save_data_directory.empty()) {save_data_directory = "~/Desktop/";}
+  if (save_data_directory.empty()) 
+  {
+    CONSOLE_LOG_ERROR("Please specify a proper output directory!");
+    return;
+  }
+
   CONSOLE_LOG_INFO("Saving calibration data to: " << save_data_directory);
 
   // Compression params for png (set to none)
@@ -456,7 +525,6 @@ void CalibrationWidget::startCalibrationButton(void)
     cv::imwrite(file_name, observation_images_[i], png_params);
   }
 
-  // Shut down all subscribers and publishers
   CONSOLE_LOG_INFO("Starting Calibration [does nothing]");
 }
 
