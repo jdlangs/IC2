@@ -503,15 +503,25 @@ void CalibrationWidget::startCalibrationButton(void)
   // Shutdown subscribers and publishers
   camera_image_subscriber_.shutdown();
   grid_image_publisher_.shutdown();
+  bool save_data = true;
 
   std::string save_data_directory = this->save_data_directory_.toStdString();
   if (save_data_directory.empty()) 
   {
-    CONSOLE_LOG_ERROR("Please specify a proper output directory!");
-    return;
+    CONSOLE_LOG_ERROR("No save data directory specified, data will not" <<
+      " be saved!");
+    save_data = false;
   }
 
-  CONSOLE_LOG_INFO("Saving calibration data to: " << save_data_directory);
+  if (save_data) {this->saveData(save_data_directory);}
+
+  // Start Calibration (increase stackedWidget index)
+  CONSOLE_LOG_INFO("Starting Calibration [does nothing]");
+}
+
+void CalibrationWidget::saveData(const std::string &directory)
+{
+  CONSOLE_LOG_INFO("Saving calibration data to: " << directory);
 
   // Compression params for png (set to none)
   std::vector<int> png_params;
@@ -521,12 +531,16 @@ void CalibrationWidget::startCalibrationButton(void)
   // Saving images
   for (std::size_t i = 0; i < observation_images_.size(); i++)
   {
-    std::string file_name = save_data_directory + std::to_string(i) + ".png";
-    cv::imwrite(file_name, observation_images_[i], png_params);
+    try
+    {
+      std::string file_name = directory + std::to_string(i) + ".png";
+      cv::imwrite(file_name, observation_images_[i], png_params);
+    }
+    catch (std::exception &ex)
+    {
+      CONSOLE_LOG_ERROR("Failed to save image: " << std::to_string(i) 
+        << ".png to " << directory);
+    }
   }
-
-  CONSOLE_LOG_INFO("Starting Calibration [does nothing]");
 }
-
 } // namespace industrial_calibration_gui
-

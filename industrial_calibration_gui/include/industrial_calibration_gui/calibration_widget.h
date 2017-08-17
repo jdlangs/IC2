@@ -87,6 +87,7 @@ protected Q_SLOTS:
   void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
   void saveImageButton(void);
   void startCalibrationButton(void);
+  void saveData(const std::string &directory);
 
 protected:
   Ui::CalibrationWidget* ui_;
