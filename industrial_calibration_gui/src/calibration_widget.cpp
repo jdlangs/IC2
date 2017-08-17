@@ -494,7 +494,7 @@ void CalibrationWidget::saveImageButton(void)
   tool_to_camera_transforms_.push_back(tip_link_to_camera_frame);
 
   std::size_t index = observation_images_.size();
-  CONSOLE_LOG_INFO("Observation #" << index << " Saved!");
+  CONSOLE_LOG_INFO("Observation #" << index - 1 << " Saved!");
 }
 
 void CalibrationWidget::startCalibrationButton(void)
@@ -520,7 +520,34 @@ void CalibrationWidget::startCalibrationButton(void)
 
 void CalibrationWidget::saveData(const std::string &directory)
 {
-  CONSOLE_LOG_INFO("Saving calibration data to: " << directory);
+  // Get the date-time to use as a directory name
+  boost::posix_time::ptime boost_posix_time = ros::Time::now().toBoost();
+  std::string date_time = boost::posix_time::to_simple_string(boost_posix_time);
+  std::replace(date_time.begin(), date_time.end(), ':', '-');
+  std::replace(date_time.begin(), date_time.end(), ' ', '-');
+  date_time = date_time.substr(0, date_time.find("."));
+
+  std::string data_directory_string = directory + date_time;
+  std::string image_directory_string = data_directory_string + "/images";
+  std::string tf_directory_string = data_directory_string + "/tf";
+
+  // Use boost filesystem to create these directories.
+  boost::filesystem::path data_directory(data_directory_string);
+  boost::filesystem::path image_directory(image_directory_string);
+  boost::filesystem::path tf_directory(tf_directory_string);
+
+  try
+  {
+    boost::filesystem::create_directory(data_directory);
+    boost::filesystem::create_directory(image_directory);
+    boost::filesystem::create_directory(tf_directory);
+  }
+  catch (std::exception &ex)
+  {
+    CONSOLE_LOG_ERROR("Unable to create directories to save data"); 
+  }
+
+  CONSOLE_LOG_INFO("Saving calibration data to: " << data_directory_string);
 
   // Compression params for png (set to none)
   std::vector<int> png_params;
@@ -532,13 +559,13 @@ void CalibrationWidget::saveData(const std::string &directory)
   {
     try
     {
-      std::string file_name = directory + std::to_string(i) + ".png";
+      std::string file_name = image_directory_string + "/" + std::to_string(i) + ".png";
       cv::imwrite(file_name, observation_images_[i], png_params);
     }
     catch (std::exception &ex)
     {
       CONSOLE_LOG_ERROR("Failed to save image: " << std::to_string(i) 
-        << ".png to " << directory);
+        << ".png to " << image_directory_string);
     }
   }
 }

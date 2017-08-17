@@ -13,6 +13,10 @@
 #include <thread>
 #include <mutex>
 
+// Boost
+#include <boost/filesystem.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 // ROS
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
