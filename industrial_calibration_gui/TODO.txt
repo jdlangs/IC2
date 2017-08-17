@@ -1,0 +1,22 @@
+TODO List:
+
+- Save tf transforms and camera_info (currently only saving images).
+
+- Potentially zip up the data instead of throwing it all into a directory.
+
+- Figure out what to do if camera_info topic publishes all zeros.
+  Set the parameters manually (modification to the GUI).
+
+- Add checkboxes for manual data collection, automated data collection, or loading
+  existing data.
+
+- Load a generic robot model into the display.
+
+- Moveit to drag robot around instead of manually jogging. (use existing moveit panel).
+
+- Add an interactive marker to set target pose "guess" position.
+
+- Generate fake target dots in RViz 3D view of target guess position.
+
+- Project 2D image onto 3D plane and generate a simulated target so when calibration
+  is completed, they should line up.
