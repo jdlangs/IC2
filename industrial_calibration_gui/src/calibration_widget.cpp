@@ -404,7 +404,6 @@ void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   {
     CONSOLE_LOG_ERROR("Could not load image from message!");
   }
-
   cv::Mat raw_image;
   cv::cvtColor(msg_ptr->image, raw_image, CV_RGB2BGR);
 
