@@ -15,9 +15,6 @@
 // ROS
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <sensor_msgs/CameraInfo.h>
@@ -39,9 +36,6 @@ namespace Ui
 
 namespace industrial_calibration_gui
 {
-typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, 
-  sensor_msgs::JointState> SyncPolicy;
-
 class CalibrationWidget : public QWidget
 {
   Q_OBJECT
