@@ -13,6 +13,7 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~
   this->target_set_from_file_ = false;
   this->collecting_data_ = true;
   this->updateCalibrationTypeText(ui_->calibration_type_combo_box->currentIndex());
+  this->updateTopicLists();
 
   // Start page
   connect(ui_->instructions_checkbox, SIGNAL(stateChanged(int)),
@@ -37,6 +38,7 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~
     this, SLOT(saveImageButton()));
   connect(ui_->start_calibration_button, SIGNAL(clicked()),
     this, SLOT(startCalibrationButton()));
+
 }
 
 CalibrationWidget::~CalibrationWidget() { }
@@ -59,6 +61,7 @@ void CalibrationWidget::startDataCollectionButton(void)
   if (this->instructions_checkbox_state_)
   {
     ui_->stackedWidget->setCurrentIndex(1);
+    this->updateTopicLists();
   }
 }
 
@@ -222,6 +225,33 @@ void CalibrationWidget::setTargetLines(const industrial_calibration_libs::Target
   ui_->target_circle_diameter_line->setReadOnly(true);
   ui_->target_point_spacing_line->setText(target_point_spacing);
   ui_->target_point_spacing_line->setReadOnly(true);
+}
+
+void CalibrationWidget::updateTopicLists(void)
+{
+  ros::master::V_TopicInfo topics;
+  ros::master::getTopics(topics);
+
+  std::lock_guard<std::mutex> lock(this->topic_list_mutex_);
+  this->image_topic_list_.clear();
+  this->camera_info_topic_list_.clear();
+  
+  for (ros::master::V_TopicInfo::iterator it = topics.begin(); it != topics.end(); it++)
+  {
+    const ros::master::TopicInfo &info = *it;
+    if (info.datatype == "sensor_msgs/Image")
+    {
+      this->image_topic_list_.push_back(info.name);
+    }
+    else if (info.datatype == "sensor_msgs/CameraInfo")
+    {
+      this->camera_info_topic_list_.push_back(info.name);
+    }
+    else
+    {
+      CONSOLE_LOG_ERROR("There are no image and camera_info topics being published.");
+    }
+  }
 }
 
 void CalibrationWidget::setInputsButton(void)

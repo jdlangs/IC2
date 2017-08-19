@@ -22,6 +22,7 @@
 #include <image_transport/image_transport.h>
 #include <ros/ros.h>
 #include <ros/console.h>
+#include <ros/master.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_listener.h>
@@ -80,6 +81,7 @@ protected Q_SLOTS:
   void loadTargetLine(void);
   void loadTargetButton(void);
   void setTargetLines(const industrial_calibration_libs::Target &target);
+  void updateTopicLists(void);
   void setInputsButton(void);
   bool checkEmptyLines(void);
   bool checkTarget(const industrial_calibration_libs::TargetDefinition &target_definition);
@@ -104,6 +106,9 @@ private:
   QString save_data_directory_;
   bool target_set_from_file_;
   bool collecting_data_;
+  std::mutex topic_list_mutex_;
+  std::vector<std::string> camera_info_topic_list_;
+  std::vector<std::string> image_topic_list_;
 
   // Data collection variables
   ros::Subscriber camera_info_sub_;

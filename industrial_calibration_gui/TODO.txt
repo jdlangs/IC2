@@ -2,7 +2,7 @@ TODO List:
 
 - Save tf transforms and camera_info (currently only saving images).
 
-- Drop down lists.
+- Drop down lists of topic names (and tf nodes).
 
 - Potentially zip up the data instead of throwing it all into a directory.
 
