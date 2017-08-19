@@ -247,10 +247,14 @@ void CalibrationWidget::updateTopicLists(void)
     {
       this->camera_info_topic_list_.push_back(info.name);
     }
-    else
-    {
-      CONSOLE_LOG_ERROR("There are no image and camera_info topics being published.");
-    }
+  }
+  if (this->image_topic_list_.size() == 0)
+  {
+    CONSOLE_LOG_ERROR("There are no sensor_msg/Image topics being published");
+  }
+  if (this->camera_info_topic_list_.size() == 0)
+  {
+    CONSOLE_LOG_ERROR("There are no sensor_msg/CameraInfo topics being published");
   }
 }
 
