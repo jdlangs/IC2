@@ -641,7 +641,7 @@ p, li { white-space: pre-wrap; }
       <string/>
      </property>
     </widget>
-    <widget class="QLineEdit" name="image_topic_line">
+    <widget class="QComboBox" name="image_topic_combo_box">
      <property name="geometry">
       <rect>
        <x>120</x>
@@ -653,8 +653,8 @@ p, li { white-space: pre-wrap; }
      <property name="text">
       <string/>
      </property>
-    </widget>
-    <widget class="QLineEdit" name="camera_info_topic_line">
+    </widget>  
+    <widget class="QComboBox" name="camera_info_topic_combo_box">
      <property name="geometry">
       <rect>
        <x>170</x>
