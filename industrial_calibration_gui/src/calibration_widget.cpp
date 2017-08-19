@@ -232,29 +232,36 @@ void CalibrationWidget::updateTopicLists(void)
   ros::master::V_TopicInfo topics;
   ros::master::getTopics(topics);
 
-  std::lock_guard<std::mutex> lock(this->topic_list_mutex_);
-  this->image_topic_list_.clear();
-  this->camera_info_topic_list_.clear();
+  std::vector<std::string> image_topic_list;
+  std::vector<std::string> camera_info_topic_list;
   
   for (ros::master::V_TopicInfo::iterator it = topics.begin(); it != topics.end(); it++)
   {
     const ros::master::TopicInfo &info = *it;
     if (info.datatype == "sensor_msgs/Image")
     {
-      this->image_topic_list_.push_back(info.name);
+      image_topic_list.push_back(info.name);
     }
     else if (info.datatype == "sensor_msgs/CameraInfo")
     {
-      this->camera_info_topic_list_.push_back(info.name);
+      camera_info_topic_list.push_back(info.name);
     }
   }
-  if (this->image_topic_list_.size() == 0)
+  if (image_topic_list.size() == 0)
   {
     CONSOLE_LOG_ERROR("There are no sensor_msg/Image topics being published");
   }
-  if (this->camera_info_topic_list_.size() == 0)
+  if (camera_info_topic_list.size() == 0)
   {
     CONSOLE_LOG_ERROR("There are no sensor_msg/CameraInfo topics being published");
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(this->topic_list_mutex_);
+    this->image_topic_list_.clear(); // Do these need to be cleared?
+    this->camera_info_topic_list_.clear(); // Do these need to be cleared? 
+    this->image_topic_list_ = image_topic_list;
+    this->camera_info_topic_list_ = camera_info_topic_list;
   }
 }
 
