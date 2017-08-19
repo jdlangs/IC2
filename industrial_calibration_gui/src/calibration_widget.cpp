@@ -62,6 +62,29 @@ void CalibrationWidget::startDataCollectionButton(void)
   {
     ui_->stackedWidget->setCurrentIndex(1);
     this->updateTopicLists();
+
+    // Set image_topic and camera_info_topic combo box data
+    // Perhaps this should be moved to the updateTopicLists method...
+    // ui_->image_topic_combo_box->clear();
+    // ui_->camera_info_topic_combo_box->clear();
+    if (this->image_topic_list_.size() > 0)
+    {
+      QStringList image_topic_list;
+      for (std::size_t i = 0; i < this->image_topic_list_.size(); i++)
+      {
+        image_topic_list.append(QString::fromStdString(this->image_topic_list_[i]));
+      }
+      ui_->image_topic_combo_box->addItems(image_topic_list);
+    }
+    if (this->camera_info_topic_list_.size() > 0)
+    {
+      QStringList camera_info_topic_list;
+      for (std::size_t i = 0; i < this->camera_info_topic_list_.size(); i++)
+      {
+        camera_info_topic_list.append(QString::fromStdString(this->camera_info_topic_list_[i]));
+      }
+      ui_->camera_info_topic_combo_box->addItems(camera_info_topic_list);
+    }
   }
 }
 
@@ -311,8 +334,8 @@ void CalibrationWidget::setInputsButton(void)
   std::string base_link = ui_->base_link_line->text().toStdString();
   std::string tip_link = ui_->tip_link_line->text().toStdString();
   std::string camera_frame = ui_->camera_calibration_frame_line->text().toStdString();
-  std::string image_topic = ui_->image_topic_line->text().toStdString();
-  std::string camera_info_topic = ui_->camera_info_topic_line->text().toStdString();
+  std::string image_topic = ui_->image_topic_combo_box->currentText().toStdString();
+  std::string camera_info_topic = ui_->camera_info_topic_combo_box->currentText().toStdString();
 
   CONSOLE_LOG_INFO("Setting parameters | base_link = " << base_link <<
     ", tip_link = " << tip_link << ", camera_frame = " << camera_frame << 
@@ -349,8 +372,8 @@ bool CalibrationWidget::checkEmptyLines(void)
   if (ui_->base_link_line->text().isEmpty() ||
     ui_->tip_link_line->text().isEmpty() ||
     ui_->camera_calibration_frame_line->text().isEmpty() ||
-    ui_->image_topic_line->text().isEmpty() ||
-    ui_->camera_info_topic_line->text().isEmpty())
+    ui_->image_topic_combo_box->currentText().isEmpty() ||
+    ui_->camera_info_topic_combo_box->currentText().isEmpty())
   {
     CONSOLE_LOG_ERROR("Please set all link names and topics!");
     return true;
