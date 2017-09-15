@@ -94,6 +94,7 @@ protected Q_SLOTS:
   void saveImageButton(void);
   void startCalibrationButton(void);
   void saveData(const std::string &directory);
+  void refreshComboBoxes(void);
 
 protected:
   Ui::CalibrationWidget* ui_;

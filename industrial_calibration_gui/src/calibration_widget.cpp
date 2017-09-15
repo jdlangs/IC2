@@ -32,6 +32,8 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~
     this, SLOT(loadTargetLine()));
   connect(ui_->load_target_button, SIGNAL(clicked()),
     this, SLOT(loadTargetButton()));
+  connect(ui_->refresh_button, SIGNAL(clicked()),
+    this, SLOT(refreshComboBoxes()));
   connect(ui_->set_inputs_button, SIGNAL(clicked()),
     this, SLOT(setInputsButton()));
   connect(ui_->save_image_button, SIGNAL(clicked()),
@@ -61,30 +63,7 @@ void CalibrationWidget::startDataCollectionButton(void)
   if (this->instructions_checkbox_state_)
   {
     ui_->stackedWidget->setCurrentIndex(1);
-    this->updateTopicLists();
-
-    // Set image_topic and camera_info_topic combo box data
-    // Perhaps this should be moved to the updateTopicLists method...
-    // ui_->image_topic_combo_box->clear();
-    // ui_->camera_info_topic_combo_box->clear();
-    if (this->image_topic_list_.size() > 0)
-    {
-      QStringList image_topic_list;
-      for (std::size_t i = 0; i < this->image_topic_list_.size(); i++)
-      {
-        image_topic_list.append(QString::fromStdString(this->image_topic_list_[i]));
-      }
-      ui_->image_topic_combo_box->addItems(image_topic_list);
-    }
-    if (this->camera_info_topic_list_.size() > 0)
-    {
-      QStringList camera_info_topic_list;
-      for (std::size_t i = 0; i < this->camera_info_topic_list_.size(); i++)
-      {
-        camera_info_topic_list.append(QString::fromStdString(this->camera_info_topic_list_[i]));
-      }
-      ui_->camera_info_topic_combo_box->addItems(camera_info_topic_list);
-    }
+    this->refreshComboBoxes();
   }
 }
 
@@ -633,4 +612,33 @@ void CalibrationWidget::saveData(const std::string &directory)
     }
   }
 }
+
+void CalibrationWidget::refreshComboBoxes(void)
+{
+  this->updateTopicLists();
+
+  // Set image_topic and camera_info_topic combo box data
+  // Perhaps this should be moved to the updateTopicLists method...
+  // ui_->image_topic_combo_box->clear();
+  // ui_->camera_info_topic_combo_box->clear();
+  if (this->image_topic_list_.size() > 0)
+  {
+    QStringList image_topic_list;
+    for (std::size_t i = 0; i < this->image_topic_list_.size(); i++)
+    {
+      image_topic_list.append(QString::fromStdString(this->image_topic_list_[i]));
+    }
+    ui_->image_topic_combo_box->addItems(image_topic_list);
+  }
+  if (this->camera_info_topic_list_.size() > 0)
+  {
+    QStringList camera_info_topic_list;
+    for (std::size_t i = 0; i < this->camera_info_topic_list_.size(); i++)
+    {
+      camera_info_topic_list.append(QString::fromStdString(this->camera_info_topic_list_[i]));
+    }
+    ui_->camera_info_topic_combo_box->addItems(camera_info_topic_list);
+  }
+}
+
 } // namespace industrial_calibration_gui

@@ -650,7 +650,7 @@ p, li { white-space: pre-wrap; }
        <height>22</height>
       </rect>
      </property>
-    </widget>  
+    </widget>
     <widget class="QComboBox" name="camera_info_topic_combo_box">
      <property name="geometry">
       <rect>
@@ -665,9 +665,9 @@ p, li { white-space: pre-wrap; }
      <property name="geometry">
       <rect>
        <x>400</x>
-       <y>210</y>
+       <y>270</y>
        <width>80</width>
-       <height>141</height>
+       <height>81</height>
       </rect>
      </property>
      <property name="text">
@@ -683,6 +683,19 @@ Inputs</string>
        <width>461</width>
        <height>101</height>
       </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="refresh_button">
+     <property name="geometry">
+      <rect>
+       <x>400</x>
+       <y>210</y>
+       <width>81</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Refresh</string>
      </property>
     </widget>
    </widget>
