@@ -619,8 +619,8 @@ void CalibrationWidget::refreshComboBoxes(void)
 
   // Set image_topic and camera_info_topic combo box data
   // Perhaps this should be moved to the updateTopicLists method...
-  // ui_->image_topic_combo_box->clear();
-  // ui_->camera_info_topic_combo_box->clear();
+  ui_->image_topic_combo_box->clear();
+  ui_->camera_info_topic_combo_box->clear();
   if (this->image_topic_list_.size() > 0)
   {
     QStringList image_topic_list;
