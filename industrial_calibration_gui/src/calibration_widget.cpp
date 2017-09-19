@@ -13,7 +13,8 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~
   this->target_set_from_file_ = false;
   this->collecting_data_ = true;
   this->updateCalibrationTypeText(ui_->calibration_type_combo_box->currentIndex());
-  this->updateTopicLists();
+  this->updateTopicList();
+  this->updateFrameList();
 
   // Start page
   connect(ui_->instructions_checkbox, SIGNAL(stateChanged(int)),
@@ -40,7 +41,6 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~
     this, SLOT(saveImageButton()));
   connect(ui_->start_calibration_button, SIGNAL(clicked()),
     this, SLOT(startCalibrationButton()));
-
 }
 
 CalibrationWidget::~CalibrationWidget() { }
@@ -229,7 +229,7 @@ void CalibrationWidget::setTargetLines(const industrial_calibration_libs::Target
   ui_->target_point_spacing_line->setReadOnly(true);
 }
 
-void CalibrationWidget::updateTopicLists(void)
+void CalibrationWidget::updateTopicList(void)
 {
   ros::master::V_TopicInfo topics;
   ros::master::getTopics(topics);
@@ -265,6 +265,16 @@ void CalibrationWidget::updateTopicLists(void)
     this->image_topic_list_ = image_topic_list;
     this->camera_info_topic_list_ = camera_info_topic_list;
   }
+}
+
+void CalibrationWidget::updateFrameList(void)
+{
+  std::vector<std::string> frame_list;
+  tf_.getFrameStrings(frame_list);
+
+  std::lock_guard<std::mutex> lock(this->frame_list_mutex_);
+  this->frame_list_.clear();
+  this->frame_list_ = frame_list;
 }
 
 void CalibrationWidget::setInputsButton(void)
@@ -310,9 +320,9 @@ void CalibrationWidget::setInputsButton(void)
   }
 
   // Getting data from top and link name inputs
-  std::string base_link = ui_->base_link_line->text().toStdString();
-  std::string tip_link = ui_->tip_link_line->text().toStdString();
-  std::string camera_frame = ui_->camera_calibration_frame_line->text().toStdString();
+  std::string base_link = ui_->base_link_combo_box->currentText().toStdString();
+  std::string tip_link = ui_->tip_link_combo_box->currentText().toStdString();
+  std::string camera_frame = ui_->camera_calibration_frame_combo_box->currentText().toStdString();
   std::string image_topic = ui_->image_topic_combo_box->currentText().toStdString();
   std::string camera_info_topic = ui_->camera_info_topic_combo_box->currentText().toStdString();
 
@@ -348,9 +358,9 @@ bool CalibrationWidget::checkEmptyLines(void)
       return true;
     }
   }
-  if (ui_->base_link_line->text().isEmpty() ||
-    ui_->tip_link_line->text().isEmpty() ||
-    ui_->camera_calibration_frame_line->text().isEmpty() ||
+  if (ui_->base_link_combo_box->currentText().isEmpty() ||
+    ui_->tip_link_combo_box->currentText().isEmpty() ||
+    ui_->camera_calibration_frame_combo_box->currentText().isEmpty() ||
     ui_->image_topic_combo_box->currentText().isEmpty() ||
     ui_->camera_info_topic_combo_box->currentText().isEmpty())
   {
@@ -615,12 +625,27 @@ void CalibrationWidget::saveData(const std::string &directory)
 
 void CalibrationWidget::refreshComboBoxes(void)
 {
-  this->updateTopicLists();
+  this->updateTopicList();
+  this->updateFrameList();
 
-  // Set image_topic and camera_info_topic combo box data
-  // Perhaps this should be moved to the updateTopicLists method...
+  // Set frame combo box data
+  ui_->base_link_combo_box->clear();
+  ui_->tip_link_combo_box->clear();
+  ui_->camera_calibration_frame_combo_box->clear();
+  if (this->frame_list_.size() > 0)
+  {
+    QStringList frame_list;
+    for (std::size_t i = 0; i < this->frame_list_.size(); i++)
+    {
+      frame_list.append(QString::fromStdString(this->frame_list_[i]));
+    }
+    ui_->base_link_combo_box->addItems(frame_list);
+    ui_->tip_link_combo_box->addItems(frame_list);
+    ui_->camera_calibration_frame_combo_box->addItems(frame_list);
+  }
+
+  // Set image_topic combo box data
   ui_->image_topic_combo_box->clear();
-  ui_->camera_info_topic_combo_box->clear();
   if (this->image_topic_list_.size() > 0)
   {
     QStringList image_topic_list;
@@ -630,6 +655,9 @@ void CalibrationWidget::refreshComboBoxes(void)
     }
     ui_->image_topic_combo_box->addItems(image_topic_list);
   }
+
+  // Set camera_info_topic combo box data
+  ui_->camera_info_topic_combo_box->clear();
   if (this->camera_info_topic_list_.size() > 0)
   {
     QStringList camera_info_topic_list;

@@ -602,7 +602,7 @@ p, li { white-space: pre-wrap; }
       <string>Camera Info Topic:</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="base_link_line">
+    <widget class="QComboBox" name="base_link_combo_box">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -615,7 +615,7 @@ p, li { white-space: pre-wrap; }
       <string/>
      </property>
     </widget>
-    <widget class="QLineEdit" name="tip_link_line">
+    <widget class="QComboBox" name="tip_link_combo_box">
      <property name="geometry">
       <rect>
        <x>160</x>
@@ -628,7 +628,7 @@ p, li { white-space: pre-wrap; }
       <string/>
      </property>
     </widget>
-    <widget class="QLineEdit" name="camera_calibration_frame_line">
+    <widget class="QComboBox" name="camera_calibration_frame_combo_box">
      <property name="geometry">
       <rect>
        <x>220</x>

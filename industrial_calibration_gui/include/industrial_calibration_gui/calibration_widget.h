@@ -81,7 +81,8 @@ protected Q_SLOTS:
   void loadTargetLine(void);
   void loadTargetButton(void);
   void setTargetLines(const industrial_calibration_libs::Target &target);
-  void updateTopicLists(void);
+  void updateTopicList(void);
+  void updateFrameList(void);
   void setInputsButton(void);
   bool checkEmptyLines(void);
   bool checkTarget(const industrial_calibration_libs::TargetDefinition &target_definition);
@@ -108,8 +109,10 @@ private:
   bool target_set_from_file_;
   bool collecting_data_;
   std::mutex topic_list_mutex_;
+  std::mutex frame_list_mutex_;
   std::vector<std::string> camera_info_topic_list_;
   std::vector<std::string> image_topic_list_;
+  std::vector<std::string> frame_list_;
 
   // Data collection variables
   ros::Subscriber camera_info_sub_;
