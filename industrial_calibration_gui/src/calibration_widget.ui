@@ -611,9 +611,6 @@ p, li { white-space: pre-wrap; }
        <height>22</height>
       </rect>
      </property>
-     <property name="text">
-      <string/>
-     </property>
     </widget>
     <widget class="QComboBox" name="tip_link_combo_box">
      <property name="geometry">
@@ -624,9 +621,6 @@ p, li { white-space: pre-wrap; }
        <height>22</height>
       </rect>
      </property>
-     <property name="text">
-      <string/>
-     </property>
     </widget>
     <widget class="QComboBox" name="camera_calibration_frame_combo_box">
      <property name="geometry">
@@ -636,9 +630,6 @@ p, li { white-space: pre-wrap; }
        <width>171</width>
        <height>22</height>
       </rect>
-     </property>
-     <property name="text">
-      <string/>
      </property>
     </widget>
     <widget class="QComboBox" name="image_topic_combo_box">
