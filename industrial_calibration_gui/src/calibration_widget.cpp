@@ -153,18 +153,21 @@ void CalibrationWidget::loadTargetLine(void)
   {
     if (target_.loadTargetFromYAML(target_file.toStdString()))
     {
-      CONSOLE_LOG_INFO("Target successfully loaded from: " << target_file.toStdString());
+      CONSOLE_LOG_INFO("Target successfully loaded from: " 
+        << target_file.toStdString());
       this->setTargetLines(target_);
       this->target_set_from_file_ = true;
     }
     else
     {
-      CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
+      CONSOLE_LOG_ERROR("Unable to load target from: " 
+        << target_file.toStdString());
     }
   }
   catch (std::exception &ex)
   {
-      CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
+      CONSOLE_LOG_ERROR("Unable to load target from: " 
+        << target_file.toStdString());
   }
 }
 
@@ -184,12 +187,14 @@ void CalibrationWidget::loadTargetButton(void)
     }
     else
     {
-      CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
+      CONSOLE_LOG_ERROR("Unable to load target from: " 
+        << target_file.toStdString());
     }  
   }
   catch (std::exception &ex)
   {
-      CONSOLE_LOG_ERROR("Unable to load target from: " << target_file.toStdString());
+      CONSOLE_LOG_ERROR("Unable to load target from: " 
+        << target_file.toStdString());
   }
 }
 
