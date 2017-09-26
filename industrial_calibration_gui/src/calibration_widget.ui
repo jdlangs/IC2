@@ -67,7 +67,7 @@
     <string>Industrial Calibration UI</string>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="start_page">
     <widget class="QLabel" name="label">
