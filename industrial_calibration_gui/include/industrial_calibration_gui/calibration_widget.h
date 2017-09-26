@@ -118,7 +118,6 @@ private:
   std::vector<std::string> frame_list_;
 
   // Data collection variables
-  ros::Subscriber camera_info_sub_;
   tf::TransformListener tf_;
   image_transport::ImageTransport it_;
   image_transport::Subscriber camera_image_subscriber_;
