@@ -1,9 +1,11 @@
 TODO List:
 
-- Potentially zip up the data instead of throwing it all into a directory.
+- Add a stacked page to allow for re-running a calibration with existing data. (Low Priority).
+
+- Potentially zip up the data instead of throwing it all into a directory. (Low Priority).
 
 - Figure out what to do if camera_info topic publishes all zeros.
-  Set the parameters manually (modification to the GUI).
+  Set the parameters manually (modification to the GUI). (Low Priority).
 
 - Add checkboxes for manual data collection, automated data collection, or loading
   existing data.
