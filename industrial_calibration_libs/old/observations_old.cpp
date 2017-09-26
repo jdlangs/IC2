@@ -19,16 +19,16 @@ ObservationExtractor::ObservationExtractor(const std::vector<cv::Mat> &images,
     // images_[i] = images_[i] > 128;
   // }
 
-  this->cols_ = target_.getData()->target_cols;
-  this->rows_ = target_.getData()->target_rows;
+  this->cols_ = target_.getDefinition()->target_cols;
+  this->rows_ = target_.getDefinition()->target_rows;
 }
 
 ObservationExtractor::ObservationExtractor(const Target &target) : target_(target), 
   custom_circle_detector_(true), extract_all_observations_(false),
   extract_single_observation_(true) 
 { 
-  this->cols_ = target_.getData()->target_cols;
-  this->rows_ = target_.getData()->target_rows;  
+  this->cols_ = target_.getDefinition()->target_cols;
+  this->rows_ = target_.getDefinition()->target_rows;  
 }
 
 bool ObservationExtractor::extractObservations(void)
@@ -40,14 +40,14 @@ bool ObservationExtractor::extractObservations(void)
 
   if (!checkData()) {return false;}
 
-  switch (this->target_.getData()->target_type)
+  switch (this->target_.getDefinition()->target_type)
   {
     case Chessboard:
       if (extractChessboard()) {return true;}
       break;
 
     case CircleGrid:
-      if (this->target_.getData()->asymmetric_grid)
+      if (this->target_.getDefinition()->asymmetric_grid)
       {
         if (extractCircleGridAsymmetric()) {return true;}
       }
@@ -81,7 +81,7 @@ bool ObservationExtractor::extractSingleObservation(const cv::Mat &input_image)
   images_.push_back(image);
 
   ObservationPoints observation_points;
-  switch (target_.getData()->target_type)
+  switch (target_.getDefinition()->target_type)
   {
     case Chessboard:
       if (extractSingleChessboard(image, observation_points)) 
@@ -92,7 +92,7 @@ bool ObservationExtractor::extractSingleObservation(const cv::Mat &input_image)
       break;
 
     case CircleGrid:
-      if (target_.getData()->asymmetric_grid)
+      if (target_.getDefinition()->asymmetric_grid)
       {
         if (extractSingleCircleGridAsymmetric(observation_points)) 
         {
@@ -142,8 +142,8 @@ bool ObservationExtractor::checkData(void) const
 #if 0
 bool ObservationExtractor::extractChessboard(void)
 {
-  std::size_t cols = target_.getData()->target_cols;
-  std::size_t rows = target_.getData()->target_rows;
+  std::size_t cols = target_.getDefinition()->target_cols;
+  std::size_t rows = target_.getDefinition()->target_rows;
 
   observation_data_.clear();
   observation_data_.resize(images_.size());
@@ -330,8 +330,8 @@ bool ObservationExtractor::extractCircleGridSymmetric(void)
 {
   cv::Ptr<cv::CircleDetector> circle_detector_ptr = cv::CircleDetector::create();
 
-  std::size_t cols = target_.getData()->target_cols;
-  std::size_t rows = target_.getData()->target_rows;
+  std::size_t cols = target_.getDefinition()->target_cols;
+  std::size_t rows = target_.getDefinition()->target_rows;
 
   observation_data_.clear();
   observation_data_.resize(images_.size());
@@ -425,8 +425,8 @@ bool ObservationExtractor::extractModifiedCircleGrid(void)
     }
   }
 
-  std::size_t cols = target_.getData()->target_cols;
-  std::size_t rows = target_.getData()->target_rows;
+  std::size_t cols = target_.getDefinition()->target_cols;
+  std::size_t rows = target_.getDefinition()->target_rows;
 
   observation_data_.clear();
   observation_data_.resize(images_.size());

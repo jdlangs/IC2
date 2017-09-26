@@ -45,7 +45,7 @@ public:
 
   bool loadTargetFromDefinition(const TargetDefinition &target_definition);
 
-  TargetDefinition getData(void) const;
+  TargetDefinition getDefinition(void) const;
 
 private:
   bool parseYAML(const YAML::Node &node, const std::string &var_name, 

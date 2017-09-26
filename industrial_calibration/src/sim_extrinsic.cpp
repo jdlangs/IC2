@@ -160,9 +160,9 @@ int main(int argc, char** argv)
     industrial_calibration_libs::ObservationPoints observation_points;
     industrial_calibration_libs::Pose6D link_pose_inverse = link_data[i].getInverse();
 
-    for (std::size_t j = 0; j < target.getData().points.size(); j++)
+    for (std::size_t j = 0; j < target.getDefinition().points.size(); j++)
     {
-      industrial_calibration_libs::Point3D target_point(target.getData().points[j]);
+      industrial_calibration_libs::Point3D target_point(target.getDefinition().points[j]);
  
       double world_point[3];
       double link_point[3];

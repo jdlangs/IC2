@@ -186,9 +186,9 @@ int main(int argc, char** argv)
     }
   }
 
-  for (std::size_t i = 0; i < target.getData().points.size(); i++)
+  for (std::size_t i = 0; i < target.getDefinition().points.size(); i++)
   {
-    industrial_calibration_libs::Point3D point(target.getData().points[i]);
+    industrial_calibration_libs::Point3D point(target.getDefinition().points[i]);
     ROS_INFO_STREAM(std::setprecision(4) << std::fixed << "Point: " << i+1 << " x: " << point.x << " y: " << point.y << " z:" << point.z);
   }
 
@@ -276,9 +276,9 @@ int main(int argc, char** argv)
     industrial_calibration_libs::ObservationPoints observation_points;
     industrial_calibration_libs::Pose6D link_pose_inverse = link_poses[i].getInverse();
 
-    for (std::size_t j = 0; j < target.getData().points.size(); j++)
+    for (std::size_t j = 0; j < target.getDefinition().points.size(); j++)
     {
-      industrial_calibration_libs::Point3D target_point(target.getData().points[j]);
+      industrial_calibration_libs::Point3D target_point(target.getDefinition().points[j]);
 
       double world_point[3];
       double link_point[3];
@@ -328,7 +328,7 @@ int main(int argc, char** argv)
 
     cv::Mat result_image;
     drawResultPoints(calibration_images[i], result_image, observation_points,
-      target.getData().target_rows, target.getData().target_cols);
+      target.getDefinition().target_rows, target.getDefinition().target_cols);
     cv::imshow("Result Image", result_image);
     cv::waitKey(0);
   }
@@ -397,9 +397,9 @@ int main(int argc, char** argv)
     industrial_calibration_libs::ObservationPoints observation_points;
     industrial_calibration_libs::Pose6D link_pose_inverse = link_poses[i].getInverse();
 
-    for (std::size_t j = 0; j < target.getData().points.size(); j++)
+    for (std::size_t j = 0; j < target.getDefinition().points.size(); j++)
     {
-      industrial_calibration_libs::Point3D target_point(target.getData().points[j]);
+      industrial_calibration_libs::Point3D target_point(target.getDefinition().points[j]);
 
       double world_point[3];
       double link_point[3];
@@ -449,7 +449,7 @@ int main(int argc, char** argv)
 
     cv::Mat result_image;
     drawResultPoints(calibration_images[i], result_image, observation_points,
-      target.getData().target_rows, target.getData().target_cols);
+      target.getDefinition().target_rows, target.getDefinition().target_cols);
     cv::imshow("Result Image", result_image);
     cv::waitKey(0);
   }  
