@@ -573,40 +573,127 @@ void CalibrationWidget::startCalibrationButton(void)
 
   // Start Calibration (increase stackedWidget index)
   CONSOLE_LOG_INFO("Starting Calibration");
-
-  switch (calibration_type_)
+  if (tool_to_camera_transforms_match_)
   {
-    case welcome_screen:
-      CONSOLE_LOG_ERROR("Calibration type not selected, I have no idea how"
-        << " you made it this far...");
-      break;
+    switch (calibration_type_)
+    {
+      case welcome_screen:
+        CONSOLE_LOG_ERROR("Calibration type not selected, I have no idea how"
+          << " you made it this far...");
+        break;
 
-    // Only one supported right now...
-    case static_target_moving_camera_on_wrist:
-      this->runStaticTargetMovingCameraOnWrist();
-      break;
+      // Only one supported right now...
+      case static_target_moving_camera_on_wrist:
+        this->runStaticTargetMovingCameraOnWrist();
+        break;
 
-    case static_target_moving_camera_on_wrist_intrinsic:
-      this->runStaticTargetMovingCameraOnWristIntrinsic();
-      break;
+      case static_target_moving_camera_on_wrist_intrinsic:
+        this->runStaticTargetMovingCameraOnWristIntrinsic();
+        break;
 
-    case static_camera_moving_target_on_wrist:
-      this->runStaticCameraMovingTargetOnWrist();
-      break;
+      case static_camera_moving_target_on_wrist:
+        this->runStaticCameraMovingTargetOnWrist();
+        break;
 
-    case static_camera_moving_target_on_wrist_intrinsic:
-      this->runStaticCameraMovingTargetOnWristIntrinsic();
-      break;
+      case static_camera_moving_target_on_wrist_intrinsic:
+        this->runStaticCameraMovingTargetOnWristIntrinsic();
+        break;
 
-    default:
-      CONSOLE_LOG_ERROR("Please select a calibration type");
-      break;
+      default:
+        CONSOLE_LOG_ERROR("Please select a calibration type");
+        break;
+    }
+  }
+  else
+  {
+    CONSOLE_LOG_ERROR("Transforms do not match, restart the program");
+    return;
   }
 }
 
 void CalibrationWidget::runStaticTargetMovingCameraOnWrist(void)
 {
   CONSOLE_LOG_INFO("Running static target moving camera on wrist!");
+
+  // Initial Camera Intrinsics from camera_info.
+  double intrinsics[4];
+  intrinsics[0] = camera_info_.K[0]; // fx
+  intrinsics[1] = camera_info_.K[4]; // fy
+  intrinsics[2] = camera_info_.K[2]; // cx
+  intrinsics[3] = camera_info_.K[5]; // cy
+
+  // Setting seed parameters for camera extrinsics from tool to camera_frame.
+  industrial_calibration_libs::Pose6D tool_to_camera;
+  tool_to_camera = this->tfToPose6D(tool_to_camera_transforms_[0]);
+
+  // Get the inverse.
+  industrial_calibration_libs::Pose6D tool_to_camera_i;
+  tool_to_camera_i = tool_to_camera.getInverse();
+
+  double extrinsics[6];
+  extrinsics[0] = tool_to_camera_i.ax;
+  extrinsics[1] = tool_to_camera_i.ay;
+  extrinsics[2] = tool_to_camera_i.az;
+  extrinsics[3] = tool_to_camera_i.ax;
+  extrinsics[4] = tool_to_camera_i.ay;
+  extrinsics[5] = tool_to_camera_i.az;
+
+  // Setting a seed guess for target pose.
+  // TODO(gChiou): Add marker for user to drag around.
+  industrial_calibration_libs::Pose6D target_pose;
+  target_pose.setOrigin(0.0, 0.0, 0.0);
+  target_pose.setEulerZYX(0.0, 0.0, 0.0);
+
+  double target_to_base[6];
+  target_to_base[0] = target_pose.ax;
+  target_to_base[1] = target_pose.ay;
+  target_to_base[2] = target_pose.az;
+  target_to_base[3] = target_pose.x;
+  target_to_base[4] = target_pose.y;
+  target_to_base[5] = target_pose.z;
+
+  // Convert base_to_tool stamped transforms to Pose6D.
+  std::vector<industrial_calibration_libs::Pose6D> link_poses;
+  link_poses.reserve(base_to_tool_transforms_.size());
+  for (std::size_t i = 0; i < base_to_tool_transforms_.size(); i++)
+  {
+    link_poses.push_back(this->tfToPose6D(base_to_tool_transforms_[i]));
+  }
+
+  // Convert images to observations
+  industrial_calibration_libs::ObservationData observation_data;
+  observation_data = this->cvMatToObservations(observation_images_);
+
+  // Running calibration and printing results to console
+  industrial_calibration_libs::MovingCameraOnWristStaticTargetExtrinsic calibration(observation_data, target_);
+
+  calibration.initKnownValues(link_poses, intrinsics);
+  calibration.initSeedValues(extrinsics, target_to_base);
+
+  calibration.runCalibration();
+  calibration.displayCovariance();
+
+  industrial_calibration_libs::MovingCameraOnWristStaticTargetExtrinsic::Result results = calibration.getResults();
+
+  // Remove this later...
+  ROS_INFO_STREAM("Extrinsic Parameters");
+  ROS_INFO_STREAM("Translation x: " << results.extrinsics[3]);
+  ROS_INFO_STREAM("Translation y: " << results.extrinsics[4]);
+  ROS_INFO_STREAM("Translation z: " << results.extrinsics[5]);
+  ROS_INFO_STREAM("Rotation x: " << results.extrinsics[0]);
+  ROS_INFO_STREAM("Rotation y: " << results.extrinsics[1]);
+  ROS_INFO_STREAM("Rotation z: " << results.extrinsics[2]);
+
+  ROS_INFO_STREAM("Target to Base");
+  ROS_INFO_STREAM("Translation x: " << results.target_to_base[3]);
+  ROS_INFO_STREAM("Translation y: " << results.target_to_base[4]);
+  ROS_INFO_STREAM("Translation z: " << results.target_to_base[5]);
+  ROS_INFO_STREAM("Rotation x: " << results.target_to_base[0]);
+  ROS_INFO_STREAM("Rotation y: " << results.target_to_base[1]);
+  ROS_INFO_STREAM("Rotation z: " << results.target_to_base[2]);
+
+  ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
+  ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());  
 }
 
 void CalibrationWidget::runStaticTargetMovingCameraOnWristIntrinsic(void)
@@ -624,6 +711,38 @@ void CalibrationWidget::runStaticCameraMovingTargetOnWristIntrinsic(void)
   CONSOLE_LOG_ERROR("Not Supported Yet!");
 }
 
+industrial_calibration_libs::Pose6D 
+CalibrationWidget::tfToPose6D(const tf::StampedTransform &t)
+{
+  double tx = t.getOrigin().getX();
+  double ty = t.getOrigin().getY();
+  double tz = t.getOrigin().getZ();
+
+  double qx = t.getRotation().getX();
+  double qy = t.getRotation().getY();
+  double qz = t.getRotation().getZ();
+  double qw = t.getRotation().getW();
+
+  industrial_calibration_libs::Pose6D pose;
+  pose.setOrigin(tx, ty, tz);
+  pose.setQuaternion(qx, qy, qz, qw);
+
+  return pose;
+}
+
+industrial_calibration_libs::ObservationData 
+CalibrationWidget::cvMatToObservations(const std::vector<cv::Mat> &images)
+{
+  industrial_calibration_libs::ObservationExtractor observation_extractor(target_);
+  for (std::size_t i = 0; i < images.size(); i++)
+  {
+    cv::Mat output_image;
+    observation_extractor.extractObservation(images[i]);
+  }
+
+  return observation_extractor.getObservationData();
+}
+
 void CalibrationWidget::saveData(const std::string &directory)
 {
   // Check if number of observations matches number of transforms
@@ -636,15 +755,16 @@ void CalibrationWidget::saveData(const std::string &directory)
   }
 
   // Check if all tool0 to camera_frame transfroms match
-  bool transforms_match = true;
+  tool_to_camera_transforms_match_ = true;
   for (std::size_t i = 0; i < tool_to_camera_transforms_.size(); i++)
   {
     if (tool_to_camera_transforms_[0] != tool_to_camera_transforms_[i])
     {
-      transforms_match = false;
+      tool_to_camera_transforms_match_ = false;
+      break;
     }
   }
-  if (!transforms_match)
+  if (!tool_to_camera_transforms_match_)
   {
     CONSOLE_LOG_ERROR("The transforms between link: " << tip_link_ 
       << " and link: " << camera_frame_ << " don't match!"

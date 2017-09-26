@@ -107,6 +107,8 @@ protected Q_SLOTS:
   void runStaticTargetMovingCameraOnWristIntrinsic(void);
   void runStaticCameraMovingTargetOnWrist(void);
   void runStaticCameraMovingTargetOnWristIntrinsic(void);
+  industrial_calibration_libs::Pose6D tfToPose6D(const tf::StampedTransform &t);  
+  industrial_calibration_libs::ObservationData cvMatToObservations(const std::vector<cv::Mat> &images);
   void saveData(const std::string &directory);
   std::string getDateTimeString(void);
   void tfToYAML(const std::string &filename, const tf::StampedTransform &transform,
@@ -149,6 +151,7 @@ private:
   std::vector<cv::Mat> observation_images_;
   std::vector<tf::StampedTransform> base_to_tool_transforms_;
   std::vector<tf::StampedTransform> tool_to_camera_transforms_;
+  bool tool_to_camera_transforms_match_;
 };
 
 bool operator!=(const tf::StampedTransform &t1, const tf::StampedTransform &t2);
