@@ -9,6 +9,12 @@ ObservationExtractor::ObservationExtractor(const Target &target, bool custom_cir
   this->target_rows_ = target_.getData().target_rows;  
 }
 
+bool ObservationExtractor::extractObservation(const cv::Mat &input_image)
+{
+  cv::Mat output_image;
+  return this->extractObservation(input_image, output_image);
+}
+
 bool ObservationExtractor::extractObservation(const cv::Mat &input_image, 
   cv::Mat &output_image)
 {

@@ -26,6 +26,8 @@ public:
 
   ObservationData getObservationData(void) {return observation_data_;}
 
+  bool extractObservation(const cv::Mat &image);
+
   bool extractObservation(const cv::Mat &image, cv::Mat &output_image);
 
 private:
