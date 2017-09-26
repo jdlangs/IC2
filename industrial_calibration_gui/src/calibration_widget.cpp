@@ -78,28 +78,29 @@ void CalibrationWidget::updateCalibrationTypeText(int current_index)
 {
   switch (current_index)
   {
-    case 0:
+    case welcome_screen:
       ui_->calibration_type_text_browser->setText("Welcome to the industrial_calibration_gui.");
       break;
 
-    case 1:
+    case static_target_moving_camera_on_wrist:
       ui_->calibration_type_text_browser->setText("Static Target Moving Camera on Wrist (Extrinsic)");
       break;
 
-    case 2:
+    case static_target_moving_camera_on_wrist_intrinsic:
       ui_->calibration_type_text_browser->setText("Static Target Moving Camera on Wrist (Extrinsic + Intrinsic) [EXPERIMENTAL]");
       break;
 
-    case 3:
+    case static_camera_moving_target_on_wrist:
       ui_->calibration_type_text_browser->setText("Static Camera Moving Target on Wrist (Extrinsic)");
 
-    case 4:
+    case static_camera_moving_target_on_wrist_intrinsic:
       ui_->calibration_type_text_browser->setText("Static Camera Moving Target on Wrist (Extrinsic + Intrinsic) [EXPERIMENTAL]");
 
     default:
       ui_->calibration_type_text_browser->setText("Welcome to the industrial_calibration_gui.");
       break;
   }
+  calibration_type_ = static_cast<CalibrationType>(current_index);
 }
 
 // Manual data collection page
@@ -566,7 +567,41 @@ void CalibrationWidget::startCalibrationButton(void)
   if (save_data) {this->saveData(save_data_directory);}
 
   // Start Calibration (increase stackedWidget index)
-  CONSOLE_LOG_INFO("Starting Calibration [does nothing]");
+  CONSOLE_LOG_INFO("Starting Calibration");
+
+  switch (calibration_type_)
+  {
+    case welcome_screen:
+      CONSOLE_LOG_ERROR("Calibration type not selected, I have no idea how"
+        << " you made it this far...");
+      break;
+
+    // Only one supported right now...
+    case static_target_moving_camera_on_wrist:
+      this->runStaticTargetMovingCameraOnWrist();
+      break;
+
+    case static_target_moving_camera_on_wrist_intrinsic:
+      CONSOLE_LOG_ERROR("Not Supported Yet!");
+      break;
+
+    case static_camera_moving_target_on_wrist:
+      CONSOLE_LOG_ERROR("Not Supported Yet!");
+      break;
+
+    case static_camera_moving_target_on_wrist_intrinsic:
+      CONSOLE_LOG_ERROR("Not Supported Yet!");
+      break;
+
+    default:
+      CONSOLE_LOG_ERROR("Please select a calibration type");
+      break;
+  }
+}
+
+void CalibrationWidget::runStaticTargetMovingCameraOnWrist(void)
+{
+  CONSOLE_LOG_INFO("Running static target moving camera on wrist!");
 }
 
 void CalibrationWidget::saveData(const std::string &directory)

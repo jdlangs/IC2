@@ -42,6 +42,15 @@ class CalibrationWidget;
 
 namespace industrial_calibration_gui
 {
+enum CalibrationType
+{
+  welcome_screen,
+  static_target_moving_camera_on_wrist,
+  static_target_moving_camera_on_wrist_intrinsic,
+  static_camera_moving_target_on_wrist,
+  static_camera_moving_target_on_wrist_intrinsic
+};
+
 class CalibrationWidget : public QWidget
 {
   Q_OBJECT
@@ -94,6 +103,7 @@ protected Q_SLOTS:
   void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
   void saveImageButton(void);
   void startCalibrationButton(void);
+  void runStaticTargetMovingCameraOnWrist(void);
   void saveData(const std::string &directory);
   std::string getDateTimeString(void);
   void tfToYAML(const std::string &filename, const tf::StampedTransform &transform,
@@ -107,6 +117,7 @@ protected:
 
 private:
   // GUI variables
+  CalibrationType calibration_type_;
   bool instructions_checkbox_state_;
   QString save_data_directory_;
   bool target_set_from_file_;
