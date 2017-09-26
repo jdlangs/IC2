@@ -446,8 +446,6 @@ void CalibrationWidget::collectData(const std::string &base_link,
 
 void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
 {
-  ROS_INFO_STREAM("Image MSG Received!");
-
   cv_bridge::CvImageConstPtr msg_ptr;
   try
   {
@@ -474,12 +472,10 @@ void CalibrationWidget::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   {
     if (this->drawGrid(grid_image))
     {
-      ROS_INFO_STREAM("Circle Grid Found!");
       display_image = grid_image;
     }
     else
     {
-      ROS_INFO_STREAM("No Circle Grid FOund!");
       display_image = raw_image;
     }
 
