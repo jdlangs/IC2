@@ -95,6 +95,9 @@ protected Q_SLOTS:
   void saveImageButton(void);
   void startCalibrationButton(void);
   void saveData(const std::string &directory);
+  std::string getDateTimeString(void);
+  void tfToYAML(const std::string &filename, const tf::StampedTransform &transform,
+    const std::string &from_link, const std::string &to_link);
   void refreshComboBoxes(void);
 
 protected:
@@ -134,6 +137,9 @@ private:
   std::vector<tf::StampedTransform> base_to_tool_transforms_;
   std::vector<tf::StampedTransform> tool_to_camera_transforms_;
 };
+
+bool operator!=(const tf::StampedTransform &t1, const tf::StampedTransform &t2);
+
 } // namespace industrial_calibration_gui
 
 #endif //CALIBRATION_WIDGET_H

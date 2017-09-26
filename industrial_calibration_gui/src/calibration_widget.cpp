@@ -556,6 +556,8 @@ void CalibrationWidget::startCalibrationButton(void)
   std::string save_data_directory = this->save_data_directory_.toStdString();
   if (save_data_directory.empty()) 
   {
+    // May want to save to a default directory in the future...
+    // Maybe ~/.ros/industrial_calibration
     CONSOLE_LOG_ERROR("No save data directory specified, data will not" <<
       " be saved!");
     save_data = false;
@@ -569,12 +571,33 @@ void CalibrationWidget::startCalibrationButton(void)
 
 void CalibrationWidget::saveData(const std::string &directory)
 {
-  // Get the date-time to use as a directory name
-  boost::posix_time::ptime boost_posix_time = ros::Time::now().toBoost();
-  std::string date_time = boost::posix_time::to_simple_string(boost_posix_time);
-  std::replace(date_time.begin(), date_time.end(), ':', '-');
-  std::replace(date_time.begin(), date_time.end(), ' ', '-');
-  date_time = date_time.substr(0, date_time.find("."));
+  // Check if number of observations matches number of transforms
+  if (observation_images_.size() != base_to_tool_transforms_.size()
+    && observation_images_.size() != tool_to_camera_transforms_.size())
+  {
+    CONSOLE_LOG_ERROR("The number of images is not equal to " <<
+      "the number of transforms");
+    return;
+  }
+
+  // Check if all tool0 to camera_frame transfroms match
+  bool transforms_match = true;
+  for (std::size_t i = 0; i < tool_to_camera_transforms_.size(); i++)
+  {
+    if (tool_to_camera_transforms_[0] != tool_to_camera_transforms_[i])
+    {
+      transforms_match = false;
+    }
+  }
+  if (!transforms_match)
+  {
+    CONSOLE_LOG_ERROR("The transforms between link: " << tip_link_ 
+      << " and link: " << camera_frame_ << " don't match!"
+      << " These transforms should remain constant");
+    return;
+  }
+
+  std::string date_time = this->getDateTimeString();
 
   std::string data_directory_string = directory + date_time;
   std::string image_directory_string = data_directory_string + "/images";
@@ -593,7 +616,8 @@ void CalibrationWidget::saveData(const std::string &directory)
   }
   catch (std::exception &ex)
   {
-    CONSOLE_LOG_ERROR("Unable to create directories to save data"); 
+    CONSOLE_LOG_ERROR("Unable to create directory to save data," <<
+      " please specify a directory that exists"); 
   }
 
   CONSOLE_LOG_INFO("Saving calibration data to: " << data_directory_string);
@@ -608,14 +632,106 @@ void CalibrationWidget::saveData(const std::string &directory)
   {
     try
     {
-      std::string file_name = image_directory_string + "/" + std::to_string(i) + ".png";
+      std::string file_name = image_directory_string + "/" 
+        + std::to_string(i) + ".png";
       cv::imwrite(file_name, observation_images_[i], png_params);
+      CONSOLE_LOG_INFO(file_name << " has been saved.");
     }
     catch (std::exception &ex)
     {
       CONSOLE_LOG_ERROR("Failed to save image: " << std::to_string(i) 
         << ".png to " << image_directory_string);
     }
+  }
+
+  // Saving transforms from base to tool0
+  for (std::size_t i = 0; i < base_to_tool_transforms_.size(); i++)
+  {
+    try
+    {
+      std::string file_name = tf_directory_string + "/" + std::to_string(i) 
+        + ".yaml";
+      this->tfToYAML(file_name, base_to_tool_transforms_[i], base_link_,
+        tip_link_);
+    }
+    catch (std::exception &ex)
+    {
+      CONSOLE_LOG_ERROR("Failed to save transform between " << base_link_ 
+        << " and " << tip_link_ << " to: " << std::to_string(i)
+        << ".yaml in " << tf_directory_string);
+    }
+  }
+
+  // Saving single transform between tool0 and camera_frame
+  try
+  {
+    std::string file_name = data_directory_string + "/" + tip_link_ + "_to_"
+      + camera_frame_ + ".yaml";
+    this->tfToYAML(file_name, tool_to_camera_transforms_[0], tip_link_,
+      camera_frame_);
+  }
+  catch (std::exception &ex)
+  {
+      CONSOLE_LOG_ERROR("Failed to save transform between " << tip_link_ 
+        << " and " << camera_frame_ << " to: " << data_directory_string 
+        << "/" + tip_link_ << "_to_" << camera_frame_ + ".yaml");    
+  }
+}
+
+std::string CalibrationWidget::getDateTimeString(void)
+{
+  // Get the date-time to use as a directory name
+  boost::posix_time::ptime boost_posix_time = ros::Time::now().toBoost();
+  std::string date_time = boost::posix_time::to_simple_string(boost_posix_time);
+  std::replace(date_time.begin(), date_time.end(), ':', '-');
+  std::replace(date_time.begin(), date_time.end(), ' ', '-');
+  date_time = date_time.substr(0, date_time.find("."));
+
+  return date_time;
+}
+
+void CalibrationWidget::tfToYAML(const std::string &filename, 
+  const tf::StampedTransform &transform, const std::string &from_link, 
+  const std::string &to_link)
+{
+  std::string name = from_link + "_to_" + to_link;
+
+  std::vector<double> translation; translation.resize(3);
+  std::vector<double> quaternion; quaternion.resize(4);
+
+  translation[0] = transform.getOrigin().getX();
+  translation[1] = transform.getOrigin().getY();
+  translation[2] = transform.getOrigin().getZ();
+
+  quaternion[0] = transform.getRotation().getX();
+  quaternion[1] = transform.getRotation().getY();
+  quaternion[2] = transform.getRotation().getZ();
+  quaternion[3] = transform.getRotation().getW();
+
+  YAML::Emitter out;
+  out << YAML::BeginMap;
+    out << YAML::Key << name;
+    out << YAML::Value << YAML::BeginMap;
+      out << YAML::Key << "From";
+        out << YAML::Value << from_link;
+      out << YAML::Key << "To";
+        out << YAML::Value << to_link;
+      out << YAML::Key << "Translation";
+        out << YAML::Value << translation;
+      out << YAML::Key << "Quaternion";
+        out << YAML::Value << quaternion;
+    out << YAML::EndMap;
+  out << YAML::EndMap;
+
+  if (out.good())
+  {
+    std::ofstream yaml_file(filename);
+    yaml_file << out.c_str();
+    CONSOLE_LOG_INFO(filename << " has been saved.");
+  }
+  else
+  {
+    CONSOLE_LOG_ERROR("YAML file is bad!");
   }
 }
 
@@ -665,4 +781,18 @@ void CalibrationWidget::refreshComboBoxes(void)
   }
 }
 
+bool operator!=(const tf::StampedTransform &t1, const tf::StampedTransform &t2)
+{
+  if (t1.getOrigin().getX() == t2.getOrigin().getX() 
+    || t1.getOrigin().getY() == t2.getOrigin().getY()
+    || t1.getOrigin().getZ() == t2.getOrigin().getZ()
+    || t1.getRotation().getX() == t2.getRotation().getX()
+    || t1.getRotation().getY() == t2.getRotation().getY()
+    || t1.getRotation().getZ() == t2.getRotation().getZ()
+    || t1.getRotation().getW() == t2.getRotation().getW())
+  {
+    return false;
+  }
+  else {return true;}
+}
 } // namespace industrial_calibration_gui
