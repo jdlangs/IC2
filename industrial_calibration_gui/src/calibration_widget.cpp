@@ -587,15 +587,15 @@ void CalibrationWidget::startCalibrationButton(void)
       break;
 
     case static_target_moving_camera_on_wrist_intrinsic:
-      CONSOLE_LOG_ERROR("Not Supported Yet!");
+      this->runStaticTargetMovingCameraOnWristIntrinsic();
       break;
 
     case static_camera_moving_target_on_wrist:
-      CONSOLE_LOG_ERROR("Not Supported Yet!");
+      this->runStaticCameraMovingTargetOnWrist();
       break;
 
     case static_camera_moving_target_on_wrist_intrinsic:
-      CONSOLE_LOG_ERROR("Not Supported Yet!");
+      this->runStaticCameraMovingTargetOnWristIntrinsic();
       break;
 
     default:
@@ -607,6 +607,21 @@ void CalibrationWidget::startCalibrationButton(void)
 void CalibrationWidget::runStaticTargetMovingCameraOnWrist(void)
 {
   CONSOLE_LOG_INFO("Running static target moving camera on wrist!");
+}
+
+void CalibrationWidget::runStaticTargetMovingCameraOnWristIntrinsic(void)
+{
+  CONSOLE_LOG_ERROR("Not Supported Yet!");
+}
+
+void CalibrationWidget::runStaticCameraMovingTargetOnWrist(void)
+{
+  CONSOLE_LOG_ERROR("Not Supported Yet!");
+}
+
+void CalibrationWidget::runStaticCameraMovingTargetOnWristIntrinsic(void)
+{
+  CONSOLE_LOG_ERROR("Not Supported Yet!");
 }
 
 void CalibrationWidget::saveData(const std::string &directory)

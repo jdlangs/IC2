@@ -104,6 +104,9 @@ protected Q_SLOTS:
   void saveImageButton(void);
   void startCalibrationButton(void);
   void runStaticTargetMovingCameraOnWrist(void);
+  void runStaticTargetMovingCameraOnWristIntrinsic(void);
+  void runStaticCameraMovingTargetOnWrist(void);
+  void runStaticCameraMovingTargetOnWristIntrinsic(void);
   void saveData(const std::string &directory);
   std::string getDateTimeString(void);
   void tfToYAML(const std::string &filename, const tf::StampedTransform &transform,
