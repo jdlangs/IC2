@@ -39,17 +39,19 @@ struct TargetDefinition
 class Target
 {
 public:
+  Target(void);
+  
   Target(const std::string &yaml_file_path);
 
   Target(const TargetDefinition &target_definition);
 
   TargetDefinition getDefinition(void) const;
 
-private:
   bool loadTargetFromYAML(const std::string &yaml_file_path);
 
   bool loadTargetFromDefinition(const TargetDefinition &target_definition);
 
+private:
   bool parseYAML(const YAML::Node &node, const std::string &var_name, 
     std::string &var_value);
 

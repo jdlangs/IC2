@@ -2,6 +2,8 @@
 
 namespace industrial_calibration_libs
 {
+Target::Target(void) { }
+
 Target::Target(const std::string &yaml_file_path) 
 {
   if (!this->loadTargetFromYAML(yaml_file_path))
