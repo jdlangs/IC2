@@ -32,22 +32,24 @@ struct TargetDefinition
   double col_spacing; // Meters
   double spacing; // Meters
 
-  bool asymmetric_grid;
+  // bool asymmetric_grid;
   std::vector<Point3D> points;
 };
 
 class Target
 {
 public:
-  Target(void);
+  Target(const std::string &yaml_file_path);
 
-  bool loadTargetFromYAML(const std::string &yaml_file_path);
-
-  bool loadTargetFromDefinition(const TargetDefinition &target_definition);
+  Target(const TargetDefinition &target_definition);
 
   TargetDefinition getDefinition(void) const;
 
 private:
+  bool loadTargetFromYAML(const std::string &yaml_file_path);
+
+  bool loadTargetFromDefinition(const TargetDefinition &target_definition);
+
   bool parseYAML(const YAML::Node &node, const std::string &var_name, 
     std::string &var_value);
 
@@ -72,7 +74,7 @@ private:
     std::vector<Point3D> &points);
 
   // Data Members
-  TargetDefinition target_params_;
+  TargetDefinition target_definition_;
 };
 
 

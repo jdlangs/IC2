@@ -2,7 +2,21 @@
 
 namespace industrial_calibration_libs
 {
-Target::Target(void) { }
+Target::Target(const std::string &yaml_file_path) 
+{
+  if (!this->loadTargetFromYAML(yaml_file_path))
+  {
+    throw std::runtime_error("Failed to load target from file: " + yaml_file_path);
+  }
+}
+
+Target::Target(const TargetDefinition &target_definition)
+{
+  if (!this->loadTargetFromDefinition(target_definition))
+  {
+    throw std::runtime_error("Failed to load target from definition");
+  }
+}
 
 bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
 {
@@ -16,33 +30,34 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
 
   bool success = true;
 
-  success &= parseYAML(target_yaml, "target_name", target_params_.target_name);
-  success &= parseYAML(target_yaml, "target_type", target_params_.target_type);
-  success &= parseYAML(target_yaml, "target_rows", target_params_.target_rows);
-  success &= parseYAML(target_yaml, "target_cols", target_params_.target_cols);
-  success &= parseYAML(target_yaml, "target_points", target_params_.target_points);
+  success &= parseYAML(target_yaml, "target_name", target_definition_.target_name);
+  success &= parseYAML(target_yaml, "target_type", target_definition_.target_type);
+  success &= parseYAML(target_yaml, "target_rows", target_definition_.target_rows);
+  success &= parseYAML(target_yaml, "target_cols", target_definition_.target_cols);
+  success &= parseYAML(target_yaml, "target_points", 
+    target_definition_.target_points);
 
-  switch (target_params_.target_type)
+  switch (target_definition_.target_type)
   {
     case Chessboard:
-      // success &= parseYAML(target_yaml, "row_spacing", target_params_.row_spacing);
-      // success &= parseYAML(target_yaml, "col_spacing", target_params_.col_spacing);
+      // success &= parseYAML(target_yaml, "row_spacing", target_definition_.row_spacing);
+      // success &= parseYAML(target_yaml, "col_spacing", target_definition_.col_spacing);
       std::cerr << "Chessboard targets are not currently supported" << std::endl;
       return false;
       break;
       
     case CircleGrid:
-      // success &= parseYAML(target_yaml, "circle_diameter", target_params_.circle_diameter);
-      // success &= parseYAML(target_yaml, "spacing", target_params_.spacing);
+      // success &= parseYAML(target_yaml, "circle_diameter", target_definition_.circle_diameter);
+      // success &= parseYAML(target_yaml, "spacing", target_definition_.spacing);
       // TODO(gChiou): Set this to false by default, check if it even exists.
-      // success &= parseYAML(target_yaml, "asymmetric_grid", target_params_.asymmetric_grid);
+      // success &= parseYAML(target_yaml, "asymmetric_grid", target_definition_.asymmetric_grid);
       std::cerr << "Circlegrid targets are not currently supported" << std::endl;
       return false;
       break;
 
     case ModifiedCircleGrid:
-      success &= parseYAML(target_yaml, "circle_diameter", target_params_.circle_diameter);
-      success &= parseYAML(target_yaml, "spacing", target_params_.spacing);
+      success &= parseYAML(target_yaml, "circle_diameter", target_definition_.circle_diameter);
+      success &= parseYAML(target_yaml, "spacing", target_definition_.spacing);
       break;
 
     default:
@@ -50,21 +65,25 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
       break;
   }
 
-  if (!parseYAML(target_yaml, "points", target_params_.points))
+  if (!parseYAML(target_yaml, "points", target_definition_.points))
   {
-    this->populatePoints(target_params_.target_rows, target_params_.target_cols,
-      target_params_.spacing, target_params_.points);
+    this->populatePoints(target_definition_.target_rows, 
+      target_definition_.target_cols, target_definition_.spacing, 
+      target_definition_.points);
   }
 
-  // success &= checkForValidTarget();
+  success &= checkForValidTarget();
   return success;
 }
 
 bool Target::loadTargetFromDefinition(const TargetDefinition &target_definition)
 {
-  // TODO(gChiou): ...
-  target_params_ = target_definition;
-  return false;
+  target_definition_ = target_definition;
+  this->populatePoints(target_definition_.target_rows, 
+    target_definition_.target_cols, target_definition_.spacing, 
+    target_definition_.points);
+
+  return checkForValidTarget();
 }
 
 bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
@@ -154,31 +173,39 @@ bool Target::parseYAML(const YAML::Node &node, const std::string &var_name,
   else {return false;}
 }
 
-// TODO(gChiou): Refactor this...
 bool Target::checkForValidTarget(void)
 {
-  if (target_params_.target_type == CircleGrid)
+  // Don't feel like typing out target_definition_
+  TargetDefinition target = this->target_definition_;
+
+  if (target.target_type == ModifiedCircleGrid)
   {
-    if (target_params_.asymmetric_grid)
+    if (target.target_rows < 2 || target.target_cols < 2)
     {
-      if (target_params_.target_points != (target_params_.target_rows*target_params_.target_cols) / 2)
-      {
-        return false;
-      }
+      return false;
     }
-    else
+    if ((target.target_rows * target.target_cols) != target.target_points)
     {
-      if (target_params_.target_points != (target_params_.target_rows*target_params_.target_cols))
-      {
-        return false;
-      }
+      return false;
+    }
+    if ((target.target_rows * target.target_cols) != target.points.size())
+    {
+      return false;
+    }
+    if (target.spacing <= 0.0)
+    {
+      return false;
+    }
+    // These values shouldn't be used for now...
+    if (target.row_spacing > 0.0 || target.col_spacing > 0.0)
+    {
+      return false;
     }
   }
-  return false; //TODO(gChiou): Remove this...
-  // TODO(gChiou): Write these same checks for modified circle grid and chessboard
+  else {return false;} // If target type is not modified circle grid.
+  return true; // As long as it doesn't fail, it should return true. 
 }
 
-// TODO(gChiou): Implement this...
 bool Target::populatePoints(std::size_t rows, std::size_t cols, double spacing, 
     std::vector<Point3D> &points)
 {
@@ -202,7 +229,7 @@ bool Target::populatePoints(std::size_t rows, std::size_t cols, double spacing,
 
 TargetDefinition Target::getDefinition(void) const
 {
-  return target_params_;
+  return target_definition_;
 }
 
 } // namespace industrial_calibration_libs
