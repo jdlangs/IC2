@@ -62,8 +62,11 @@ void CalibrationWidget::startDataCollectionButton(void)
 {
   if (this->instructions_checkbox_state_)
   {
-    ui_->stackedWidget->setCurrentIndex(1);
-    this->refreshComboBoxes();
+    if (ui_->calibration_type_combo_box->currentIndex() != 0)
+    {
+      ui_->stackedWidget->setCurrentIndex(1);
+      this->refreshComboBoxes();
+    }
   }
 }
 
