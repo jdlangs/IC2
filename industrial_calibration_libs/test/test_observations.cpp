@@ -43,7 +43,7 @@ TEST(Observations, load_observation_set_1)
 
   for (std::size_t i = 0; i < num_images; i++)
   {
-    EXPECT_EQ(observation_data[i].size(), target.getData().target_points);
+    EXPECT_EQ(observation_data[i].size(), target.getDefinition().target_points);
   }
 
   // TODO(gChiou): Find a way to verify observation data...
@@ -105,7 +105,7 @@ TEST(Observations, load_observation_set_2)
 
   for (std::size_t i = 0; i < num_images; i++)
   {
-    EXPECT_EQ(observation_data[i].size(), target.getData().target_points);
+    EXPECT_EQ(observation_data[i].size(), target.getDefinition().target_points);
   }
 
   // TODO(gChiou): Find a way to verify observation data...

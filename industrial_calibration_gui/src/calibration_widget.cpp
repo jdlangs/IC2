@@ -203,17 +203,17 @@ void CalibrationWidget::setTargetLines(const industrial_calibration_libs::Target
   // Round numbers with decimals
   std::stringstream target_circle_diameter_stream;
   target_circle_diameter_stream << std::fixed << std::setprecision(5) 
-    << target.getData().circle_diameter;
+    << target.getDefinition().circle_diameter;
   std::stringstream target_point_spacing_stream;
   target_point_spacing_stream << std::fixed << std::setprecision(5)
-    << target.getData().spacing;
+    << target.getDefinition().spacing;
   
   // Setting line outputs
-  QString target_name = QString::fromStdString(target.getData().target_name);
-  QString target_rows = QString::fromStdString(std::to_string(target.getData().target_rows));
-  QString target_cols = QString::fromStdString(std::to_string(target.getData().target_cols));
+  QString target_name = QString::fromStdString(target.getDefinition().target_name);
+  QString target_rows = QString::fromStdString(std::to_string(target.getDefinition().target_rows));
+  QString target_cols = QString::fromStdString(std::to_string(target.getDefinition().target_cols));
   QString target_points = 
-    QString::fromStdString(std::to_string(target.getData().target_points));
+    QString::fromStdString(std::to_string(target.getDefinition().target_points));
   QString target_circle_diameter = 
     QString::fromStdString(target_circle_diameter_stream.str());
   QString target_point_spacing = 
@@ -221,7 +221,7 @@ void CalibrationWidget::setTargetLines(const industrial_calibration_libs::Target
 
   ui_->target_name_line->setText(target_name);
   ui_->target_name_line->setReadOnly(true);
-  ui_->target_type_combo_box->setCurrentIndex(target.getData().target_type);
+  ui_->target_type_combo_box->setCurrentIndex(target.getDefinition().target_type);
   ui_->target_type_combo_box->setDisabled(true);
   ui_->target_rows_line->setText(target_rows);
   ui_->target_rows_line->setReadOnly(true);

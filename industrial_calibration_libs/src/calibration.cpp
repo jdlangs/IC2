@@ -173,7 +173,7 @@ bool MovingCameraOnWristStaticTargetExtrinsic::runCalibration(void)
     for (std::size_t j = 0; j < observations_per_image_; j++)
     {
       Pose6D link_pose = link_poses_[i];
-      Point3D point = target_.getData().points[j];
+      Point3D point = target_.getDefinition().points[j];
       
       double observed_x = observation_data_[i][j].x;
       double observed_y = observation_data_[i][j].y;
@@ -256,7 +256,7 @@ bool MovingCameraOnWristStaticTargetIntrinsic::runCalibration(void)
     for (std::size_t j = 0; j < observations_per_image_; j++)
     {
       Pose6D link_pose = link_poses_[i];
-      Point3D point = target_.getData().points[j];
+      Point3D point = target_.getDefinition().points[j];
 
       double observed_x = observation_data_[i][j].x;
       double observed_y = observation_data_[i][j].y;
