@@ -30,6 +30,9 @@ public:
 
   bool extractObservation(const cv::Mat &image, cv::Mat &output_image);
 
+  int extractObservations(const std::vector<cv::Mat> &input_images,
+    std::vector<bool> &success);
+
 private:
   template<typename PARAMS, typename DETECTOR_PTR, typename DETECTOR>
   bool extractModifiedCircleGrid(const cv::Mat &image, 
@@ -55,6 +58,7 @@ private:
 
   std::size_t target_cols_;
   std::size_t target_rows_;
+  std::size_t target_points_;
 };
 
 } // namespace industrial_calibration_libs

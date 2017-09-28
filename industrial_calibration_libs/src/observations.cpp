@@ -6,7 +6,8 @@ ObservationExtractor::ObservationExtractor(const Target &target, bool custom_cir
   custom_circle_detector_(custom_circle_detector)
 { 
   this->target_cols_ = target_.getDefinition().target_cols;
-  this->target_rows_ = target_.getDefinition().target_rows;  
+  this->target_rows_ = target_.getDefinition().target_rows;
+  this->target_points_ = target_.getDefinition().target_points;  
 }
 
 bool ObservationExtractor::extractObservation(const cv::Mat &input_image)
@@ -40,10 +41,13 @@ bool ObservationExtractor::extractObservation(const cv::Mat &input_image,
           cv::CircleDetector, cv::CircleDetector>(input_image, 
           observation_points, output_image)) 
         {
-          images_.push_back(input_image);
-          grid_images_.push_back(output_image);
-          observation_data_.push_back(observation_points);
-          return true;
+          if (observation_points.size() == this->target_points_)
+          {
+            images_.push_back(input_image);
+            grid_images_.push_back(output_image);
+            observation_data_.push_back(observation_points);
+            return true;
+          }
         }    
       }
       else
@@ -52,10 +56,13 @@ bool ObservationExtractor::extractObservation(const cv::Mat &input_image,
           cv::FeatureDetector, cv::SimpleBlobDetector>(input_image,
           observation_points, output_image)) 
         {
-          images_.push_back(input_image);
-          grid_images_.push_back(output_image);
-          observation_data_.push_back(observation_points);
-          return true;
+          if (observation_points.size() == this->target_points_)
+          {
+            images_.push_back(input_image);
+            grid_images_.push_back(output_image);
+            observation_data_.push_back(observation_points);
+            return true;
+          }
         }          
       }
       break;
@@ -64,6 +71,23 @@ bool ObservationExtractor::extractObservation(const cv::Mat &input_image,
       break;
   }
   return false;
+}
+
+int ObservationExtractor::extractObservations(const std::vector<cv::Mat> &input_images,
+  std::vector<bool> &success)
+{
+  int count = 0;
+  success.resize(input_images.size());
+  for (std::size_t i = 0; i < input_images.size(); i++)
+  {
+    if (this->extractObservation(input_images[i]))
+    {
+      success[i] = true;
+      count++;
+    }
+    else {success[i] = false;}
+  }
+  return count;
 }
 
 template<typename PARAMS, typename DETECTOR_PTR, typename DETECTOR>
