@@ -161,6 +161,12 @@ CameraOnWristExtrinsic::CameraOnWristExtrinsic(const ObservationData &observatio
 
 bool CameraOnWristExtrinsic::runCalibration(void)
 {
+  if (link_poses_.size() == 0)
+  {
+    std::cerr << "base to tool Poses are Empty!" << '\n';
+    return false;
+  }
+
   if (!checkObservations()) {return false;}
 
   // Iterate through every observation image
@@ -241,6 +247,12 @@ CameraOnWristIntrinsic::CameraOnWristIntrinsic(const ObservationData &observatio
 
 bool CameraOnWristIntrinsic::runCalibration(void)
 {
+  if (link_poses_.size() == 0)
+  {
+    std::cerr << "base to tool Poses are Empty!" << '\n';
+    return false;
+  }
+  
   if (!checkObservations()) {return false;}
 
   // Iterate through every observation image
