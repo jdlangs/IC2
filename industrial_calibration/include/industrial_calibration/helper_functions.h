@@ -96,16 +96,16 @@ bool loadLinkData(const std::size_t &index, const std::string &path,
 
   LinkData link_data;
   success &= parseYAML(data_yaml["base_link_to_tool0"], "Translation", link_data.translation);
-  success &= parseYAML(data_yaml["base_link_to_tool0"], "Quaternion", link_data.rotation);
+  success &= parseYAML(data_yaml["base_link_to_tool0"], "Quaternion", link_data.rotation_quat);
 
   double tx, ty, tz, qx, qy, qz, qw;
   tx = link_data.translation[0];
   ty = link_data.translation[1];
   tz = link_data.translation[2];
-  qx = link_data.rotation[0];
-  qy = link_data.rotation[1];
-  qz = link_data.rotation[2];
-  qw = link_data.rotation[3];
+  qx = link_data.rotation_quat[0];
+  qy = link_data.rotation_quat[1];
+  qz = link_data.rotation_quat[2];
+  qw = link_data.rotation_quat[3];
 
   pose.setOrigin(tx, ty, tz);
   pose.setQuaternion(qx, qy, qz, qw);
