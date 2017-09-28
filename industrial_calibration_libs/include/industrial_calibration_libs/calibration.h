@@ -20,6 +20,30 @@ struct CovarianceRequest
   std::string object_name;
 };
 
+// TODO(gChiou): Think of a better name for this...
+struct MovingCameraOnWristStaticTargetExtrinsicValues
+{
+  // Known Values
+  IntrinsicsPartial intrinsics;
+  std::vector<Pose6D> base_to_tool; // For every observation.
+
+  // Unknown Values
+  Extrinsics tool_to_camera;
+  Extrinsics target_to_base;
+};
+
+// TODO(gChiou): Think of a better name for this...
+struct MovingCameraOnWristStaticTargetIntrinsicValues
+{
+  // Known Values
+  std::vector<Pose6D> base_to_tool; // For every observation.
+
+  // Uknown Values
+  IntrinsicsFull intrinsics;
+  Extrinsics tool_to_camera;
+  Extrinsics target_to_base;
+};
+
 class CalibrationJob
 {
 public:
