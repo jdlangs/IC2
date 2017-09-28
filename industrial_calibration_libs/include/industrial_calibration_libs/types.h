@@ -113,6 +113,8 @@ public:
 */  
 struct IntrinsicsPartial
 {
+  IntrinsicsPartial(void) { }
+
   IntrinsicsPartial(double fx, double fy, double cx, double cy) :
     data{fx, fy, cx, cy} { }
 
@@ -137,6 +139,8 @@ struct IntrinsicsPartial
 */
 struct IntrinsicsFull
 {
+  IntrinsicsFull(void) { }
+
   IntrinsicsFull(double fx, double fy, double cx, double cy,
     double k1, double k2, double k3, double p1, double p2) :
   data{fx, fy, cx, cy, k1, k2, k3, p1, p2} { }
@@ -164,6 +168,8 @@ struct IntrinsicsFull
 */
 struct Extrinsics
 {
+  Extrinsics(void) { }
+
   Extrinsics(double ax, double ay, double az, double x,
     double y, double z) : data{ax, ay, az, x, y, z} { }
 
