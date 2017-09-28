@@ -85,18 +85,18 @@ void CalibrationWidget::updateCalibrationTypeText(int current_index)
       ui_->calibration_type_text_browser->setText("Welcome to the industrial_calibration_gui.");
       break;
 
-    case static_target_moving_camera_on_wrist:
+    case camera_on_wrist_extrinsic:
       ui_->calibration_type_text_browser->setText("Static Target Moving Camera on Wrist (Extrinsic)");
       break;
 
-    case static_target_moving_camera_on_wrist_intrinsic:
+    case camera_on_wrist_intrinsic:
       ui_->calibration_type_text_browser->setText("Static Target Moving Camera on Wrist (Extrinsic + Intrinsic) [EXPERIMENTAL]");
       break;
 
-    case static_camera_moving_target_on_wrist:
+    case camera_in_world_extrinsic:
       ui_->calibration_type_text_browser->setText("Static Camera Moving Target on Wrist (Extrinsic)");
 
-    case static_camera_moving_target_on_wrist_intrinsic:
+    case camera_in_world_intrinsic:
       ui_->calibration_type_text_browser->setText("Static Camera Moving Target on Wrist (Extrinsic + Intrinsic) [EXPERIMENTAL]");
 
     default:
@@ -586,20 +586,20 @@ void CalibrationWidget::startCalibrationButton(void)
         break;
 
       // Only one supported right now...
-      case static_target_moving_camera_on_wrist:
-        this->runStaticTargetMovingCameraOnWrist();
+      case camera_on_wrist_extrinsic:
+        this->runCameraOnWristExtrinsic();
         break;
 
-      case static_target_moving_camera_on_wrist_intrinsic:
-        this->runStaticTargetMovingCameraOnWristIntrinsic();
+      case camera_on_wrist_intrinsic:
+        this->runCameraOnWristIntrinsic();
         break;
 
-      case static_camera_moving_target_on_wrist:
-        this->runStaticCameraMovingTargetOnWrist();
+      case camera_in_world_extrinsic:
+        this->runCameraInWorldExtrinsic();
         break;
 
-      case static_camera_moving_target_on_wrist_intrinsic:
-        this->runStaticCameraMovingTargetOnWristIntrinsic();
+      case camera_in_world_intrinsic:
+        this->runCameraInWorldIntrinsic();
         break;
 
       default:
@@ -614,7 +614,7 @@ void CalibrationWidget::startCalibrationButton(void)
   }
 }
 
-void CalibrationWidget::runStaticTargetMovingCameraOnWrist(void)
+void CalibrationWidget::runCameraOnWristExtrinsic(void)
 {
   CONSOLE_LOG_INFO("Running static target moving camera on wrist!");
 
@@ -629,31 +629,11 @@ void CalibrationWidget::runStaticTargetMovingCameraOnWrist(void)
   industrial_calibration_libs::Pose6D tool_to_camera;
   tool_to_camera = this->tfToPose6D(tool_to_camera_transforms_[0]);
 
-  // Get the inverse.
-  industrial_calibration_libs::Pose6D tool_to_camera_i;
-  tool_to_camera_i = tool_to_camera.getInverse();
-
-  double extrinsics[6];
-  extrinsics[0] = tool_to_camera_i.ax;
-  extrinsics[1] = tool_to_camera_i.ay;
-  extrinsics[2] = tool_to_camera_i.az;
-  extrinsics[3] = tool_to_camera_i.ax;
-  extrinsics[4] = tool_to_camera_i.ay;
-  extrinsics[5] = tool_to_camera_i.az;
-
   // Setting a seed guess for target pose.
   // TODO(gChiou): Add marker for user to drag around.
   industrial_calibration_libs::Pose6D target_pose;
   target_pose.setOrigin(0.0, 0.0, 0.0);
   target_pose.setEulerZYX(0.0, 0.0, 0.0);
-
-  double target_to_base[6];
-  target_to_base[0] = target_pose.ax;
-  target_to_base[1] = target_pose.ay;
-  target_to_base[2] = target_pose.az;
-  target_to_base[3] = target_pose.x;
-  target_to_base[4] = target_pose.y;
-  target_to_base[5] = target_pose.z;
 
   // Convert base_to_tool stamped transforms to Pose6D.
   std::vector<industrial_calibration_libs::Pose6D> link_poses;
@@ -667,16 +647,22 @@ void CalibrationWidget::runStaticTargetMovingCameraOnWrist(void)
   industrial_calibration_libs::ObservationData observation_data;
   observation_data = this->cvMatToObservations(observation_images_);
 
-  // Running calibration and printing results to console
-  industrial_calibration_libs::MovingCameraOnWristStaticTargetExtrinsic calibration(observation_data, target_);
+  // Set Params
+  industrial_calibration_libs::CameraOnWristExtrinsicParams params;
+  params.intrinsics = industrial_calibration_libs::IntrinsicsPartial(
+    intrinsics[0], intrinsics[1], intrinsics[2], intrinsics[3]);
+  params.tool_to_camera = industrial_calibration_libs::Extrinsics(tool_to_camera.getInverse());
+  params.target_to_base = industrial_calibration_libs::Extrinsics(target_pose);
+  params.base_to_tool = link_poses;
 
-  calibration.initKnownValues(link_poses, intrinsics);
-  calibration.initSeedValues(extrinsics, target_to_base);
+  // Running calibration and printing results to console
+  industrial_calibration_libs::CameraOnWristExtrinsic calibration(observation_data,
+  target_, params);
 
   calibration.runCalibration();
   calibration.displayCovariance();
 
-  industrial_calibration_libs::MovingCameraOnWristStaticTargetExtrinsic::Result results = calibration.getResults();
+  industrial_calibration_libs::CameraOnWristExtrinsic::Result results = calibration.getResults();
 
   // Remove this later...
   ROS_INFO_STREAM("Extrinsic Parameters");
@@ -699,17 +685,17 @@ void CalibrationWidget::runStaticTargetMovingCameraOnWrist(void)
   ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());  
 }
 
-void CalibrationWidget::runStaticTargetMovingCameraOnWristIntrinsic(void)
+void CalibrationWidget::runCameraOnWristIntrinsic(void)
 {
   CONSOLE_LOG_ERROR("Not Supported Yet!");
 }
 
-void CalibrationWidget::runStaticCameraMovingTargetOnWrist(void)
+void CalibrationWidget::runCameraInWorldExtrinsic(void)
 {
   CONSOLE_LOG_ERROR("Not Supported Yet!");
 }
 
-void CalibrationWidget::runStaticCameraMovingTargetOnWristIntrinsic(void)
+void CalibrationWidget::runCameraInWorldIntrinsic(void)
 {
   CONSOLE_LOG_ERROR("Not Supported Yet!");
 }
