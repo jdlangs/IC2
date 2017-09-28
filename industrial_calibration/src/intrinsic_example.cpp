@@ -1,3 +1,4 @@
+#if 0
 #include <ros/ros.h>
 #include <yaml-cpp/yaml.h>
 #include <industrial_calibration_libs/industrial_calibration_libs.h>
@@ -454,3 +455,6 @@ int main(int argc, char** argv)
     cv::waitKey(0);
   }  
 }
+#endif
+
+int main() {return 0;}

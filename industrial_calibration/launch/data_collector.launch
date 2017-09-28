@@ -14,7 +14,7 @@
   <arg unless="$(arg debug)" name="launch_prefix" value=""/>
   <arg if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args"/>
 
-  <node name="cal_data_collector" pkg="industrial_calibration" type="cal_data_collector" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
+  <node name="data_collector" pkg="industrial_calibration" type="data_collector" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
     <param name="pattern_cols" value="$(arg cols)" type="int"/>
     <param name="pattern_rows" value="$(arg rows)" type="int"/>
     <param name="from_link" value="$(arg from_link)" type="string"/>

@@ -1,4 +1,4 @@
-#include <industrial_calibration/cal_data_collector.h>
+#include <industrial_calibration/data_collector.h>
 
 CalDataCollector::CalDataCollector(ros::NodeHandle nh, ros::NodeHandle pnh) :
   nh_(nh), pnh_(pnh), i_(0) // RENAME i_ TO SOMETHING ELSE
@@ -278,7 +278,7 @@ bool CalDataCollector::checkSettings(void)
 
 int main(int argc, char* argv[])
 {
-  ros::init(argc, argv, "cal_data_collector");
+  ros::init(argc, argv, "data_collector");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
 

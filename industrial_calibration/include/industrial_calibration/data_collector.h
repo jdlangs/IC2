@@ -1,5 +1,5 @@
-#ifndef CAL_DATA_COLLECTOR_H
-#define CAL_DATA_COLLECTOR_H
+#ifndef DATA_COLLECTOR_H
+#define DATA_COLLECTOR_H
 
 #include <cv_bridge/cv_bridge.h>
 #include <fstream>
@@ -73,4 +73,4 @@ private:
   ros::Subscriber camera_info_sub_;
   std::vector<double> intrinsic_matrix_;
 };
-#endif // CAL_DATA_COLLECTOR_H
+#endif // DATA_COLLECTOR_H

@@ -16,7 +16,7 @@
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "extrinsic_sim");
+  ros::init(argc, argv, "extrinsic_simulate");
   ros::NodeHandle pnh("~");
   std::string data_path;
   pnh.getParam("data_path", data_path);
