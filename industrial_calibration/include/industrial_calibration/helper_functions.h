@@ -17,9 +17,9 @@ typedef std::vector<double> RotationDeg;
 
 struct LinkData
 {
-  JointStates joint_states;
   Translation translation;
   Quaternion rotation_quat;
+  JointStates joint_states;
   RotationRad rotation_rad;
   RotationDeg rotation_deg;
 };
@@ -38,6 +38,9 @@ bool convertToPose6D(const std::vector<LinkData> &link_data,
 void drawResultPoints(const cv::Mat &input_image, cv::Mat &output_image,
   const industrial_calibration_libs::ObservationPoints &observation_points,
   std::size_t rows, std::size_t cols);
+
+bool loadLinkData(const std::size_t &index, const std::string &path,
+  industrial_calibration_libs::Pose6D &pose);
 
 bool parseYAML(const YAML::Node &node, const std::string &var_name, 
   std::vector<double> &var_value)
@@ -74,6 +77,39 @@ bool loadLinkData(const std::size_t &index, const std::string &path,
 
   success &= parseYAML(data_yaml["base_link_to_tool0"], "Translation", link_data->translation);
   success &= parseYAML(data_yaml["base_link_to_tool0"], "Quaternion", link_data->rotation_quat);
+  return success;
+}
+
+bool loadLinkData(const std::size_t &index, const std::string &path,
+  industrial_calibration_libs::Pose6D &pose)
+{
+  bool success = true;
+  std::string file_path = path + std::to_string(index) + ".yaml";
+
+  YAML::Node data_yaml;
+  try
+  {
+    data_yaml = YAML::LoadFile(file_path);
+    if (!data_yaml["base_link_to_tool0"]) {return false;}
+  }
+  catch (YAML::BadFile &bf) {return false;}
+
+  LinkData link_data;
+  success &= parseYAML(data_yaml["base_link_to_tool0"], "Translation", link_data.translation);
+  success &= parseYAML(data_yaml["base_link_to_tool0"], "Quaternion", link_data.rotation);
+
+  double tx, ty, tz, qx, qy, qz, qw;
+  tx = link_data.translation[0];
+  ty = link_data.translation[1];
+  tz = link_data.translation[2];
+  qx = link_data.rotation[0];
+  qy = link_data.rotation[1];
+  qz = link_data.rotation[2];
+  qw = link_data.rotation[3];
+
+  pose.setOrigin(tx, ty, tz);
+  pose.setQuaternion(qx, qy, qz, qw);
+
   return success;
 }
 
