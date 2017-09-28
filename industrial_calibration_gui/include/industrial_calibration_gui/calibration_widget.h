@@ -45,10 +45,10 @@ namespace industrial_calibration_gui
 enum CalibrationType
 {
   welcome_screen,
-  static_target_moving_camera_on_wrist,
-  static_target_moving_camera_on_wrist_intrinsic,
-  static_camera_moving_target_on_wrist,
-  static_camera_moving_target_on_wrist_intrinsic
+  camera_on_wrist_extrinsic,
+  camera_on_wrist_intrinsic,
+  camera_in_world_extrinsic,
+  camera_in_world_intrinsic
 };
 
 class CalibrationWidget : public QWidget
@@ -103,10 +103,10 @@ protected Q_SLOTS:
   void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
   void saveImageButton(void);
   void startCalibrationButton(void);
-  void runStaticTargetMovingCameraOnWrist(void);
-  void runStaticTargetMovingCameraOnWristIntrinsic(void);
-  void runStaticCameraMovingTargetOnWrist(void);
-  void runStaticCameraMovingTargetOnWristIntrinsic(void);
+  void runCameraOnWristExtrinsic(void);
+  void runCameraOnWristIntrinsic(void);
+  void runCameraInWorldExtrinsic(void);
+  void runCameraInWorldIntrinsic(void);
   industrial_calibration_libs::Pose6D tfToPose6D(const tf::StampedTransform &t);  
   industrial_calibration_libs::ObservationData cvMatToObservations(const std::vector<cv::Mat> &images);
   void saveData(const std::string &directory);

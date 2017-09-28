@@ -81,6 +81,7 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
 bool Target::loadTargetFromDefinition(const TargetDefinition &target_definition)
 {
   target_definition_ = target_definition;
+
   this->populatePoints(target_definition_.target_rows, 
     target_definition_.target_cols, target_definition_.spacing, 
     target_definition_.points);

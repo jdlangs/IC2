@@ -140,9 +140,9 @@ template<typename T> inline void cameraPointResidualWithDistortion(T point[3],
   residual[1] = fy * ypp + cy - oy;
 }
 
-struct MovingCameraOnWristStaticTargetExtrinsicCF
+struct CameraOnWristExtrinsicCF
 {
-    MovingCameraOnWristStaticTargetExtrinsicCF(const double observed_x, 
+    CameraOnWristExtrinsicCF(const double observed_x, 
     const double observed_y, const double focal_length_x, 
     const double focal_length_y, const double optical_center_x, 
     const double optical_center_y, Pose6D link_pose, 
@@ -194,7 +194,7 @@ struct MovingCameraOnWristStaticTargetExtrinsicCF
     const double focal_length_x, const double focal_length_y, const double optical_center_x, 
     const double optical_center_y, Pose6D pose, Point3D point)
   {
-    return (new ceres::AutoDiffCostFunction<MovingCameraOnWristStaticTargetExtrinsicCF, 2, 6, 6>(new MovingCameraOnWristStaticTargetExtrinsicCF(observed_x, observed_y, focal_length_x, focal_length_y, 
+    return (new ceres::AutoDiffCostFunction<CameraOnWristExtrinsicCF, 2, 6, 6>(new CameraOnWristExtrinsicCF(observed_x, observed_y, focal_length_x, focal_length_y, 
       optical_center_x, optical_center_y, pose, point)));
   }
 
@@ -209,9 +209,9 @@ struct MovingCameraOnWristStaticTargetExtrinsicCF
   Point3D point_;
 };
 
-struct MovingCameraOnWristStaticTargetIntrinsicCF
+struct CameraOnWristIntrinsicCF
 {
-  MovingCameraOnWristStaticTargetIntrinsicCF(const double observed_x, 
+  CameraOnWristIntrinsicCF(const double observed_x, 
     const double observed_y, Pose6D link_pose, Point3D point) : observed_x_(observed_x), 
     observed_y_(observed_y), link_pose_(link_pose), point_(point) 
   { 
@@ -268,7 +268,7 @@ struct MovingCameraOnWristStaticTargetIntrinsicCF
   static ceres::CostFunction *Create(const double observed_x, 
     const double observed_y, Pose6D link_pose, Point3D point)
   {
-    return (new ceres::AutoDiffCostFunction<MovingCameraOnWristStaticTargetIntrinsicCF, 2, 6, 9, 6>(new MovingCameraOnWristStaticTargetIntrinsicCF(observed_x, 
+    return (new ceres::AutoDiffCostFunction<CameraOnWristIntrinsicCF, 2, 6, 9, 6>(new CameraOnWristIntrinsicCF(observed_x, 
       observed_y, link_pose, point)));
   }  
 
