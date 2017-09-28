@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="data_path" value="$(find industrial_calibration_libs)/test/resources/"/>
+
+  <!-- Debug arguments -->
+  <arg name="debug" default="false"/>
+  <arg unless="$(arg debug)" name="launch_prefix" value=""/>
+  <arg if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args"/>
+
+  <node name="extrinsic_example_debug" pkg="industrial_calibration" type="extrinsic_example_debug" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
+    <param name="data_path" value="$(arg data_path)" type="string"/>
+  </node>
+</launch>
