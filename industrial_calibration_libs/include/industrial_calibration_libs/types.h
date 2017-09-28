@@ -173,6 +173,9 @@ struct Extrinsics
   Extrinsics(double ax, double ay, double az, double x,
     double y, double z) : data{ax, ay, az, x, y, z} { }
 
+  Extrinsics(Pose6D pose) : data{pose.ax, pose.ay, pose.az, 
+    pose.x, pose.y, pose.z} { }
+
   double * getData(void) {return data;}
 
   Pose6D asPose6D(void) {return Pose6D(data[3], data[4], data[5], 
