@@ -1,94 +1,22 @@
+/*
+  The goal of this program is to simulate a "calibration" by generating 
+  the observations with known transform between tool and camera_frame. 
+  The solver will be seeded with a slightly incorrect solution, 
+  which should theoretically converge to the correct solution.
+
+  The observations will be generated using existing transforms between 
+  the base_to_tool, target_to_base, and a known transform between the 
+  tool and camera_frame.
+*/
+
 #include <ros/ros.h>
 #include <yaml-cpp/yaml.h>
 #include <industrial_calibration_libs/industrial_calibration_libs.h>
-
-typedef std::vector<double> Translation;
-typedef std::vector<double> Quaternion;
-
-struct LinkData
-{
-  Translation translation;
-  Quaternion rotation;
-};
-
-/*
-  Helper function declarations
-*/
-bool parseYAML(const YAML::Node &node, const std::string &var_name, 
-  std::vector<double> &var_value);
-
-bool loadLinkData(const std::size_t &index, const std::string &path,
-  industrial_calibration_libs::Pose6D &pose);
-
-/*
-  Helper function implementations
-*/
-bool parseYAML(const YAML::Node &node, const std::string &var_name, 
-  std::vector<double> &var_value)
-{
-
-  var_value.clear();
-  if (node[var_name])
-  {
-    const YAML::Node n = node[var_name];
-    var_value.reserve(n.size());
-    for (std::size_t i = 0; i < n.size(); i++)
-    {
-      double value = n[i].as<double>();
-      var_value.push_back(value);
-    }
-    if (var_value.size() == n.size()) {return true;}
-  }
-  return false;
-}
-
-bool loadLinkData(const std::size_t &index, const std::string &path,
-  industrial_calibration_libs::Pose6D &pose)
-{
-  bool success = true;
-  std::string file_path = path + std::to_string(index) + ".yaml";
-
-  YAML::Node data_yaml;
-  try
-  {
-    data_yaml = YAML::LoadFile(file_path);
-    if (!data_yaml["base_link_to_tool0"]) {return false;}
-  }
-  catch (YAML::BadFile &bf) {return false;}
-
-  LinkData link_data;
-  success &= parseYAML(data_yaml["base_link_to_tool0"], "Translation", link_data.translation);
-  success &= parseYAML(data_yaml["base_link_to_tool0"], "Quaternion", link_data.rotation);
-
-  double tx, ty, tz, qx, qy, qz, qw;
-  tx = link_data.translation[0];
-  ty = link_data.translation[1];
-  tz = link_data.translation[2];
-  qx = link_data.rotation[0];
-  qy = link_data.rotation[1];
-  qz = link_data.rotation[2];
-  qw = link_data.rotation[3];
-
-  pose.setOrigin(tx, ty, tz);
-  pose.setQuaternion(qx, qy, qz, qw);
-
-  return success;
-}
-
-/*
-  The goal of this program is to simulate a "calibration" by generating the observations
-  with known transform between tool0 and camera_optical_frame. The solver will be seeded
-  with a slightly incorrect solution, which should theoretically converge to the correct
-  solution.
-
-  The observations will be generated using existing transforms between the base to tool0,
-  a know transform betwexn tool0 and camera_optical_frame, and a know transform between
-  target and base.
-*/
+#include <industrial_calibration/helper_functions.h>
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "extrinsic_example");
+  ros::init(argc, argv, "extrinsic_sim");
   ros::NodeHandle pnh("~");
   std::string data_path;
   pnh.getParam("data_path", data_path);
@@ -108,7 +36,6 @@ int main(int argc, char** argv)
     link_data.push_back(pose);
   }
 
-#if 0
   for (std::size_t i = 0; i < link_data.size(); i++)
   {
     ROS_INFO_STREAM("Translation");
@@ -120,7 +47,6 @@ int main(int argc, char** argv)
     ROS_INFO_STREAM(link_data[i].ay);
     ROS_INFO_STREAM(link_data[i].az);
   }
-#endif
 
   /*
     Define some constants
@@ -153,7 +79,7 @@ int main(int argc, char** argv)
   const double* target_angle_axis(&target_to_base[0]);
   const double* target_position(&target_to_base[3]);
 
-  // Generate observation data
+  // Generate "fake" observation data
   industrial_calibration_libs::ObservationData observation_data;
   for (std::size_t i = 0; i < link_data.size(); i++)
   {
@@ -200,7 +126,6 @@ int main(int argc, char** argv)
     observation_data.push_back(observation_points);
   }
 
-#if 0
   ROS_INFO_STREAM("Total Observations: " << observation_data.size());
   for (std::size_t i = 0; i < observation_data.size(); i++)
   {
@@ -211,48 +136,33 @@ int main(int argc, char** argv)
       ROS_INFO_STREAM(observation_data[i][j]);
     }
   }
-#endif
 
-  // Generate fake seed data
-  double intrinsics_seed[4];
-  intrinsics_seed[0] = 570.0;
-  intrinsics_seed[1] = 570.0;
-  intrinsics_seed[2] = 320.0;
-  intrinsics_seed[3] = 240.0;
-
+  // Generating fake seed and add to params
+  industrial_calibration_libs::CameraOnWristExtrinsicParams params;
+  params.intrinsics = industrial_calibration_libs::IntrinsicsPartial(570.0,
+    570.0, 320.0, 240.0);
+  
   // Fake camera extrinsics seed data
   industrial_calibration_libs::Pose6D fake_tool_to_camera;
-  // fake_tool_to_camera.setOrigin(0.0197, 0.0908, 0.112141);
-  // fake_tool_to_camera.setAngleAxis(0.0, 0.0, 0.0);
   fake_tool_to_camera.setOrigin(0.097, 0.1508, 0.112141);
   fake_tool_to_camera.setAngleAxis(0.0, 0.0, 0.0);  
-
-  double extrinsics_seed[6];
-  extrinsics_seed[0] = fake_tool_to_camera.ax;
-  extrinsics_seed[1] = fake_tool_to_camera.ay;
-  extrinsics_seed[2] = fake_tool_to_camera.az;
-  extrinsics_seed[3] = fake_tool_to_camera.x;
-  extrinsics_seed[4] = fake_tool_to_camera.y;
-  extrinsics_seed[5] = fake_tool_to_camera.z;
-
-  double target_to_base_seed[6] = {0};
-  target_to_base_seed[3] = 0.72;
-  target_to_base_seed[4] = 0.1;
-  target_to_base_seed[5] = 0.1;
+  params.tool_to_camera = industrial_calibration_libs::Extrinsics(fake_tool_to_camera);
+  params.target_to_base = industrial_calibration_libs::Extrinsics(0,0,0,0,0,0);
+  params.base_to_tool = link_data;
 
   // Run a calibration
-  industrial_calibration_libs::MovingCameraOnWristStaticTargetExtrinsic calibration(observation_data, target);
-
-  calibration.initKnownValues(link_data, intrinsics_seed);
-  calibration.initSeedValues(extrinsics_seed, target_to_base_seed);
-
+  industrial_calibration_libs::CameraOnWristExtrinsic calibration(observation_data,
+    target, params);
+  
+  ROS_INFO_STREAM("uh...");  
   calibration.runCalibration();
+
+  ROS_INFO_STREAM("What...");
 
   calibration.displayCovariance();
 
-  industrial_calibration_libs::MovingCameraOnWristStaticTargetExtrinsic::Result results = calibration.getResults();
-
-  // Note(gChiou): Prints out calibration results
+  // Get results and print
+  industrial_calibration_libs::CameraOnWristExtrinsic::Result results = calibration.getResults();
   ROS_INFO_STREAM("");
   ROS_INFO_STREAM("Tool0 to camera_optical_frame");
   ROS_INFO_STREAM("Translation x: " << results.extrinsics[3]);
@@ -295,4 +205,3 @@ int main(int argc, char** argv)
   ROS_INFO_STREAM("Expected Ry: " << 0.00 << " | Result Ry: " << results.target_to_base[1]);
   ROS_INFO_STREAM("Expected Rz: " << 0.00 << " | Result Rz: " << results.target_to_base[2]);
 }
-
