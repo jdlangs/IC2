@@ -147,24 +147,17 @@ bool CalibrationJob::computeCovariance(const std::vector<CovarianceRequest> &req
   return true;
 }
 
-CameraOnWristExtrinsic::CameraOnWristExtrinsic(const ObservationData &observation_data, const Target &target,
-  const MCOWSTE_Params &params) : CalibrationJob(observation_data, target) 
+CameraOnWristExtrinsic::CameraOnWristExtrinsic(const ObservationData &observation_data, const Target &target, const CameraOnWristExtrinsicParams &params) 
+  : CalibrationJob(observation_data, target) 
 {
-
+  link_poses_ = params.base_to_tool;
+  std::memcpy(intrinsics_, params.intrinsics.data, 
+    sizeof(intrinsics_));
+  std::memcpy(result_.extrinsics, params.tool_to_camera.data,
+    sizeof(result_.extrinsics));
+  std::memcpy(result_.target_to_base, params.target_to_base.data,
+    sizeof(result_.target_to_base));
 }
-
-// void CameraOnWristExtrinsic::initKnownValues(const std::vector<Pose6D> &link_poses, const double intrinsics[4])
-// {
-//   link_poses_ = link_poses;
-//   std::memcpy(intrinsics_, intrinsics, sizeof(intrinsics_));
-// }
-
-// void CameraOnWristExtrinsic::initSeedValues(const double extrinsics[6], const double target_to_base[6])
-// {
-//   std::memcpy(result_.extrinsics, extrinsics, sizeof(result_.extrinsics));
-//   std::memcpy(result_.target_to_base, target_to_base, 
-//     sizeof(result_.target_to_base));
-// }
 
 bool CameraOnWristExtrinsic::runCalibration(void)
 {
@@ -203,7 +196,7 @@ bool CameraOnWristExtrinsic::runCalibration(void)
 
   ceres::Solve(options_, &problem_, &summary_);
 
-  // REMOVE THIS
+  // TODO(gChiou): REMOVE THIS
   std::cout << summary_.FullReport() << '\n';
 
   if (summary_.termination_type != ceres::NO_CONVERGENCE)
@@ -234,24 +227,17 @@ void CameraOnWristExtrinsic::displayCovariance(void)
     result_.target_to_base); 
 }
 
-CameraOnWristIntrinsic::CameraOnWristIntrinsic(const ObservationData &observation_data, const Target &target,
-  const MCOWSTI_Params &params) : CalibrationJob(observation_data, target) 
+CameraOnWristIntrinsic::CameraOnWristIntrinsic(const ObservationData &observation_data, const Target &target, const CameraOnWristIntrinsicParams &params) 
+  : CalibrationJob(observation_data, target) 
 {
- 
+  link_poses_ = params.base_to_tool;
+  std::memcpy(result_.intrinsics, params.intrinsics.data, 
+    sizeof(result_.intrinsics));
+  std::memcpy(result_.extrinsics, params.tool_to_camera.data,
+    sizeof(result_.extrinsics));
+  std::memcpy(result_.target_to_base, params.target_to_base.data,
+    sizeof(result_.target_to_base));
 }
-
-// void CameraOnWristIntrinsic::initKnownValues(const std::vector<Pose6D> &link_poses)
-// {
-//   link_poses_ = link_poses;
-// }
-
-// void CameraOnWristIntrinsic::initSeedValues(const double extrinsics[6], const double target_to_base[6], const double intrinsics[9])
-// {
-//   std::memcpy(result_.extrinsics, extrinsics, sizeof(result_.extrinsics));
-//   std::memcpy(result_.target_to_base, target_to_base, 
-//     sizeof(result_.target_to_base));
-//   std::memcpy(result_.intrinsics, intrinsics, sizeof(result_.intrinsics));
-// }
 
 bool CameraOnWristIntrinsic::runCalibration(void)
 {

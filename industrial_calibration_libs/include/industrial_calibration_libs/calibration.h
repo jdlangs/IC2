@@ -90,7 +90,7 @@ public:
   };
 
   CameraOnWristExtrinsic(const ObservationData &observation_data,
-    const Target &target const MCOWSTE_Params &params);
+    const Target &target, const CameraOnWristExtrinsicParams &params);
 
   ~CameraOnWristExtrinsic(void) { }
 
@@ -116,7 +116,7 @@ public:
   };
 
   CameraOnWristIntrinsic(const ObservationData &observation_data,
-    const Target &target, const MCOWSTI_Params &params);
+    const Target &target, const CameraOnWristIntrinsicParams &params);
 
   ~CameraOnWristIntrinsic(void) { }
 
