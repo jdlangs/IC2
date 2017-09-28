@@ -1,3 +1,9 @@
+/*
+  NOTE: These helper functions are just my lazy way of getting
+  the "data" into the calibration library. This is not the best
+  way to do it.
+*/
+
 #include <ros/ros.h>
 #include <yaml-cpp/yaml.h>
 #include <opencv2/highgui/highgui.hpp>
