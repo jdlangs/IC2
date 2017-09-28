@@ -175,10 +175,8 @@ struct Extrinsics
 
   double * getData(void) {return data;}
 
-  Pose6D getPose(void) {return Pose6D(data[3], data[4], data[5], 
+  Pose6D asPose6D(void) {return Pose6D(data[3], data[4], data[5], 
     data[0], data[1], data[2]);}
-
-  Pose6D getInversePose(void) {return this->getPose().getInverse();}
 
   const double &ax(void) const {return data[0];}
   const double &ay(void) const {return data[1];}
