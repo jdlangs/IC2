@@ -105,5 +105,91 @@ public:
   double z;   
 };
 
+/*
+  fx = Focal length x
+  fy = Focal length y
+  cx = Optical center x
+  cy = Optical center y
+*/  
+struct IntrinsicsPartial
+{
+  IntrinsicsPartial(double fx, double fy, double cx, double cy) :
+    data{fx, fy, cx, cy} { }
+
+  double* getData(void) {return data;}
+
+  const double &fx(void) const {return data[0];}
+  const double &fy(void) const {return data[1];}
+  const double &cx(void) const {return data[2];}
+  const double &cy(void) const {return data[3];}
+
+private:
+  double data[4];
+};
+
+/*
+  fx = Focal length x
+  fy = Focal length y
+  cx = Optical center x
+  cy = Optical center y
+  k1 = Distortion k1 (radial)
+  k2 = Distortion k2 (radial)
+  k3 = Distortion k3 (radial)
+  p1 = Distortion p1 (tangential)
+  p2 = Distortion p2 (tangential)
+*/
+struct IntrinsicsFull
+{
+  IntrinsicsFull(double fx, double fy, double cx, double cy,
+    double k1, double k2, double k3, double p1, double p2) :
+  data{fx, fy, cx, cy, k1, k2, k3, p1, p2} { }
+
+  double* getData(void) {return data;}
+
+  const double &fx(void) const {return data[0];}
+  const double &fy(void) const {return data[1];}
+  const double &cx(void) const {return data[2];}
+  const double &cy(void) const {return data[3];}
+  const double &k1(void) const {return data[4];}
+  const double &k2(void) const {return data[5];}
+  const double &k3(void) const {return data[6];}
+  const double &p1(void) const {return data[7];}
+  const double &p2(void) const {return data[8];}
+
+private:
+  double data[9];
+};
+
+/*
+  ax = Angle Axis x
+  ay = Angle Axis y
+  az = Angle Axis z
+  y = Translation y
+  x = Translation x
+  z = Translation z
+*/
+struct Extrinsics
+{
+  Extrinsics(double ax, double ay, double az, double x,
+    double y, double z) : data{ax, ay, az, x, y, z} { }
+
+  double * getData(void) {return data;}
+
+  Pose6D getPose(void) {return Pose6D(data[3], data[4], data[5], 
+    data[0], data[1], data[2]);}
+
+  Pose6D getInversePose(void) {return this->getPose().getInverse();}
+
+  const double &ax(void) const {return data[0];}
+  const double &ay(void) const {return data[1];}
+  const double &az(void) const {return data[2];}
+  const double &x(void) const {return data[3];}
+  const double &y(void) const {return data[4];}
+  const double &z(void) const {return data[5];}
+
+private:
+  double data[6];
+};
+
 } // namespace industrial_calibration_libs
 #endif
