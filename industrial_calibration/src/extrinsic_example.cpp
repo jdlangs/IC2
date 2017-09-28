@@ -69,7 +69,8 @@ int main(int argc, char** argv)
   convertToPose6D(link_data, &params.base_to_tool);
 
   // Create calibration object and run
-  industrial_calibration_libs::CameraOnWristExtrinsic calibration(observation_data, target, params);
+  industrial_calibration_libs::CameraOnWristExtrinsic calibration(observation_data, 
+    target, params);
 
   calibration.runCalibration();
   calibration.displayCovariance();
