@@ -5,6 +5,10 @@
 #include <industrial_calibration_libs/observations.h>
 #include <industrial_calibration_libs/targets.h>
 
+// Note(gChiou): Name for other classes
+// CameraToBaseExtrinsic
+// CameraToBaseIntrinsic
+
 namespace industrial_calibration_libs
 {
 enum CovarianceRequestType
@@ -20,8 +24,7 @@ struct CovarianceRequest
   std::string object_name;
 };
 
-// TODO(gChiou): Think of a better name for this...
-struct MovingCameraOnWristStaticTargetExtrinsicValues
+struct CameraOnWristExtrinsicParams 
 {
   // Known Values
   IntrinsicsPartial intrinsics;
@@ -32,8 +35,7 @@ struct MovingCameraOnWristStaticTargetExtrinsicValues
   Extrinsics target_to_base;
 };
 
-// TODO(gChiou): Think of a better name for this...
-struct MovingCameraOnWristStaticTargetIntrinsicValues
+struct CameraOnWristIntrinsicParams
 {
   // Known Values
   std::vector<Pose6D> base_to_tool; // For every observation.
@@ -78,7 +80,7 @@ protected:
   double final_cost_;
 };
 
-class MovingCameraOnWristStaticTargetExtrinsic : public CalibrationJob
+class CameraOnWristExtrinsic : public CalibrationJob
 {
 public:
   struct Result
@@ -87,16 +89,10 @@ public:
     double target_to_base[6];
   };
 
-  MovingCameraOnWristStaticTargetExtrinsic(const ObservationData &observation_data,
-    const Target &target);
+  CameraOnWristExtrinsic(const ObservationData &observation_data,
+    const Target &target const MCOWSTE_Params &params);
 
-  ~MovingCameraOnWristStaticTargetExtrinsic(void) { }
-
-  void initKnownValues(const std::vector<Pose6D> &link_poses, 
-    const double intrinsics[4]);
-
-  void initSeedValues(const double extrinsics[6], 
-    const double target_to_base[6]);
+  ~CameraOnWristExtrinsic(void) { }
 
   bool runCalibration(void);
 
@@ -109,7 +105,7 @@ private:
   Result result_;
 };
 
-class MovingCameraOnWristStaticTargetIntrinsic : public CalibrationJob
+class CameraOnWristIntrinsic : public CalibrationJob
 {
 public:
   struct Result
@@ -119,15 +115,10 @@ public:
     double intrinsics[9];
   };
 
-  MovingCameraOnWristStaticTargetIntrinsic(const ObservationData &observation_data,
-    const Target &target);
+  CameraOnWristIntrinsic(const ObservationData &observation_data,
+    const Target &target, const MCOWSTI_Params &params);
 
-  ~MovingCameraOnWristStaticTargetIntrinsic(void) { }
-
-  void initKnownValues(const std::vector<Pose6D> &link_poses);
-
-  void initSeedValues(const double extrinsics[6], 
-    const double target_to_base[6], const double intrinsics[9]);
+  ~CameraOnWristIntrinsic(void) { }
 
   bool runCalibration(void);
 
@@ -139,5 +130,4 @@ private:
   Result result_;
 };
 } // namespace industrial_calibration_libs
-
 #endif
