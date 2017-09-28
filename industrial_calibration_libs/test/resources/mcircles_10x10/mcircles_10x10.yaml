@@ -2,6 +2,5 @@ target_name: mcircles_10x10
 target_type: 2
 target_rows: 10
 target_cols: 10
-target_points: 100
 circle_diameter: 0.01
 spacing: 0.0248

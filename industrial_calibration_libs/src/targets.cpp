@@ -36,8 +36,6 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
   success &= parseYAML(target_yaml, "target_type", target_definition_.target_type);
   success &= parseYAML(target_yaml, "target_rows", target_definition_.target_rows);
   success &= parseYAML(target_yaml, "target_cols", target_definition_.target_cols);
-  success &= parseYAML(target_yaml, "target_points", 
-    target_definition_.target_points);
 
   switch (target_definition_.target_type)
   {
@@ -67,14 +65,12 @@ bool Target::loadTargetFromYAML(const std::string &yaml_file_path)
       break;
   }
 
-  if (!parseYAML(target_yaml, "points", target_definition_.points))
-  {
-    this->populatePoints(target_definition_.target_rows, 
-      target_definition_.target_cols, target_definition_.spacing, 
-      target_definition_.points);
-  }
+  this->populatePoints(target_definition_.target_rows, 
+    target_definition_.target_cols, target_definition_.spacing, 
+    target_definition_.points);
 
   success &= checkForValidTarget();
+
   return success;
 }
 
@@ -187,20 +183,11 @@ bool Target::checkForValidTarget(void)
     {
       return false;
     }
-    if ((target.target_rows * target.target_cols) != target.target_points)
-    {
-      return false;
-    }
     if ((target.target_rows * target.target_cols) != target.points.size())
     {
       return false;
     }
     if (target.spacing <= 0.0)
-    {
-      return false;
-    }
-    // These values shouldn't be used for now...
-    if (target.row_spacing > 0.0 || target.col_spacing > 0.0)
     {
       return false;
     }

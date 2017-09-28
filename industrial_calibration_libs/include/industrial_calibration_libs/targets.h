@@ -25,7 +25,6 @@ struct TargetDefinition
   std::size_t target_type;
   std::size_t target_rows;
   std::size_t target_cols;
-  std::size_t target_points;
 
   double circle_diameter; // Meters
   double row_spacing; // Meters

@@ -215,8 +215,8 @@ void CalibrationWidget::setTargetLines(const industrial_calibration_libs::Target
   QString target_name = QString::fromStdString(target.getDefinition().target_name);
   QString target_rows = QString::fromStdString(std::to_string(target.getDefinition().target_rows));
   QString target_cols = QString::fromStdString(std::to_string(target.getDefinition().target_cols));
-  QString target_points = 
-    QString::fromStdString(std::to_string(target.getDefinition().target_points));
+  QString target_points = QString::fromStdString(std::to_string(
+    target.getDefinition().target_rows*target.getDefinition().target_cols));
   QString target_circle_diameter = 
     QString::fromStdString(target_circle_diameter_stream.str());
   QString target_point_spacing = 
@@ -303,8 +303,6 @@ void CalibrationWidget::setInputsButton(void)
       = std::strtoul(ui_->target_rows_line->text().toStdString().c_str(), NULL, 0);
     target_definition.target_cols
       = std::strtoul(ui_->target_cols_line->text().toStdString().c_str(), NULL, 0);
-    target_definition.target_points
-      = std::strtoul(ui_->target_points_line->text().toStdString().c_str(), NULL, 0);
     target_definition.circle_diameter
       = std::atof(ui_->target_circle_diameter_line->text().toStdString().c_str());
     target_definition.spacing
@@ -320,9 +318,9 @@ void CalibrationWidget::setInputsButton(void)
           << target_definition.target_type <<
           ", with rows = " << target_definition.target_rows << ", and cols = " <<
           target_definition.target_cols << ", and total points = " << 
-          target_definition.target_points << ", with circle diameter = " <<
-          target_definition.circle_diameter << " (m), and point spacing = " <<
-          target_definition.spacing << " (m).");
+          target_definition.target_cols*target_definition.target_rows << 
+          ", with circle diameter = " << target_definition.circle_diameter <<
+          " (m), and point spacing = " << target_definition.spacing << " (m).");
       }
     }
     else {return;}
@@ -393,16 +391,9 @@ bool CalibrationWidget::checkTarget(const
     return false;
   }
   if (target_definition.target_rows == 0 || target_definition.target_cols == 0 ||
-    target_definition.target_points == 0 || target_definition.circle_diameter == 0 ||
-    target_definition.spacing == 0) 
+    target_definition.circle_diameter == 0 || target_definition.spacing == 0) 
   {
     CONSOLE_LOG_ERROR("One of the input fields has a non-numeric value or is set to zero!");
-    return false;
-  }
-  if (target_definition.target_rows*target_definition.target_cols != 
-    target_definition.target_points) 
-  {
-    CONSOLE_LOG_ERROR("Target rows * cols do not match total number of points!");
     return false;
   }
   return true;

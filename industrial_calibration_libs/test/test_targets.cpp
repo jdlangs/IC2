@@ -1,107 +1,53 @@
 #include <test_utils.h>
 
-TEST(Targets, load_target_yaml_with_points)
+TEST(Targets, load_target_from_yaml)
 {
-  industrial_calibration_libs::Target my_target;
-  EXPECT_TRUE(my_target.loadTargetFromYAML("mcircles_7x5/mcircles_7x5.yaml"));
+  // Create a target object.
+  industrial_calibration_libs::Target target("mcircles_10x10/mcircles_10x10.yaml");;
 
   // Note(gChiou): Checking fields for data that matches the input target.
-  EXPECT_EQ(my_target.getDefinition().target_name, "mcircles_7x5");
-  EXPECT_EQ(my_target.getDefinition().target_type, 2);
-  EXPECT_EQ(my_target.getDefinition().target_rows, 7);
-  EXPECT_EQ(my_target.getDefinition().target_cols, 5);
-  EXPECT_EQ(my_target.getDefinition().target_points, 35);
-  EXPECT_EQ(my_target.getDefinition().circle_diameter, 0.015);
-  EXPECT_EQ(my_target.getDefinition().spacing, 0.03);
-  EXPECT_EQ(my_target.getDefinition().points.size(), 
-    my_target.getDefinition().target_rows*my_target.getDefinition().target_cols);
+  EXPECT_EQ(target.getDefinition().target_name, "mcircles_10x10");
+  EXPECT_EQ(target.getDefinition().target_type, 2);
+  EXPECT_EQ(target.getDefinition().target_rows, 10);
+  EXPECT_EQ(target.getDefinition().target_cols, 10);
+  EXPECT_EQ(target.getDefinition().circle_diameter, 0.01);
+  EXPECT_EQ(target.getDefinition().spacing, 0.0248);
 
-  // Note(gChiou): Checking that the first and last point match.
-  industrial_calibration_libs::Point3D first_point_actual(0.0000, 0.1800, 0.0000);
-  industrial_calibration_libs::Point3D first_point_yaml(my_target.getDefinition().points[0]);
-
-  industrial_calibration_libs::Point3D second_point_actual(0.0300, 0.1800, 0.0000);
-  industrial_calibration_libs::Point3D second_point_yaml(my_target.getDefinition().points[1]);
-
-  industrial_calibration_libs::Point3D second_to_last_point_actual(0.0900, 0.0000, 0.0000);
-  industrial_calibration_libs::Point3D second_to_last_point_yaml(my_target.getDefinition().points[my_target.getDefinition().target_points-2]);
-
-  industrial_calibration_libs::Point3D last_point_actual(0.120, 0.0000, 0.0000);
-  industrial_calibration_libs::Point3D last_point_yaml(my_target.getDefinition().points[my_target.getDefinition().target_points-1]);
-
-  // Note(gChiou): Prints out all points, leaving commented for debugging purposes
   #if 0
-  for (std::size_t i = 0; i < my_target.getDefinition().points.size(); i++)
-  {
-    industrial_calibration_libs::Point3D point(my_target.getDefinition().points[i]);
-    CONSOLE_OUTPUT(std::setprecision(4) << std::fixed << "Point: " << i+1 << " x: " << point.x << " y: " << point.y << " z:" << point.z);
-  }
+    // Note(gChiou): Prints out all points, leaving commented for debugging purposes
+    printPoint3DVector(my_target.getDefinition().points);
   #endif
-
-  EXPECT_TRUE(first_point_actual == first_point_yaml);
-  EXPECT_TRUE(second_point_actual == second_point_yaml);
-  EXPECT_TRUE(second_to_last_point_actual == second_to_last_point_yaml);
-  EXPECT_TRUE(last_point_actual == last_point_yaml);
 }
 
-TEST(Targets, load_target_yaml_without_points)
+TEST(Targets, load_target_from_definition)
 {
-  industrial_calibration_libs::Target my_target;
-  EXPECT_TRUE(my_target.loadTargetFromYAML("mcircles_7x5/mcircles_7x5_np.yaml"));
+  // Create a target definition object
+  industrial_calibration_libs::TargetDefinition target_definition;
 
-  // Note(gChiou): Checking fields for data that matches the input target.
-  EXPECT_EQ(my_target.getDefinition().target_name, "mcircles_7x5");
-  EXPECT_EQ(my_target.getDefinition().target_type, 2);
-  EXPECT_EQ(my_target.getDefinition().target_rows, 7);
-  EXPECT_EQ(my_target.getDefinition().target_cols, 5);
-  EXPECT_EQ(my_target.getDefinition().target_points, 35);
-  EXPECT_EQ(my_target.getDefinition().circle_diameter, 0.015);
-  EXPECT_EQ(my_target.getDefinition().spacing, 0.03);
-  EXPECT_EQ(my_target.getDefinition().points.size(), 
-    my_target.getDefinition().target_rows*my_target.getDefinition().target_cols);
+  target_definition.target_name = "mcircles_10x10";
+  target_definition.target_type = industrial_calibration_libs::ModifiedCircleGrid;
+  target_definition.target_rows = 10;
+  target_definition.target_cols = 10;
+  target_definition.circle_diameter = 0.01;
+  target_definition.spacing = 0.0248;
 
-  // Note(gChiou): Checking that the first and last point match.
-  industrial_calibration_libs::Point3D first_point_actual(0.0000, 0.1800, 0.0000);
-  industrial_calibration_libs::Point3D first_point_yaml(my_target.getDefinition().points[0]);
+  // Create a target object from definition.
+  industrial_calibration_libs::Target definition_target(target_definition);
 
-  industrial_calibration_libs::Point3D second_point_actual(0.0300, 0.1800, 0.0000);
-  industrial_calibration_libs::Point3D second_point_yaml(my_target.getDefinition().points[1]);
+  // Create a target object file.
+  industrial_calibration_libs::Target yaml_target("mcircles_10x10/mcircles_10x10.yaml");;
 
-  industrial_calibration_libs::Point3D second_to_last_point_actual(0.0900, 0.0000, 0.0000);
-  industrial_calibration_libs::Point3D second_to_last_point_yaml(my_target.getDefinition().points[my_target.getDefinition().target_points-2]);
-
-  industrial_calibration_libs::Point3D last_point_actual(0.120, 0.0000, 0.0000);
-  industrial_calibration_libs::Point3D last_point_yaml(my_target.getDefinition().points[my_target.getDefinition().target_points-1]);  
-
-  // Note(gChiou): Prints out all points, leaving commented for debugging purposes
-  #if 0
-  for (std::size_t i = 0; i < my_target.getDefinition().points.size(); i++)
-  {
-    industrial_calibration_libs::Point3D point(my_target.getDefinition().points[i]);
-    CONSOLE_OUTPUT(std::setprecision(4) << std::fixed << "Point: " << i+1 << " x: " << point.x << " y: " << point.y << " z:" << point.z);
-  }
-  #endif
-
-  EXPECT_TRUE(first_point_actual == first_point_yaml);
-  EXPECT_TRUE(second_point_actual == second_point_yaml);
-  EXPECT_TRUE(second_to_last_point_actual == second_to_last_point_yaml);
-  EXPECT_TRUE(last_point_actual == last_point_yaml);  
-}
-
-TEST(Targets, load_target_yaml_compare)
-{
-  industrial_calibration_libs::Target full_target;
-  EXPECT_TRUE(full_target.loadTargetFromYAML("mcircles_7x5/mcircles_7x5.yaml"));
-
-  industrial_calibration_libs::Target gen_target;
-  EXPECT_TRUE(gen_target.loadTargetFromYAML("mcircles_7x5/mcircles_7x5_np.yaml"));
-
-  ASSERT_TRUE(full_target.getDefinition().points.size() == gen_target.getDefinition().points.size());
-
-  for (std::size_t i = 0; i < full_target.getDefinition().points.size(); i++)
-  {
-    EXPECT_EQ(full_target.getDefinition().points[i].x, gen_target.getDefinition().points[i].x);
-    EXPECT_EQ(full_target.getDefinition().points[i].y, gen_target.getDefinition().points[i].y);
-    EXPECT_EQ(full_target.getDefinition().points[i].z, gen_target.getDefinition().points[i].z);
-  }  
+  // Compare...
+  EXPECT_EQ(definition_target.getDefinition().target_name, 
+    yaml_target.getDefinition().target_name);
+  EXPECT_EQ(definition_target.getDefinition().target_type, 
+    yaml_target.getDefinition().target_type);
+  EXPECT_EQ(definition_target.getDefinition().target_rows, 
+    yaml_target.getDefinition().target_rows);
+  EXPECT_EQ(definition_target.getDefinition().target_cols, 
+    yaml_target.getDefinition().target_cols);
+  EXPECT_EQ(definition_target.getDefinition().circle_diameter, 
+    yaml_target.getDefinition().circle_diameter);
+  EXPECT_EQ(definition_target.getDefinition().spacing, 
+    yaml_target.getDefinition().spacing);
 }
