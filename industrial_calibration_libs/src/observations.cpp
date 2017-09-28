@@ -7,7 +7,7 @@ ObservationExtractor::ObservationExtractor(const Target &target, bool custom_cir
 { 
   this->target_cols_ = target_.getDefinition().target_cols;
   this->target_rows_ = target_.getDefinition().target_rows;
-  this->target_points_ = target_.getDefinition().target_points;  
+  this->target_points_ = this->target_cols_ * this->target_rows_;
 }
 
 bool ObservationExtractor::extractObservation(const cv::Mat &input_image)
