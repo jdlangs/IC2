@@ -1,5 +1,9 @@
 #include <test_utils.h>
 
+/*
+  This test loads a target from a target yaml file.
+*/
+
 TEST(Targets, load_target_from_yaml)
 {
   // Create a target object.
@@ -18,6 +22,11 @@ TEST(Targets, load_target_from_yaml)
     printPoint3DVector(my_target.getDefinition().points);
   #endif
 }
+
+/*
+  This test loads a target from a user defined "definition", and compares
+  it to a test loaded from a yaml file.
+*/
 
 TEST(Targets, load_target_from_definition)
 {
