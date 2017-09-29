@@ -1,125 +1,157 @@
 #include <test_utils.h>
 
-TEST(Observations, load_observation_set_1)
+// Note(gChiou): These tests only check that the correct number of 
+//               "observations" were extracted from an image.
+
+TEST(Observations, observation_from_single_image)
 {
-  const std::size_t num_images = 15;
+  std::size_t num_observations = 15;
 
   // Load in calibration images
   std::vector<cv::Mat> calibration_images;
-  calibration_images.reserve(num_images);
-  std::string cal_image_path = "mcircles_7x5/dataset_1/images/";
+  std::string image_path = "mcircles_10x10/extrinsic/images/";
+  loadImagesFromPath(image_path, num_observations, calibration_images);
 
-  for (std::size_t i = 0; i < num_images; i++)
-  {
-    std::string image_path = cal_image_path + std::to_string(i+1) + ".jpg";
-    cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_COLOR);
-
-    ASSERT_TRUE(!image.empty());
-    ASSERT_TRUE(image.size().width > 0 && image.size().height > 0);
-
-    calibration_images.push_back(image);
-  }
-
-  // Load in target
-  industrial_calibration_libs::Target target;
-  target.loadTargetFromYAML("mcircles_7x5/mcircles_7x5.yaml");
-
-  // Create Observation Extractor Object
-  industrial_calibration_libs::ObservationExtractor observation_extractor(target);
+  #if 0
   for (std::size_t i = 0; i < calibration_images.size(); i++)
   {
-    cv::Mat output_image;
-    ASSERT_TRUE(observation_extractor.extractObservation(calibration_images[i], output_image));
-#if 0
-    cv::namedWindow("Image " + std::to_string(i+1), cv::WINDOW_NORMAL);
-    cv::imshow("Image " + std::to_string(i+1), output_image);
-    cv::waitKey(0);    
-#endif
+    showImage(calibration_images[i], "Original Image: " + std::to_string(i));
+  }
+  #endif
+
+  // Load in target
+  industrial_calibration_libs::Target target("mcircles_10x10/mcircles_10x10.yaml");
+
+  // Create observation extractor and load one at a time
+  industrial_calibration_libs::ObservationExtractor observation_extractor(target);
+
+  for (std::size_t i = 0; i < calibration_images.size(); i++)
+  {
+    ASSERT_TRUE(observation_extractor.extractObservation(calibration_images[i]));
   }
 
+  // Get the observation data
   industrial_calibration_libs::ObservationData observation_data = observation_extractor.getObservationData();
 
-  EXPECT_EQ(observation_data.size(), num_images);
+  EXPECT_EQ(observation_data.size(), num_observations);
 
-  for (std::size_t i = 0; i < num_images; i++)
+  std::size_t target_rows = target.getDefinition().target_rows;
+  std::size_t target_cols = target.getDefinition().target_cols;
+  std::size_t total_points = target_rows * target_cols;
+
+  for (std::size_t i = 0; i < num_observations; i++)
   {
-    EXPECT_EQ(observation_data[i].size(), target.getDefinition().target_points);
+    EXPECT_EQ(observation_data[i].size(), total_points);
   }
 
-  // TODO(gChiou): Find a way to verify observation data...
-
-#if 0
-  CONSOLE_OUTPUT("Total Observations: " << observation_data.size());
-  for (std::size_t i = 0; i < observation_data.size(); i++)
-  {
-    CONSOLE_OUTPUT("Observations for Image " << i+1 << " Size: " << observation_data[i].size());
-    CONSOLE_OUTPUT("Observations for Image " << i+1 << " Points:");
-    for (std::size_t j = 0; j < observation_data[i].size(); j++)
-    {
-      CONSOLE_OUTPUT(observation_data[i][j]);
-    }
-  }
-#endif
+  #if 0
+  printObservationData(observation_data);
+  #endif
 }
 
-TEST(Observations, load_observation_set_2)
+TEST(Observations, observation_from_single_image_output)
 {
-  const std::size_t num_images = 24;
+  std::size_t num_observations = 15;
 
   // Load in calibration images
   std::vector<cv::Mat> calibration_images;
-  calibration_images.reserve(num_images);
-  std::string cal_image_path = "mcircles_7x5/dataset_2/images/";
+  std::string image_path = "mcircles_10x10/extrinsic/images/";
+  loadImagesFromPath(image_path, num_observations, calibration_images);
 
-  for (std::size_t i = 0; i < num_images; i++)
+  #if 0
+  for (std::size_t i = 0; i < calibration_images.size(); i++)
   {
-    std::string image_path = cal_image_path + std::to_string(i+1) + ".jpg";
-    cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_COLOR);
-
-    ASSERT_TRUE(!image.empty());
-    ASSERT_TRUE(image.size().width > 0 && image.size().height > 0);
-
-    calibration_images.push_back(image);
+    showImage(calibration_images[i], "Original Image: " + std::to_string(i));
   }
+  #endif
 
   // Load in target
-  industrial_calibration_libs::Target target;
-  target.loadTargetFromYAML("mcircles_7x5/mcircles_7x5.yaml");
+  industrial_calibration_libs::Target target("mcircles_10x10/mcircles_10x10.yaml");
 
-  // Create Observation Extractor Object
+  // Create observation extractor and load one at a time
   industrial_calibration_libs::ObservationExtractor observation_extractor(target);
+
   for (std::size_t i = 0; i < calibration_images.size(); i++)
   {
     cv::Mat output_image;
-    ASSERT_TRUE(observation_extractor.extractObservation(calibration_images[i], output_image));
-#if 0 
-    cv::namedWindow("Image " + std::to_string(i+1), cv::WINDOW_NORMAL);
-    cv::imshow("Image " + std::to_string(i+1), output_image);
-    cv::waitKey(0);    
-#endif
+    ASSERT_TRUE(observation_extractor.extractObservation(calibration_images[i],
+      output_image));
+    #if 0
+    showImage(output_image, "Observation Image: " + std::to_string(i));
+    #endif
   }
 
+  // Get the observation data
   industrial_calibration_libs::ObservationData observation_data = observation_extractor.getObservationData();
 
-  EXPECT_EQ(observation_data.size(), num_images);
+  EXPECT_EQ(observation_data.size(), num_observations);
 
-  for (std::size_t i = 0; i < num_images; i++)
+  std::size_t target_rows = target.getDefinition().target_rows;
+  std::size_t target_cols = target.getDefinition().target_cols;
+  std::size_t total_points = target_rows * target_cols;
+
+  for (std::size_t i = 0; i < num_observations; i++)
   {
-    EXPECT_EQ(observation_data[i].size(), target.getDefinition().target_points);
+    EXPECT_EQ(observation_data[i].size(), total_points);
   }
 
-  // TODO(gChiou): Find a way to verify observation data...
-
-#if 0
-  CONSOLE_OUTPUT("Total Observations: " << observation_data.size());
-  for (std::size_t i = 0; i < observation_data.size(); i++)
-  {
-    CONSOLE_OUTPUT("Observations for Image " << i+1 << " Size: " << observation_data[i].size());
-    CONSOLE_OUTPUT("Observations for Image " << i+1 << " Points:");
-    for (std::size_t j = 0; j < observation_data[i].size(); j++)
-    {
-      CONSOLE_OUTPUT(observation_data[i][j]);
-    }
-  }
-#endif
+  #if 0
+  printObservationData(observation_data);
+  #endif
 }
+
+TEST(Observations, observations_from_vector_images)
+{
+  std::size_t num_observations = 15;
+
+  // Load in calibration images
+  std::vector<cv::Mat> calibration_images;
+  std::string image_path = "mcircles_10x10/extrinsic/images/";
+  loadImagesFromPath(image_path, num_observations, calibration_images);
+
+  #if 0
+  for (std::size_t i = 0; i < calibration_images.size(); i++)
+  {
+    showImage(calibration_images[i], "Original Image: " + std::to_string(i));
+  }
+  #endif
+
+  // Load in target
+  industrial_calibration_libs::Target target("mcircles_10x10/mcircles_10x10.yaml");
+
+  // Create observation extractor and load one at a time
+  industrial_calibration_libs::ObservationExtractor observation_extractor(target);
+
+  std::vector<bool> success;
+  int num_success = observation_extractor.extractObservations(calibration_images,
+    success);
+
+  int check_success = 0;
+  for (std::size_t i = 0; i < success.size(); i++)
+  {
+    if (success[i]) {check_success++;}
+  }
+
+  EXPECT_EQ(num_success, check_success);
+  EXPECT_EQ(static_cast<std::size_t>(num_success), num_observations);
+
+  // Get the observation data
+  industrial_calibration_libs::ObservationData observation_data = observation_extractor.getObservationData();
+
+  EXPECT_EQ(observation_data.size(), num_observations);
+
+  std::size_t target_rows = target.getDefinition().target_rows;
+  std::size_t target_cols = target.getDefinition().target_cols;
+  std::size_t total_points = target_rows * target_cols;
+
+  for (std::size_t i = 0; i < num_observations; i++)
+  {
+    EXPECT_EQ(observation_data[i].size(), total_points);
+  }
+
+  #if 0
+  printObservationData(observation_data);
+  #endif
+}
+
+
