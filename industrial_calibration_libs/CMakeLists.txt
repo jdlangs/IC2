@@ -225,8 +225,8 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(${PROJECT_NAME}_test 
     test/test_industrial_calibration_libs.cpp
     test/test_targets.cpp
-    # test/test_observations.cpp
-    # test/test_calibration.cpp
+    test/test_observations.cpp
+    test/test_calibration.cpp
     WORKING_DIRECTORY 
       ${PROJECT_SOURCE_DIR}/test/resources
   )
