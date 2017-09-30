@@ -57,6 +57,8 @@ public:
   
   double getFinalCost(void) {return final_cost_;}
 
+  void setOutput(bool output) {output_results_ = output;}
+
 protected:
   bool checkObservations(void);
 
@@ -78,6 +80,8 @@ protected:
 
   double initial_cost_;
   double final_cost_;
+
+  bool output_results_;
 };
 
 class CameraOnWristExtrinsic : public CalibrationJob

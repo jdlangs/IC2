@@ -5,7 +5,8 @@
 namespace industrial_calibration_libs
 {
 CalibrationJob::CalibrationJob(const ObservationData &observation_data,
-  const Target &target) : observation_data_(observation_data), target_(target) { }
+  const Target &target) : observation_data_(observation_data), target_(target),
+  output_results_(false) { }
 
 bool CalibrationJob::checkObservations(void)
 {
@@ -88,60 +89,62 @@ bool CalibrationJob::computeCovariance(const std::vector<CovarianceRequest> &req
 
   covariance.Compute(covariance_pairs, &problem_);
 
-  // TEMPORARY (OUTPUT RESULTS TO SCREEN)
-  std::cout << "Covariance Blocks: " << '\n';
-  for (std::size_t i = 0; i < covariance_blocks.size(); i++)
+  if (output_results_)
   {
-    for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+    std::cout << "Covariance Blocks: " << '\n';
+    for (std::size_t i = 0; i < covariance_blocks.size(); i++)
     {
-      std::cout << "Covariance [" << block_names[i] << ", " 
-        << block_names[j] << "]" << '\n';
-
-      int N = block_sizes[i];
-      int M = block_sizes[j];
-      double* ij_cov_block = new double[N*M];
-
-      covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
-        ij_cov_block);
-
-      for (int q = 0; q < N; q++)
+      for (std::size_t j = 0; j < covariance_blocks.size(); j++)
       {
-        std::cout << "[";
-        for (int k = 0; k < M; k++)
+        std::cout << "Covariance [" << block_names[i] << ", " 
+          << block_names[j] << "]" << '\n';
+
+        int N = block_sizes[i];
+        int M = block_sizes[j];
+        double* ij_cov_block = new double[N*M];
+
+        covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
+          ij_cov_block);
+
+        for (int q = 0; q < N; q++)
         {
-          double sigma_i = sqrt(ij_cov_block[q*N+q]);
-          double sigma_j = sqrt(ij_cov_block[k*N+k]);
-          if (q == k)
+          std::cout << "[";
+          for (int k = 0; k < M; k++)
           {
-            if (sigma_i > 1.0 || sigma_i < -1.0)
+            double sigma_i = sqrt(ij_cov_block[q*N+q]);
+            double sigma_j = sqrt(ij_cov_block[k*N+k]);
+            if (q == k)
             {
-              std::cout << " " << std::right << std::setw(9) << std::scientific 
-                << std::setprecision(1) << sigma_i;              
+              if (sigma_i > 1.0 || sigma_i < -1.0)
+              {
+                std::cout << " " << std::right << std::setw(9) << std::scientific 
+                  << std::setprecision(1) << sigma_i;              
+              }
+              else
+              {
+                std::cout << " " << std::right << std::setw(9) << std::fixed
+                  << std::setprecision(5) << sigma_i;
+              }
             }
             else
             {
-              std::cout << " " << std::right << std::setw(9) << std::fixed
-                << std::setprecision(5) << sigma_i;
+              if (ij_cov_block[q*N + k]/(sigma_i * sigma_j) > 1.0 ||
+                ij_cov_block[q*N + k]/(sigma_i * sigma_j) < -1.0)
+              {
+                std::cout << " " << std::right << std::setw(9) << std::scientific
+                  << std::setprecision(1) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+              }
+              else
+              {
+                std::cout << " " << std::right << std::setw(9) << std::fixed 
+                  << std::setprecision(5) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+              }
             }
           }
-          else
-          {
-            if (ij_cov_block[q*N + k]/(sigma_i * sigma_j) > 1.0 ||
-              ij_cov_block[q*N + k]/(sigma_i * sigma_j) < -1.0)
-            {
-              std::cout << " " << std::right << std::setw(9) << std::scientific
-                << std::setprecision(1) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
-            }
-            else
-            {
-              std::cout << " " << std::right << std::setw(9) << std::fixed 
-                << std::setprecision(5) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
-            }
-          }
+          std::cout << "]" << '\n';
         }
-        std::cout << "]" << '\n';
+        delete [] ij_cov_block;
       }
-      delete [] ij_cov_block;
     }
   }
   return true;
@@ -197,13 +200,15 @@ bool CameraOnWristExtrinsic::runCalibration(void)
 
   // Solve
   options_.linear_solver_type = ceres::DENSE_SCHUR;
-  options_.minimizer_progress_to_stdout = true; // REMOVE THIS LATER ???
+  options_.minimizer_progress_to_stdout = output_results_;
   options_.max_num_iterations = 9001;
 
   ceres::Solve(options_, &problem_, &summary_);
 
-  // TODO(gChiou): REMOVE THIS
-  std::cout << summary_.FullReport() << '\n';
+  if (output_results_)
+  {
+    std::cout << summary_.FullReport() << '\n';
+  }
 
   if (summary_.termination_type != ceres::NO_CONVERGENCE)
   {
@@ -278,13 +283,15 @@ bool CameraOnWristIntrinsic::runCalibration(void)
 
   // Solve
   options_.linear_solver_type = ceres::DENSE_SCHUR;
-  options_.minimizer_progress_to_stdout = true; // REMOVE THIS LATER ???
+  options_.minimizer_progress_to_stdout = output_results_; 
   options_.max_num_iterations = 9001;
 
   ceres::Solve(options_, &problem_, &summary_);
 
-  // REMOVE THIS ONE DAY
-  std::cout << summary_.FullReport() << '\n';  
+  if (output_results_)
+  {
+    std::cout << summary_.FullReport() << '\n';  
+  }
 
   if (summary_.termination_type != ceres::NO_CONVERGENCE)
   {
