@@ -35,12 +35,12 @@ void printVector(const std::vector<double> &vec);
 bool convertToPose6D(const std::vector<LinkData> &link_data, 
   std::vector<industrial_calibration_libs::Pose6D> *link_poses);
 
+bool loadLinkData(const std::size_t &index, const std::string &path,
+  industrial_calibration_libs::Pose6D &pose);
+
 void drawResultPoints(const cv::Mat &input_image, cv::Mat &output_image,
   const industrial_calibration_libs::ObservationPoints &observation_points,
   std::size_t rows, std::size_t cols);
-
-bool loadLinkData(const std::size_t &index, const std::string &path,
-  industrial_calibration_libs::Pose6D &pose);
 
 bool parseYAML(const YAML::Node &node, const std::string &var_name, 
   std::vector<double> &var_value)
@@ -80,6 +80,14 @@ bool loadLinkData(const std::size_t &index, const std::string &path,
   return success;
 }
 
+void printVector(const std::vector<double> &vec)
+{
+  for (std::size_t i = 0; i < vec.size(); i++)
+  {
+    ROS_INFO_STREAM(vec[i]);
+  }
+}
+
 bool loadLinkData(const std::size_t &index, const std::string &path,
   industrial_calibration_libs::Pose6D &pose)
 {
@@ -111,14 +119,6 @@ bool loadLinkData(const std::size_t &index, const std::string &path,
   pose.setQuaternion(qx, qy, qz, qw);
 
   return success;
-}
-
-void printVector(const std::vector<double> &vec)
-{
-  for (std::size_t i = 0; i < vec.size(); i++)
-  {
-    ROS_INFO_STREAM(vec[i]);
-  }
 }
 
 bool convertToPose6D(const std::vector<LinkData> &link_data, 
