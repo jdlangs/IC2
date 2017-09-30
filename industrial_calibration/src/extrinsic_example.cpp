@@ -13,8 +13,8 @@ int main(int argc, char** argv)
   pnh.getParam("data_path", data_path);
 
   // Load Target Data
-  industrial_calibration_libs::Target target;
-  target.loadTargetFromYAML(data_path + "mcircles_10x10/mcircles_10x10.yaml");
+  industrial_calibration_libs::Target target(data_path + 
+    "mcircles_10x10/mcircles_10x10.yaml");
 
   // Load Calibration Images
   const std::size_t num_images = 15;
