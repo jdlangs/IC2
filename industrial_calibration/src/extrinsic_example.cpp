@@ -71,7 +71,7 @@ int main(int argc, char** argv)
   // Create calibration object and run
   industrial_calibration_libs::CameraOnWristExtrinsic calibration(observation_data, 
     target, params);
-
+  calibration.setOutput(true);
   calibration.runCalibration();
   calibration.displayCovariance();
 

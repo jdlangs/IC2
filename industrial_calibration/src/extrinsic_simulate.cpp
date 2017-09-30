@@ -153,12 +153,8 @@ int main(int argc, char** argv)
   // Run a calibration
   industrial_calibration_libs::CameraOnWristExtrinsic calibration(observation_data,
     target, params);
-  
-  ROS_INFO_STREAM("uh...");  
+  calibration.setOutput(true);
   calibration.runCalibration();
-
-  ROS_INFO_STREAM("What...");
-
   calibration.displayCovariance();
 
   // Get results and print
