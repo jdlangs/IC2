@@ -73,8 +73,13 @@ bool ObservationExtractor::extractObservation(const cv::Mat &input_image,
   return false;
 }
 
-int ObservationExtractor::extractObservations(const std::vector<cv::Mat> &input_images,
-  std::vector<bool> &success)
+int ObservationExtractor::extractObservations(const std::vector<cv::Mat> &input_images)
+{
+  std::vector<bool> success;
+  return this->extractObservations(input_images, success);
+}
+
+int ObservationExtractor::extractObservations(const std::vector<cv::Mat> &input_images, std::vector<bool> &success)
 {
   int count = 0;
   success.resize(input_images.size());

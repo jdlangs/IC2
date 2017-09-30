@@ -30,6 +30,8 @@ public:
 
   bool extractObservation(const cv::Mat &image, cv::Mat &output_image);
 
+  int extractObservations(const std::vector<cv::Mat> &input_images);
+
   int extractObservations(const std::vector<cv::Mat> &input_images,
     std::vector<bool> &success);
 
