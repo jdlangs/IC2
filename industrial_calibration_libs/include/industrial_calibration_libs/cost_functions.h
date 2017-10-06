@@ -338,7 +338,7 @@ struct CameraOnWristExtrinsicIntrinsicCF
   static ceres::CostFunction *Create(const double observed_x, 
     const double observed_y, Pose6D link_pose, Point3D point)
   {
-    return (new ceres::AutoDiffCostFunction<CameraOnWristExtrinsicIntrinsicCF, 2, 6, 9, 6>(new CameraOnWristExtrinsicIntrinsicCF(observed_x, 
+    return (new ceres::AutoDiffCostFunction<CameraOnWristExtrinsicIntrinsicCF, 2, 6, 9, 6>(new CameraOnWristIntrinsicCF(observed_x, 
       observed_y, link_pose, point)));
   }  
 
