@@ -17,7 +17,7 @@ int main(int argc, char** argv)
     "mcircles_10x10/mcircles_10x10.yaml");
 
   // Load Calibration Images
-  const std::size_t num_images = 15;
+  const std::size_t num_images = 5;
   std::vector<cv::Mat> calibration_images;
   calibration_images.reserve(num_images);
   std::string cal_image_path = data_path + "mcircles_10x10/intrinsic/images/";
