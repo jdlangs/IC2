@@ -94,6 +94,7 @@ int main(int argc, char** argv)
   // Print out results.
   industrial_calibration_libs::CameraOnWristIntrinsic::Result results = calibration.getResults();
   ROS_INFO_STREAM("Intrinsic Parameters");
+  ROS_INFO_STREAM("----------------------------------------");
   ROS_INFO_STREAM("Focal Length x: " << results.intrinsics[0]);
   ROS_INFO_STREAM("Focal Length y: " << results.intrinsics[1]);
   ROS_INFO_STREAM("Optical Center x: " << results.intrinsics[2]);
@@ -103,7 +104,15 @@ int main(int argc, char** argv)
   ROS_INFO_STREAM("Distortion k3: " << results.intrinsics[6]);
   ROS_INFO_STREAM("Distortion p1: " << results.intrinsics[7]);
   ROS_INFO_STREAM("Distortion p2: " << results.intrinsics[8]);
-
+  ROS_INFO_STREAM("Target Pose");
+  ROS_INFO_STREAM("----------------------------------------");
+  ROS_INFO_STREAM("Translation x: " << results.target_to_camera[3]);
+  ROS_INFO_STREAM("Translation y: " << results.target_to_camera[4]);
+  ROS_INFO_STREAM("Translation z: " << results.target_to_camera[5]);
+  ROS_INFO_STREAM("Angle Axis x: " << results.target_to_camera[0]);
+  ROS_INFO_STREAM("Angle Axis y: " << results.target_to_camera[1]);
+  ROS_INFO_STREAM("Angle Axis z: " << results.target_to_camera[2]);
+  ROS_INFO_STREAM("----------------------------------------");
   ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
   ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
 }
