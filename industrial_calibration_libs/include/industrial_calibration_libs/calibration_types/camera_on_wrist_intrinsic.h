@@ -5,6 +5,12 @@
 
 namespace industrial_calibration_libs
 {
+enum CameraOnWristIntrinsicMethod
+{
+  CALCULATE_FIRST_POSE,
+  CALCULATE_EVERY_POSE
+};
+
 struct CameraOnWristIntrinsicParams
 {
   // Known Values
@@ -12,8 +18,7 @@ struct CameraOnWristIntrinsicParams
 
   // Uknown Values
   IntrinsicsFull intrinsics;
-  Extrinsics tool_to_camera;
-  Extrinsics target_to_base;
+  Extrinsics target_to_camera;
 };
 
 class CameraOnWristIntrinsic : public CalibrationJob
@@ -21,13 +26,13 @@ class CameraOnWristIntrinsic : public CalibrationJob
 public:
   struct Result
   {
-    double extrinsics[6];
-    double target_to_base[6];
+    double target_to_camera[6];
     double intrinsics[9];
   };
 
   CameraOnWristIntrinsic(const ObservationData &observation_data,
-    const Target &target, const CameraOnWristIntrinsicParams &params);
+    const Target &target, const CameraOnWristIntrinsicParams &params,
+    const CameraOnWristIntrinsicMethod &method = CALCULATE_FIRST_POSE);
 
   ~CameraOnWristIntrinsic(void) { }
 
@@ -38,7 +43,15 @@ public:
   Result getResults(void) {return result_;}
 
 private:
+  bool runCalculateFirstPose(void);
+
+  bool runCalculateEveryPose(void);
+
+  bool findDistortedTarget(const ObservationPoints &observation_points,
+    Pose6D &position);
+
   Result result_;
+  CameraOnWristIntrinsicMethod method_;
 };
 } // namespace industrial_calibration_libs
 #endif // CAMERA_ON_WRIST_INTRINSIC_H
