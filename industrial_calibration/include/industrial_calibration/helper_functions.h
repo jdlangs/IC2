@@ -30,6 +30,9 @@ bool parseYAML(const YAML::Node &node, const std::string &var_name,
 bool loadLinkData(const std::size_t &index, const std::string &path,
   LinkData *link_data);
 
+bool loadLinkData2(const std::size_t &index, const std::string &path,
+  LinkData *link_data);
+
 void printVector(const std::vector<double> &vec);
 
 bool convertToPose6D(const std::vector<LinkData> &link_data, 
@@ -41,6 +44,9 @@ bool loadLinkData(const std::size_t &index, const std::string &path,
 void drawResultPoints(const cv::Mat &input_image, cv::Mat &output_image,
   const industrial_calibration_libs::ObservationPoints &observation_points,
   std::size_t rows, std::size_t cols);
+
+void getQuaternion(double distance, double &qx, double &qy, double &qz,
+  double &qw);
 
 bool parseYAML(const YAML::Node &node, const std::string &var_name, 
   std::vector<double> &var_value)
@@ -77,6 +83,25 @@ bool loadLinkData(const std::size_t &index, const std::string &path,
 
   success &= parseYAML(data_yaml["base_link_to_tool0"], "Translation", link_data->translation);
   success &= parseYAML(data_yaml["base_link_to_tool0"], "Quaternion", link_data->rotation_quat);
+  return success;
+}
+
+bool loadLinkData2(const std::size_t &index, const std::string &path,
+  LinkData *link_data)
+{
+  bool success = true;
+  std::string file_path = path + std::to_string(index) + ".yaml";
+
+  YAML::Node data_yaml;
+  try
+  {
+    data_yaml = YAML::LoadFile(file_path);
+    if (!data_yaml["base_to_tool0"]) {return false;}
+  }
+  catch (YAML::BadFile &bf) {return false;}
+
+  success &= parseYAML(data_yaml["base_to_tool0"], "Translation", link_data->translation);
+  success &= parseYAML(data_yaml["base_to_tool0"], "Quaternion", link_data->rotation_quat);
   return success;
 }
 
@@ -162,4 +187,19 @@ void drawResultPoints(const cv::Mat &input_image, cv::Mat &output_image,
     else
       cv::circle(output_image, observation_points[i], RADIUS, cv::Scalar(0, 255, 0), -1);
   }
+}
+
+void getQuaternion(double distance, double &qx, double &qy, double &qz,
+  double &qw)
+{
+  Eigen::Matrix3d m;
+
+  m(0,0) =  1; m(0,1) =   0; m(0,2) =  0;
+  m(1,0) =  0; m(1,1) =  -1; m(1,2) =  0;
+  m(2,0) =  0; m(2,1) =   0; m(2,2) = -1;
+
+  industrial_calibration_libs::Pose6D temp_pose;
+  temp_pose.setBasis(m);
+  temp_pose.setOrigin(-0.1, -0.1, distance);
+  temp_pose.getQuaternion(qx, qy, qz, qw);  
 }
