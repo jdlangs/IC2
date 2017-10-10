@@ -55,6 +55,11 @@ bool CameraOnWristExtrinsic::runCalibration(void)
   options_.minimizer_progress_to_stdout = output_results_;
   options_.max_num_iterations = 9001;
 
+  if (output_results_)
+  {
+    options_.minimizer_progress_to_stdout = true;
+  }
+
   ceres::Solve(options_, &problem_, &summary_);
 
   if (output_results_)
