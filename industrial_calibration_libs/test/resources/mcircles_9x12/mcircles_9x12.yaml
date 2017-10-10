@@ -1,0 +1,6 @@
+target_name: mcircles_9x12
+target_type: 2
+target_rows: 9
+target_cols: 12
+circle_diameter: 0.124
+spacing: 0.01779
