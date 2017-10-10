@@ -40,20 +40,26 @@ bool CameraOnWristIntrinsic::runCalibration(void)
   return false;
 }
 
-bool CameraOnWristIntrinsic::calculateFirstPose(void)
+bool CameraOnWristIntrinsic::runCalculateFirstPose(void)
 {
   Pose6D target_to_position1; // Position of first calibration image
-  Pose6D target_to_position2; // Position of last calibration image
-  Pose6D position2_to_target;
-  Pose6D position2_to_position1;
+  Pose6D position1_to_target; // Inverse of target_to_position1
 
   // Calculate target_to_position1 and target_to_position2
   this->findDistortedTarget(observation_data_[0], target_to_position1);
-  this->findDistortedTarget(observation_data_[num_images_-1], target_to_position2);
+  position1_to_target = target_to_position1.getInverse();
 
-  position2_to_target = target_to_position2.getInverse();
-  position2_to_position1 = target_to_position1 * position2_to_target;
-  // Get vector along which target moves, might not need this.
+  // Use position1_to_target as seed
+  double target_seed[6];
+  target_seed[0] = target_to_position1.ax;
+  target_seed[1] = target_to_position1.ay;
+  target_seed[2] = target_to_position1.az;
+  target_seed[3] = target_to_position1.x;
+  target_seed[4] = target_to_position1.y;
+  target_seed[5] = target_to_position1.z;
+
+  std::memcpy(result_.target_to_camera, target_seed, 
+    sizeof(result_.target_to_camera));
 
   // Iterate through every observation image
   for (std::size_t i = 0; i < num_images_; i++)
@@ -61,7 +67,11 @@ bool CameraOnWristIntrinsic::calculateFirstPose(void)
     // Iterate through every observation in each observation image
     for (std::size_t j = 0; j < observations_per_image_; j++)
     {
-      Pose6D link_pose = link_poses_[i];
+      double x_position = link_poses_[i].x - link_poses_[0].x;
+      double y_position = link_poses_[i].y - link_poses_[0].y;
+      double z_position = link_poses_[i].z - link_poses_[0].z;
+      Point3D position(x_position, y_position, z_position);
+
       Point3D point = target_.getDefinition().points[j];
 
       double observed_x = observation_data_[i][j].x;
@@ -69,7 +79,7 @@ bool CameraOnWristIntrinsic::calculateFirstPose(void)
 
       ceres::CostFunction *cost_function =
         CameraOnWristIntrinsicCF::Create(observed_x, observed_y,
-          link_pose, point);
+          position, point);
 
       problem_.AddResidualBlock(cost_function, NULL, result_.intrinsics,
         result_.target_to_camera);

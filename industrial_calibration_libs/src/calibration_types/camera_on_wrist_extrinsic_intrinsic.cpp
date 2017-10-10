@@ -63,7 +63,6 @@ bool CameraOnWristExtrinsicIntrinsic::runCalibration(void)
     final_cost_ = summary_.final_cost / total_observations_;
     return true;    
   }
-
   return false;  
 }
 

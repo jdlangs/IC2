@@ -212,11 +212,8 @@ struct CameraOnWristExtrinsicCF
 struct CameraOnWristIntrinsicCF
 {
   CameraOnWristIntrinsicCF(const double observed_x, const double observed_y,
-    Pose6D link_pose, Point3D point) : observed_x_(observed_x), 
-    observed_y_(observed_y), link_pose_(link_pose), point_(point)
-  {
-    link_pose_i_ = link_pose_.getInverse(); // May not need this...
-  }
+    Point3D tool_position, Point3D point) : observed_x_(observed_x), 
+    observed_y_(observed_y), tool_position_(tool_position), point_(point) { }
 
   template<typename T> bool operator() (const T* const intrinsic_parameters,
   const T* const target_pose, T* residual) const
@@ -246,9 +243,9 @@ struct CameraOnWristIntrinsicCF
       camera_point);
 
     // Transform to camera location 
-    camera_point[0] = camera_point[0] + T(link_pose_.x);
-    camera_point[1] = camera_point[1] + T(link_pose_.y);
-    camera_point[2] = camera_point[2] + T(link_pose_.z);
+    camera_point[0] = camera_point[0] + T(tool_position_.x);
+    camera_point[1] = camera_point[1] + T(tool_position_.y);
+    camera_point[2] = camera_point[2] + T(tool_position_.z);
 
     // Compute projected point into image plane and residual
     T observed_x = T(observed_x_);
@@ -264,16 +261,15 @@ struct CameraOnWristIntrinsicCF
   // Factory to hide the construction of the Cost Function object from
   // client code.
   static ceres::CostFunction *Create(const double observed_x, const double observed_y,
-    Pose6D link_pose, Point3D point)
+    Point3D tool_position, Point3D point)
   {
     return (new ceres::AutoDiffCostFunction<CameraOnWristIntrinsicCF, 2, 9, 6>(new 
-      CameraOnWristIntrinsicCF(observed_x, observed_y, link_pose, point)));
+      CameraOnWristIntrinsicCF(observed_x, observed_y, tool_position, point)));
   }
 
   double observed_x_; // Observed x location of object in the image
   double observed_y_; // Observed y location of object in the image
-  Pose6D link_pose_; 
-  Pose6D link_pose_i_;
+  Point3D tool_position_;
   Point3D point_;
 };
 
@@ -422,6 +418,5 @@ struct DistortedTargetFinder
   double distortion_p2_;
   Point3D point_;
 };
-
 } // namespace industrial_calibration_libs
 #endif
