@@ -85,8 +85,7 @@ int main(int argc, char** argv)
 
   // Create calibration object and run
   industrial_calibration_libs::CameraOnWristIntrinsic calibration(
-    observation_data, target, params, 
-    industrial_calibration_libs::ASSUME_VECTOR);
+    observation_data, target, params);
   calibration.setOutput(true);
   calibration.runCalibration();
   calibration.displayCovariance();
