@@ -65,10 +65,16 @@ set_target_properties(extrinsic_example_debug ${COMPILER_WARNINGS})
 target_link_libraries(extrinsic_example_debug ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
   ${Boost_LIBRARIES} yaml-cpp)
 
-add_executable(intrinsic_example src/intrinsic_example.cpp)
-add_dependencies(intrinsic_example ${catkin_EXPORTED_TARGETS})
-set_target_properties(intrinsic_example ${COMPILER_WARNINGS})
-target_link_libraries(intrinsic_example ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
+add_executable(intrinsic_example_mh3 src/intrinsic_example_mh3.cpp)
+add_dependencies(intrinsic_example_mh3 ${catkin_EXPORTED_TARGETS})
+set_target_properties(intrinsic_example_mh3 ${COMPILER_WARNINGS})
+target_link_libraries(intrinsic_example_mh3 ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
+  ${Boost_LIBRARIES} yaml-cpp)
+
+add_executable(intrinsic_example_abb src/intrinsic_example_abb.cpp)
+add_dependencies(intrinsic_example_abb ${catkin_EXPORTED_TARGETS})
+set_target_properties(intrinsic_example_abb ${COMPILER_WARNINGS})
+target_link_libraries(intrinsic_example_abb ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
   ${Boost_LIBRARIES} yaml-cpp)
 
 add_executable(extrinsic_simulate src/extrinsic_simulate.cpp)

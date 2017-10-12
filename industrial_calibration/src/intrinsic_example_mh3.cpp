@@ -20,7 +20,7 @@ int main(int argc, char** argv)
   const std::size_t num_images = 7;
   std::vector<cv::Mat> calibration_images;
   calibration_images.reserve(num_images);
-  std::string cal_image_path = data_path + "mcircles_9x12/intrinsic/images/";
+  std::string cal_image_path = data_path + "mcircles_9x12/intrinsic_mh3/images/";
 
   for (std::size_t i = 0; i < num_images; i++)
   {
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   for (std::size_t i = 0; i < num_images; i++)
   {
     LinkData temp_link_data;
-    loadLinkData2(i, data_path + "mcircles_9x12/intrinsic/tf/", &temp_link_data);
+    loadLinkData2(i, data_path + "mcircles_9x12/intrinsic_mh3/tf/", &temp_link_data);
     link_data.push_back(temp_link_data);
   }
 

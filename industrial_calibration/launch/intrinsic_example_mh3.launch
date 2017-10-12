@@ -7,7 +7,7 @@
   <arg unless="$(arg debug)" name="launch_prefix" value=""/>
   <arg if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args"/>
 
-  <node name="intrinsic_example" pkg="industrial_calibration" type="intrinsic_example" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
+  <node name="intrinsic_example_mh3" pkg="industrial_calibration" type="intrinsic_example_mh3" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
     <param name="data_path" value="$(arg data_path)" type="string"/>
   </node>
 </launch>
