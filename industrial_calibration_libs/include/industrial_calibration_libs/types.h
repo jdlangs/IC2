@@ -118,6 +118,9 @@ struct IntrinsicsPartial
   IntrinsicsPartial(double fx, double fy, double cx, double cy) :
     data{fx, fy, cx, cy} { }
 
+  IntrinsicsPartial(double *intrinsics) : data{intrinsics[0], 
+    intrinsics[1], intrinsics[2], intrinsics[3]} { }
+
   const double &fx(void) const {return data[0];}
   const double &fy(void) const {return data[1];}
   const double &cx(void) const {return data[2];}
@@ -143,7 +146,11 @@ struct IntrinsicsFull
 
   IntrinsicsFull(double fx, double fy, double cx, double cy,
     double k1, double k2, double k3, double p1, double p2) :
-  data{fx, fy, cx, cy, k1, k2, k3, p1, p2} { }
+    data{fx, fy, cx, cy, k1, k2, k3, p1, p2} { }
+
+  IntrinsicsFull(double *intrinsics) : data{intrinsics[0],
+    intrinsics[1], intrinsics[2], intrinsics[3], intrinsics[4],
+    intrinsics[5], intrinsics[6], intrinsics[7], intrinsics[8]} { }
 
   const double &fx(void) const {return data[0];}
   const double &fy(void) const {return data[1];}
@@ -172,6 +179,10 @@ struct Extrinsics
 
   Extrinsics(double ax, double ay, double az, double x,
     double y, double z) : data{ax, ay, az, x, y, z} { }
+
+  Extrinsics(double *extrinsics) : data{extrinsics[0],
+    extrinsics[1], extrinsics[2], extrinsics[3], extrinsics[4],
+    extrinsics[5]} { }
 
   Extrinsics(Pose6D pose) : data{pose.ax, pose.ay, pose.az, 
     pose.x, pose.y, pose.z} { }
