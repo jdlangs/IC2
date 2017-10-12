@@ -2,9 +2,8 @@
 
 namespace industrial_calibration_libs
 {
-CameraOnWristIntrinsic::CameraOnWristIntrinsic(const ObservationData &observation_data, const Target &target, const CameraOnWristIntrinsicParams &params,
-  const CameraOnWristIntrinsicMethod &method) 
-  : CalibrationJob(observation_data, target), method_(method)
+CameraOnWristIntrinsic::CameraOnWristIntrinsic(const ObservationData &observation_data, const Target &target, const CameraOnWristIntrinsicParams &params) 
+  : CalibrationJob(observation_data, target)
 {
   link_poses_ = params.base_to_tool;
   std::memcpy(result_.intrinsics, params.intrinsics.data, 
@@ -23,21 +22,7 @@ bool CameraOnWristIntrinsic::runCalibration(void)
   
   if (!checkObservations()) {return false;}
 
-  switch (method_)
-  {
-    case CALCULATE_FIRST_POSE:
-      return this->runCalculateFirstPose();
-      break;
-
-    case CALCULATE_EVERY_POSE:
-      return this->runCalculateEveryPose();
-      break;
-
-    default:
-      return false;
-  }
-
-  return false;
+  return this->runCalculateFirstPose();
 }
 
 bool CameraOnWristIntrinsic::runCalculateFirstPose(void)
@@ -105,11 +90,6 @@ bool CameraOnWristIntrinsic::runCalculateFirstPose(void)
     return true;    
   }
 
-  return false;
-}
-
-bool CameraOnWristIntrinsic::runCalculateEveryPose(void)
-{
   return false;
 }
 
