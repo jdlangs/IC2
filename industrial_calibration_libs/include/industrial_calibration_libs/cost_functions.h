@@ -211,7 +211,73 @@ struct CameraOnWristExtrinsicCF
 
 struct CameraOnWristIntrinsicCF
 {
-  CameraOnWristIntrinsicCF(const double observed_x, 
+  CameraOnWristIntrinsicCF(const double observed_x, const double observed_y,
+    Point3D tool_position, Point3D point) : observed_x_(observed_x), 
+    observed_y_(observed_y), tool_position_(tool_position), point_(point) { }
+
+  template<typename T> bool operator() (const T* const intrinsic_parameters,
+  const T* const target_pose, T* residual) const
+  {
+    T focal_length_x;
+    T focal_length_y;
+    T optical_center_x;
+    T optical_center_y;
+    T distortion_k1;
+    T distortion_k2;
+    T distortion_k3;
+    T distortion_p1;
+    T distortion_p2;
+
+    // Extract intrinsics
+    extractCameraIntrinsics(intrinsic_parameters, focal_length_x, focal_length_y, 
+      optical_center_x, optical_center_y, distortion_k1, distortion_k2, 
+      distortion_k3, distortion_p1, distortion_p2);
+
+    // Extract target angle axis and position
+    const T* target_angle_axis(&target_pose[0]);
+    const T* target_position(&target_pose[3]);
+
+    // Transform point into camera frame
+    T camera_point[3];
+    transformPoint3D(target_angle_axis, target_position, point_.asVector(), 
+      camera_point);
+
+    // Transform to camera location 
+    camera_point[0] = camera_point[0] + T(tool_position_.x);
+    camera_point[1] = camera_point[1] + T(tool_position_.y);
+    camera_point[2] = camera_point[2] + T(tool_position_.z);
+
+    // Compute projected point into image plane and residual
+    T observed_x = T(observed_x_);
+    T observed_y = T(observed_y_);
+
+    cameraPointResidualWithDistortion(camera_point, distortion_k1, distortion_k2, 
+      distortion_k3, distortion_p1, distortion_p2, focal_length_x, focal_length_y,
+      optical_center_x, optical_center_y, observed_x, observed_y, residual);
+
+    return true;
+  }
+
+  // Factory to hide the construction of the Cost Function object from
+  // client code.
+  static ceres::CostFunction *Create(const double observed_x, const double observed_y,
+    Point3D tool_position, Point3D point)
+  {
+    return (new ceres::AutoDiffCostFunction<CameraOnWristIntrinsicCF, 2, 9, 6>(new 
+      CameraOnWristIntrinsicCF(observed_x, observed_y, tool_position, point)));
+  }
+
+  double observed_x_; // Observed x location of object in the image
+  double observed_y_; // Observed y location of object in the image
+  Point3D tool_position_;
+  Point3D point_;
+};
+
+// DELETE THIS LATER
+#if 1
+struct CameraOnWristExtrinsicIntrinsicCF
+{
+  CameraOnWristExtrinsicIntrinsicCF(const double observed_x, 
     const double observed_y, Pose6D link_pose, Point3D point) : observed_x_(observed_x), 
     observed_y_(observed_y), link_pose_(link_pose), point_(point) 
   { 
@@ -232,8 +298,9 @@ struct CameraOnWristIntrinsicCF
     T distortion_p2;
 
     // Extract intrinsics
-    extractCameraIntrinsics(intrinsic_parameters, focal_length_x, focal_length_y, optical_center_x, 
-      optical_center_y, distortion_k1, distortion_k2, distortion_k3, distortion_p1, distortion_p2);
+    extractCameraIntrinsics(intrinsic_parameters, focal_length_x, focal_length_y, 
+      optical_center_x, optical_center_y, distortion_k1, distortion_k2, 
+      distortion_k3, distortion_p1, distortion_p2);
 
     // Extract camera angle axis and position
     const T* camera_angle_axis(&extrinsic_parameters[0]);
@@ -248,7 +315,8 @@ struct CameraOnWristIntrinsicCF
     T camera_point[3]; // Point in camera coordinates
     
     // Transform point into camera coordinates
-    transformPoint3D(target_angle_axis, target_position, point_.asVector(), world_point);
+    transformPoint3D(target_angle_axis, target_position, point_.asVector(), 
+      world_point);
     poseTransformPoint(link_pose_i_, world_point, link_point);
     transformPoint(camera_angle_axis, camera_position, link_point, camera_point);
 
@@ -268,8 +336,7 @@ struct CameraOnWristIntrinsicCF
   static ceres::CostFunction *Create(const double observed_x, 
     const double observed_y, Pose6D link_pose, Point3D point)
   {
-    return (new ceres::AutoDiffCostFunction<CameraOnWristIntrinsicCF, 2, 6, 9, 6>(new CameraOnWristIntrinsicCF(observed_x, 
-      observed_y, link_pose, point)));
+    return (new ceres::AutoDiffCostFunction<CameraOnWristExtrinsicIntrinsicCF, 2, 6, 9, 6>(new CameraOnWristExtrinsicIntrinsicCF(observed_x, observed_y, link_pose, point)));
   }  
 
   double observed_x_;
@@ -278,9 +345,81 @@ struct CameraOnWristIntrinsicCF
   Pose6D link_pose_i_;
   Point3D point_;
 };
-
-} // namespace industrial_calibration_libs
-
 #endif
 
+struct DistortedTargetFinder
+{
+  DistortedTargetFinder(const double observed_x, const double observed_y,
+    const double focal_length_x, const double focal_length_y,
+    const double optical_center_x, const double optical_center_y,
+    const double distortion_k1, const double distortion_k2,
+    const double distortion_k3, const double distortion_p1,
+    const double distortion_p2, Point3D point) : observed_x_(observed_x), 
+    observed_y_(observed_y), focal_length_x_(focal_length_x),
+    focal_length_y_(focal_length_y), optical_center_x_(optical_center_x),
+    optical_center_y_(optical_center_y), distortion_k1_(distortion_k1),
+    distortion_k2_(distortion_k2), distortion_k3_(distortion_k3),
+    distortion_p1_(distortion_p1), distortion_p2_(distortion_p2),
+    point_(point) { }
 
+  template<typename T> bool operator() (const T* const extrinsic_parameters,
+    T* residual) const
+  {
+    // Extract camera angle axis and position
+    const T* camera_angle_axis(&extrinsic_parameters[0]);
+    const T* camera_position(&extrinsic_parameters[3]);
+
+    T camera_point[3]; // Point in camera coordinates
+
+    // Transform point into camera coordinates
+    transformPoint3D(camera_angle_axis, camera_position, point_.asVector(), camera_point);
+
+    // Project the point into image plane and compute the residual
+    T observed_x = T(observed_x_);
+    T observed_y = T(observed_y_);
+    T focal_length_x = T(focal_length_x_);
+    T focal_length_y = T(focal_length_y_);
+    T optical_center_x = T(optical_center_x_);
+    T optical_center_y = T(optical_center_y_);
+    T distortion_k1 = T(distortion_k1_);
+    T distortion_k2 = T(distortion_k2_);
+    T distortion_k3 = T(distortion_k3_);
+    T distortion_p1 = T(distortion_p1_);
+    T distortion_p2 = T(distortion_p2_);
+
+    cameraPointResidualWithDistortion(camera_point, distortion_k1, distortion_k2, 
+      distortion_k3, distortion_p1, distortion_p2, focal_length_x, focal_length_y,
+      optical_center_x, optical_center_y, observed_x, observed_y, residual);
+
+    return true;
+  }
+
+  // Factory to hide the construction of the Cost Function object from
+  // client code.
+  static ceres::CostFunction *Create(const double observed_x, const double observed_y,
+    const double focal_length_x, const double focal_length_y, const double optical_center_x,
+    const double optical_center_y, const double distortion_k1, const double distortion_k2,
+    const double distortion_k3, const double distortion_p1, const double distortion_p2,
+    Point3D point)
+  {
+    return (new ceres::AutoDiffCostFunction<DistortedTargetFinder, 2, 6>(new 
+      DistortedTargetFinder(observed_x, observed_y, focal_length_x, focal_length_y,
+        optical_center_x, optical_center_y, distortion_k1, distortion_k2, distortion_k3,
+        distortion_p1, distortion_p2, point)));
+  }
+
+  double observed_x_;
+  double observed_y_;
+  double focal_length_x_;
+  double focal_length_y_;
+  double optical_center_x_;
+  double optical_center_y_;
+  double distortion_k1_;
+  double distortion_k2_;
+  double distortion_k3_;
+  double distortion_p1_;
+  double distortion_p2_;
+  Point3D point_;
+};
+} // namespace industrial_calibration_libs
+#endif

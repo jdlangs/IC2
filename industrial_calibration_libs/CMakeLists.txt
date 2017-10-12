@@ -140,6 +140,9 @@ add_library(${PROJECT_NAME}
   src/circle_detector.cpp
   src/calibration.cpp
   src/types.cpp
+  src/calibration_types/camera_on_wrist_extrinsic.cpp
+  src/calibration_types/camera_on_wrist_intrinsic.cpp
+  src/calibration_types/camera_on_wrist_extrinsic_intrinsic.cpp
 )
 
 ## Add cmake target dependencies of the library
