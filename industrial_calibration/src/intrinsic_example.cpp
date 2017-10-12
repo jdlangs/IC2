@@ -4,8 +4,6 @@
 #include <industrial_calibration_libs/industrial_calibration_libs.h>
 #include <industrial_calibration/helper_functions.h>
 
-#define TARGET_PATH "target_path"
-
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "intrinsic example");
