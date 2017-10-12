@@ -113,6 +113,7 @@ protected Q_SLOTS:
   std::string getDateTimeString(void);
   void tfToYAML(const std::string &filename, const tf::StampedTransform &transform,
     const std::string &from_link, const std::string &to_link);
+  void cameraInfoToYAML(const std::string &filename);
   void refreshComboBoxes(void);
 
 protected:

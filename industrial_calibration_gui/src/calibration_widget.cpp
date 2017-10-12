@@ -831,6 +831,18 @@ void CalibrationWidget::saveData(const std::string &directory)
         << " and " << camera_frame_ << " to: " << data_directory_string 
         << "/" + tip_link_ << "_to_" << camera_frame_ + ".yaml");    
   }
+
+  // Saving camera_info a a text file.
+  try
+  {
+    std::string file_name = data_directory_string + "/" + "camera_info.yaml";
+    this->cameraInfoToYAML(file_name);
+  }
+  catch (std::exception &ex)
+  {
+    CONSOLE_LOG_ERROR("Failed to save camera_info.yam");
+  }
+
 }
 
 std::string CalibrationWidget::getDateTimeString(void)
@@ -886,7 +898,97 @@ void CalibrationWidget::tfToYAML(const std::string &filename,
   }
   else
   {
-    CONSOLE_LOG_ERROR("YAML file is bad!");
+    CONSOLE_LOG_ERROR(filename << " YAML file is bad!");
+  }
+}
+
+void CalibrationWidget::cameraInfoToYAML(const std::string &filename)
+{
+  // Convert camera_info types into std::vector...
+  std::vector<double> camera_info_K; 
+  std::vector<double> camera_info_D;
+  std::vector<double> camera_info_R;
+  std::vector<double> camera_info_P;
+
+  camera_info_K.reserve(camera_info_.K.size());
+  camera_info_D.reserve(camera_info_.D.size());
+  camera_info_R.reserve(camera_info_.R.size());
+  camera_info_P.reserve(camera_info_.P.size());
+
+  for (std::size_t i = 0; i < camera_info_.K.size(); i++)
+    camera_info_K.push_back(camera_info_.K[i]);
+
+  for (std::size_t i = 0; i < camera_info_.D.size(); i++)
+    camera_info_D.push_back(camera_info_.D[i]);
+
+  for (std::size_t i = 0; i < camera_info_.R.size(); i++)
+    camera_info_R.push_back(camera_info_.R[i]);
+
+  for (std::size_t i = 0; i < camera_info_.P.size(); i++)
+    camera_info_P.push_back(camera_info_.P[i]);
+
+
+  YAML::Emitter out;
+  out << YAML::BeginMap;
+    out << YAML::Key << "image_width";
+    out << YAML::Value << camera_info_.width;
+
+    out << YAML::Key << "image_height";
+    out << YAML::Value << camera_info_.height;
+
+    out << YAML::Key << "camera_matrix";
+    out << YAML::Value << YAML::BeginMap;
+      out << YAML::Key << "rows";
+        out << YAML::Value << 3;
+      out << YAML::Key << "cols";
+        out << YAML::Value << 3;
+      out << YAML::Key << "data";
+        out << YAML::Value << camera_info_K;
+    out << YAML::EndMap;
+
+    out << YAML::Key << "distortion_model";
+    out << YAML::Value << camera_info_.distortion_model;
+
+    out << YAML::Key << "distortion_coefficients";
+    out << YAML::Value << YAML::BeginMap;
+      out << YAML::Key << "rows";
+        out << YAML::Value << 1;
+      out << YAML::Key << "cols";
+        out << YAML::Value << camera_info_D.size();
+      out << YAML::Key << "data";
+        out << YAML::Value << camera_info_D;
+    out << YAML::EndMap;
+
+    out << YAML::Key << "rectification_matrix";
+    out << YAML::Value << YAML::BeginMap;
+      out << YAML::Key << "rows";
+        out << YAML::Value << 3;
+      out << YAML::Key << "cols";
+        out << YAML::Value << 3;
+      out << YAML::Key << "data";
+        out << YAML::Value << camera_info_R;
+    out << YAML::EndMap;
+
+    out << YAML::Key << "projection_matrix";
+    out << YAML::Value << YAML::BeginMap;
+      out << YAML::Key << "rows";
+        out << YAML::Value << 3;
+      out << YAML::Key << "cols";
+        out << YAML::Value << 4;
+      out << YAML::Key << "data";
+        out << YAML::Value << camera_info_P;
+    out << YAML::EndMap;
+  out << YAML::EndMap;
+
+  if (out.good())
+  {
+    std::ofstream yaml_file(filename);
+    yaml_file << out.c_str();
+    CONSOLE_LOG_INFO(filename << " has been saved.");
+  }
+  else
+  {
+    CONSOLE_LOG_INFO(filename << " YAML file is bad")
   }
 }
 
