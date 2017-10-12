@@ -61,27 +61,17 @@ int main(int argc, char** argv)
   target_pose.setQuaternion(qx, qy, qz, qw);
   target_pose.setOrigin(0.0089, 0.127, 0.1778); // meters
 
-  // Set Camera Info (manually extracted from camera_info.txt).
-  // Focal length and optical center are from K matrix.
-  // Distortion is from P matrix.
-  // This is un-calibrated data and is used as an initial guess.
-  double focal_length_x = 570.3422;
-  double focal_length_y = 570.3422;
-  double optical_center_x = 319.5;
-  double optical_center_y = 239.5;
-  double distortion_k1 = 0.0;
-  double distortion_k2 = 0.0;
-  double distortion_k3 = 0.0;
-  double distortion_p1 = 0.0;
-  double distortion_p2 = 0.0;
+  // Load camera_info from YAML.
+  std::string camera_info_path = data_path + "mcircles_9x12/intrinsic_abb/camera_info.yaml";
+  double camera_info[9];
+  loadCameraInfo(camera_info_path, camera_info);
 
   // Set your calibration parameters to be passed to the calibration object.
   industrial_calibration_libs::CameraOnWristIntrinsicParams params;
 
+
   // Seed intrinsic parameters
-  params.intrinsics = industrial_calibration_libs::IntrinsicsFull(focal_length_x,
-    focal_length_y, optical_center_x, optical_center_y, distortion_k1, 
-    distortion_k2, distortion_k3, distortion_p1, distortion_p2);
+  params.intrinsics = industrial_calibration_libs::IntrinsicsFull(camera_info);
 
   // Seed target pose
   params.target_to_camera = industrial_calibration_libs::Extrinsics(target_pose);
@@ -126,9 +116,6 @@ int main(int argc, char** argv)
   // target pose. If the distance moved for the target matches the distance
   // moved for the robot tool, your calibration should be accurate.
 
-  // In this case we will (temporarily) use the same data that was used to solve 
-  // for the intrinsics. I will take new images in the future to verify. (gChiou).
-
   // This is passing in:
   // 1] First observation image data
   // 2] Pose at first observation image
@@ -136,9 +123,50 @@ int main(int argc, char** argv)
   // 4] Pose at second observation
   // 5] Results of intrinsic calibration
   // 6] Initial guess for target position
+
+  // Grab verfication observations
+  const std::size_t num_verification_images = 2;
+  std::vector<cv::Mat> verification_images;
+  verification_images.reserve(num_verification_images);
+
+  for (std::size_t i = 0; i < num_verification_images; i++)
+  {
+    std::string image_path = cal_image_path + "v" + std::to_string(i) + ".png";
+    cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_COLOR);
+    verification_images.push_back(image);
+  }
+
+  // Extract observations from verification images
+  industrial_calibration_libs::ObservationExtractor vobservation_extractor(target);
+  int vnum_success = vobservation_extractor.extractObservations(verification_images);
+
+  if (vnum_success != num_verification_images)
+  {
+    ROS_ERROR_STREAM("Unable to extract observations from verification images");
+    return 0;
+  }
+
+  industrial_calibration_libs::ObservationData vobservation_data =
+    vobservation_extractor.getObservationData();
+
+  // Load verification link_data
+  std::vector<LinkData> vlink_data;
+  vlink_data.reserve(num_verification_images);
+  for (std::size_t i = 0; i < num_verification_images; i++)
+  {
+    LinkData temp_link_data;
+    loadLinkData2(i, data_path + "mcircles_9x12/intrinsic_abb/tf/", &temp_link_data,
+      true);
+    vlink_data.push_back(temp_link_data);
+  }
+
+  industrial_calibration_libs::Pose6D pose_0, pose_1;
+  convertToPose6D(vlink_data[0], pose_0);
+  convertToPose6D(vlink_data[num_verification_images-1], pose_1);
+
   industrial_calibration_libs::IntrinsicsVerification verification 
-    = calibration.verifyIntrinsics(observation_data[0], params.base_to_tool[0], 
-      observation_data[num_images-1], params.base_to_tool[num_images-1],
+    = calibration.verifyIntrinsics(vobservation_data[0], pose_0, 
+      vobservation_data[num_verification_images-1], pose_1,
       results.intrinsics, params.target_to_camera.data);
 
   ROS_INFO_STREAM("x Direction:");
