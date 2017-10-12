@@ -66,6 +66,7 @@ int main(int argc, char** argv)
   // Set Camera Info (manually extracted from camera_info.txt).
   // Focal length and optical center are from K matrix.
   // Distortion is from P matrix.
+  // This is un-calibrated data and is used as an initial guess.
   double focal_length_x = 570.3422;
   double focal_length_y = 570.3422;
   double optical_center_x = 319.5;
@@ -76,17 +77,24 @@ int main(int argc, char** argv)
   double distortion_p1 = 0.0;
   double distortion_p2 = 0.0;
 
+  // Set your calibration parameters to be passed to the calibration object.
   industrial_calibration_libs::CameraOnWristIntrinsicParams params;
+
+  // Seed intrinsic parameters
   params.intrinsics = industrial_calibration_libs::IntrinsicsFull(focal_length_x,
     focal_length_y, optical_center_x, optical_center_y, distortion_k1, 
     distortion_k2, distortion_k3, distortion_p1, distortion_p2);
+
+  // Seed target pose
   params.target_to_camera = industrial_calibration_libs::Extrinsics(target_pose);
+
+  // Robot tool positions for every calibration image.
   convertToPose6D(link_data, &params.base_to_tool);
 
   // Create calibration object and run
   industrial_calibration_libs::CameraOnWristIntrinsic calibration(
     observation_data, target, params);
-  calibration.setOutput(true);
+  calibration.setOutput(true); // Enable output to console.
   calibration.runCalibration();
   calibration.displayCovariance();
 
@@ -114,4 +122,12 @@ int main(int argc, char** argv)
   ROS_INFO_STREAM("----------------------------------------");
   ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
   ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
+
+  // Use these results to verify a calibration. This is done by taking
+  // two images that are furthest away from each other and calculating the
+  // target pose. If the distance moved for the target matches the distance
+  // moved for the robot tool, your calibration should be accurate.
+
+  // In this case we will (temporarily) use the same data that was used to solve 
+  // for the intrinsics. I will take new images in the future to verify. (gChiou).
 }
