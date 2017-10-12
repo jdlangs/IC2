@@ -5,6 +5,21 @@
 
 namespace industrial_calibration_libs
 {
+struct IntrinsicsVerification
+{
+  double target_diff_x; // m
+  double tool_diff_x; // m
+  double absolute_error_x; // m
+
+  double target_diff_y; // m
+  double tool_diff_y; // m
+  double absolute_error_y; // m
+
+  double target_diff_z; // m
+  double tool_diff_z; // m
+  double absolute_error_z; // m
+};
+
 struct CameraOnWristIntrinsicParams
 {
   // Known Values
@@ -35,11 +50,15 @@ public:
 
   Result getResults(void) {return result_;}
 
+  IntrinsicsVerification verifyIntrinsics(const ObservationPoints &observation_1,
+    const Pose6D &pose_1, const ObservationPoints &observation_2, const Pose6D &pose_2,
+    double intrinsics[9], double target_guess[6]);
+
 private:
   bool runCalculateFirstPose(void);
 
   bool findDistortedTarget(const ObservationPoints &observation_points,
-    Pose6D &position);
+    Pose6D &position, double intrinsics[9], double guess_pose[6]);
 
   Result result_;
 };

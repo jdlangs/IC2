@@ -130,4 +130,34 @@ int main(int argc, char** argv)
 
   // In this case we will (temporarily) use the same data that was used to solve 
   // for the intrinsics. I will take new images in the future to verify. (gChiou).
+
+  // This is passing in:
+  // 1] First observation image data
+  // 2] Pose at first observation image
+  // 3] Second observation image data
+  // 4] Pose at second observation
+  // 5] Results of intrinsic calibration
+  // 6] Initial guess for target position
+  industrial_calibration_libs::IntrinsicsVerification verification 
+    = calibration.verifyIntrinsics(observation_data[0], params.base_to_tool[0], 
+      observation_data[num_images-1], params.base_to_tool[num_images-1],
+      results.intrinsics, params.target_to_camera.data);
+
+  ROS_INFO_STREAM("x Direction:");
+  ROS_INFO_STREAM("Target (Pose_1 - Pose_2) x: " << verification.target_diff_x << " m");
+  ROS_INFO_STREAM("Tool Diff (Pose_1 - Pose_2) x: " << verification.tool_diff_x << " m");
+  ROS_INFO_STREAM("Absolute Error (Tool - Target) x: " << verification.absolute_error_x << " m");
+
+  ROS_INFO_STREAM("y Direction:");
+  ROS_INFO_STREAM("Target Diff (Pose_1 - Pose_2) y: " << verification.target_diff_y << " m");
+  ROS_INFO_STREAM("Tool Diff (Pose_1 - Pose_2) y: " << verification.tool_diff_y << " m");
+  ROS_INFO_STREAM("Absolute Error (Tool - Target) y: " << verification.absolute_error_y << " m");
+
+  ROS_INFO_STREAM("z Direction:");
+  ROS_INFO_STREAM("Target Diff (Pose_1 - Pose_2) z: " << verification.target_diff_z << " m");
+  ROS_INFO_STREAM("Tool Diff (Pose_1 - Pose_2) z: " << verification.tool_diff_z << " m");
+  ROS_INFO_STREAM("Absolute Error (Tool - Target) z: " << verification.absolute_error_z << " m");
+
+  return 0;    
 }
+

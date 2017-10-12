@@ -371,6 +371,9 @@ struct DistortedTargetFinder
 
     T camera_point[3]; // Point in camera coordinates
 
+    // Transform point into camera coordinates
+    transformPoint3D(camera_angle_axis, camera_position, point_.asVector(), camera_point);
+
     // Project the point into image plane and compute the residual
     T observed_x = T(observed_x_);
     T observed_y = T(observed_y_);
