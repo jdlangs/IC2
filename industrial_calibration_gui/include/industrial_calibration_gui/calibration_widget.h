@@ -3,6 +3,11 @@
 
 #include <QWidget>
 #include <QFileDialog>
+#include <QBoxLayout>
+#include <QGridLayout>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QTextBrowser>
 
 // Industrial Calibration
 #include <ui_calibration_widget.h>
@@ -55,7 +60,7 @@ class CalibrationWidget : public QWidget
 {
 Q_OBJECT
 public:
-  CalibrationWidget(QWidget* parent = 0);
+  CalibrationWidget(QWidget *parent = 0);
 
   virtual ~CalibrationWidget();
 
@@ -102,6 +107,10 @@ protected Q_SLOTS:
   bool drawGrid(cv::Mat &image);
   void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
   void saveImageButton(void);
+
+  void askTargetLocationPopup(void);
+  void getTargetLocationFromPopup(void);
+
   void startCalibrationButton(void);
   void runCameraOnWristExtrinsic(void);
   void runCameraOnWristIntrinsic(void);
@@ -143,6 +152,21 @@ private:
   sensor_msgs::CameraInfo camera_info_;
   cv::Mat camera_image_;
   std::mutex camera_image_mutex_;
+
+  // Target location popup
+  bool target_popup_exists_; // Prevent memory leak
+  QWidget *target_location_popup_;
+  QVBoxLayout *target_location_popup_layout_;
+  QGridLayout *target_location_popup_grid_;
+  QTextBrowser *target_location_popup_instructions_;
+  QLabel *target_location_popup_x_position_label_;
+  QLabel *target_location_popup_y_position_label_;
+  QLabel *target_location_popup_z_position_label_;
+  QLineEdit *target_location_popup_x_position_line_;
+  QLineEdit *target_location_popup_y_position_line_;
+  QLineEdit *target_location_popup_z_position_line_;
+  QPushButton *target_location_popup_pushbutton_;
+  // std::vector<double> target_location_popup_position_;
 
   // Calibration variables
   industrial_calibration_libs::Target target_;
