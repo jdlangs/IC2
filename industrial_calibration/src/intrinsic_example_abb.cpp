@@ -48,7 +48,8 @@ int main(int argc, char** argv)
   for (std::size_t i = 0; i < num_images; i++)
   {
     LinkData temp_link_data;
-    loadLinkData2(i, data_path + "mcircles_9x12/intrinsic_abb/tf/", &temp_link_data);
+    loadLinkData(data_path + "mcircles_9x12/intrinsic_abb/tf/" + std::to_string(i) + ".yaml",
+      &temp_link_data, "base_to_tool0");    
     link_data.push_back(temp_link_data);
   }
 
@@ -155,8 +156,8 @@ int main(int argc, char** argv)
   for (std::size_t i = 0; i < num_verification_images; i++)
   {
     LinkData temp_link_data;
-    loadLinkData2(i, data_path + "mcircles_9x12/intrinsic_abb/tf/", &temp_link_data,
-      true);
+    loadLinkData(data_path + "mcircles_9x12/intrinsic_abb/tf/v" + std::to_string(i) + ".yaml",
+      &temp_link_data, "base_to_tool0"); 
     vlink_data.push_back(temp_link_data);
   }
 

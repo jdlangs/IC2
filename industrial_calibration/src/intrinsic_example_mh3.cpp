@@ -48,7 +48,8 @@ int main(int argc, char** argv)
   for (std::size_t i = 0; i < num_images; i++)
   {
     LinkData temp_link_data;
-    loadLinkData2(i, data_path + "mcircles_9x12/intrinsic_mh3/tf/", &temp_link_data);
+    loadLinkData(data_path + "mcircles_9x12/intrinsic_mh3/tf/" + std::to_string(i) + ".yaml",
+      &temp_link_data, "base_to_tool0");     
     link_data.push_back(temp_link_data);
   }
 

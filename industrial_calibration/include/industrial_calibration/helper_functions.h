@@ -27,11 +27,11 @@ struct LinkData
 bool parseYAML(const YAML::Node &node, const std::string &var_name, 
   std::vector<double> &var_value);
 
-bool loadLinkData(const std::size_t &index, const std::string &path,
-  LinkData *link_data);
+bool loadLinkData(const std::string &file_path,
+  LinkData *link_data, const std::string &node);
 
-bool loadLinkData2(const std::size_t &index, const std::string &path,
-  LinkData *link_data, bool verification = false);
+bool loadLinkData(const std::string &file_path,
+  industrial_calibration_libs::Pose6D &pose, const std::string &node);
 
 void printVector(const std::vector<double> &vec);
 
@@ -40,9 +40,6 @@ void convertToPose6D(const LinkData &link_data,
 
 bool convertToPose6D(const std::vector<LinkData> &link_data, 
   std::vector<industrial_calibration_libs::Pose6D> *link_poses);
-
-bool loadLinkData(const std::size_t &index, const std::string &path,
-  industrial_calibration_libs::Pose6D &pose);
 
 void drawResultPoints(const cv::Mat &input_image, cv::Mat &output_image,
   const industrial_calibration_libs::ObservationPoints &observation_points,
@@ -72,78 +69,30 @@ bool parseYAML(const YAML::Node &node, const std::string &var_name,
   return false;
 }
 
-bool loadLinkData(const std::size_t &index, const std::string &path,
-  LinkData *link_data)
+bool loadLinkData(const std::string &file_path, LinkData *link_data, 
+  const std::string &node)
 {
   bool success = true;
-  std::string file_path = path + std::to_string(index) + ".yaml";
 
   YAML::Node data_yaml;
   try
   {
     data_yaml = YAML::LoadFile(file_path);
-    if (!data_yaml["base_link_to_tool0"]) {return false;}
+    // if (!data_yaml["base_link_to_tool0"]) {return false;}
+    if (!data_yaml[node]) {return false;}
   }
   catch (YAML::BadFile &bf) {return false;}
 
-  success &= parseYAML(data_yaml["base_link_to_tool0"], "Translation", link_data->translation);
-  success &= parseYAML(data_yaml["base_link_to_tool0"], "Quaternion", link_data->rotation_quat);
+  success &= parseYAML(data_yaml[node], "Translation", link_data->translation);
+  success &= parseYAML(data_yaml[node], "Quaternion", link_data->rotation_quat);
   return success;
 }
 
-bool loadLinkData2(const std::size_t &index, const std::string &path,
-  LinkData *link_data, bool verification)
+bool loadLinkData(const std::string &file_path, 
+  industrial_calibration_libs::Pose6D &pose, const std::string &node)
 {
-  bool success = true;
-
-  std::string file_path;
-  if (verification)
-  {
-    file_path = path + "v" + std::to_string(index) + ".yaml";
-  }
-  else
-  {
-    file_path = path + std::to_string(index) + ".yaml";
-  }
-
-  YAML::Node data_yaml;
-  try
-  {
-    data_yaml = YAML::LoadFile(file_path);
-    if (!data_yaml["base_to_tool0"]) {return false;}
-  }
-  catch (YAML::BadFile &bf) {return false;}
-
-  success &= parseYAML(data_yaml["base_to_tool0"], "Translation", link_data->translation);
-  success &= parseYAML(data_yaml["base_to_tool0"], "Quaternion", link_data->rotation_quat);
-  return success;
-}
-
-void printVector(const std::vector<double> &vec)
-{
-  for (std::size_t i = 0; i < vec.size(); i++)
-  {
-    ROS_INFO_STREAM(vec[i]);
-  }
-}
-
-bool loadLinkData(const std::size_t &index, const std::string &path,
-  industrial_calibration_libs::Pose6D &pose)
-{
-  bool success = true;
-  std::string file_path = path + std::to_string(index) + ".yaml";
-
-  YAML::Node data_yaml;
-  try
-  {
-    data_yaml = YAML::LoadFile(file_path);
-    if (!data_yaml["base_link_to_tool0"]) {return false;}
-  }
-  catch (YAML::BadFile &bf) {return false;}
-
   LinkData link_data;
-  success &= parseYAML(data_yaml["base_link_to_tool0"], "Translation", link_data.translation);
-  success &= parseYAML(data_yaml["base_link_to_tool0"], "Quaternion", link_data.rotation_quat);
+  bool success = loadLinkData(file_path, &link_data, node);
 
   double tx, ty, tz, qx, qy, qz, qw;
   tx = link_data.translation[0];
@@ -158,6 +107,14 @@ bool loadLinkData(const std::size_t &index, const std::string &path,
   pose.setQuaternion(qx, qy, qz, qw);
 
   return success;
+}
+
+void printVector(const std::vector<double> &vec)
+{
+  for (std::size_t i = 0; i < vec.size(); i++)
+  {
+    ROS_INFO_STREAM(vec[i]);
+  }
 }
 
 void convertToPose6D(const LinkData &link_data, 

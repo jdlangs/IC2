@@ -32,7 +32,8 @@ int main(int argc, char** argv)
   for (std::size_t i = 0; i < num_images; i++)
   {
     industrial_calibration_libs::Pose6D pose;
-    loadLinkData(i, data_path + "mcircles_10x10/extrinsic/tf/", pose);
+    loadLinkData(data_path + "mcircles_10x10/extrinsic/tf/" + std::to_string(i) + ".yaml", 
+      pose, "base_link_to_tool0");    
     link_data.push_back(pose);
   }
 
