@@ -62,27 +62,16 @@ int main(int argc, char** argv)
   target_pose.setQuaternion(qx, qy, qz, qw);
   target_pose.setOrigin(0.0089, 0.127, 0.1778); // meters
 
-  // Set Camera Info (manually extracted from camera_info.txt).
-  // Focal length and optical center are from K matrix.
-  // Distortion is from P matrix.
-  // This is un-calibrated data and is used as an initial guess.
-  double focal_length_x = 570.3422;
-  double focal_length_y = 570.3422;
-  double optical_center_x = 319.5;
-  double optical_center_y = 239.5;
-  double distortion_k1 = 0.0;
-  double distortion_k2 = 0.0;
-  double distortion_k3 = 0.0;
-  double distortion_p1 = 0.0;
-  double distortion_p2 = 0.0;
+  // Load camera_info from YAML.
+  std::string camera_info_path = data_path + "mcircles_9x12/intrinsic_mh3/camera_info.yaml";
+  double camera_info[9];
+  loadCameraInfo(camera_info_path, camera_info);
 
   // Set your calibration parameters to be passed to the calibration object.
   industrial_calibration_libs::CameraOnWristIntrinsicParams params;
 
   // Seed intrinsic parameters
-  params.intrinsics = industrial_calibration_libs::IntrinsicsFull(focal_length_x,
-    focal_length_y, optical_center_x, optical_center_y, distortion_k1, 
-    distortion_k2, distortion_k3, distortion_p1, distortion_p2);
+  params.intrinsics = industrial_calibration_libs::IntrinsicsFull(camera_info);
 
   // Seed target pose
   params.target_to_camera = industrial_calibration_libs::Extrinsics(target_pose);
