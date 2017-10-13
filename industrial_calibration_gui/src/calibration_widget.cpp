@@ -513,7 +513,6 @@ void CalibrationWidget::saveImageButton(void)
 {
   // Get image
   cv::Mat image;
-
   {
     std::lock_guard<std::mutex> lock(this->camera_image_mutex_);
     camera_image_.copyTo(image); 
@@ -576,7 +575,6 @@ void CalibrationWidget::startCalibrationButton(void)
           << " you made it this far...");
         break;
 
-      // Only one supported right now...
       case camera_on_wrist_extrinsic:
         this->runCameraOnWristExtrinsic();
         break;
@@ -586,10 +584,12 @@ void CalibrationWidget::startCalibrationButton(void)
         break;
 
       case camera_in_world_extrinsic:
+        // Not supported yet.
         this->runCameraInWorldExtrinsic();
         break;
 
       case camera_in_world_intrinsic:
+        // Not supported yet
         this->runCameraInWorldIntrinsic();
         break;
 
