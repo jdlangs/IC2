@@ -570,23 +570,23 @@ void CalibrationWidget::askTargetLocationPopup(void)
   target_location_popup_instructions_->setText(instructions_text);
   target_location_popup_instructions_->setAlignment(Qt::AlignCenter);
 
-  target_location_popup_x_position_label_ = new QLabel("x (m)");
-  target_location_popup_y_position_label_ = new QLabel("y (m)");
-  target_location_popup_z_position_label_ = new QLabel("z (m)");
+  target_location_popup_x_label_ = new QLabel("x (m)");
+  target_location_popup_y_label_ = new QLabel("y (m)");
+  target_location_popup_z_label_ = new QLabel("z (m)");
 
-  target_location_popup_x_position_line_ = new QLineEdit();
-  target_location_popup_y_position_line_ = new QLineEdit();
-  target_location_popup_z_position_line_ = new QLineEdit();
+  target_location_popup_x_line_ = new QLineEdit();
+  target_location_popup_y_line_ = new QLineEdit();
+  target_location_popup_z_line_ = new QLineEdit();
 
   target_location_popup_pushbutton_ = new QPushButton("Set Values");
 
-  target_location_popup_grid_->addWidget(target_location_popup_x_position_label_, 0, 0);
-  target_location_popup_grid_->addWidget(target_location_popup_y_position_label_, 1, 0);
-  target_location_popup_grid_->addWidget(target_location_popup_z_position_label_, 2, 0);
+  target_location_popup_grid_->addWidget(target_location_popup_x_label_, 0, 0);
+  target_location_popup_grid_->addWidget(target_location_popup_y_label_, 1, 0);
+  target_location_popup_grid_->addWidget(target_location_popup_z_label_, 2, 0);
 
-  target_location_popup_grid_->addWidget(target_location_popup_x_position_line_, 0, 1);
-  target_location_popup_grid_->addWidget(target_location_popup_y_position_line_, 1, 1);
-  target_location_popup_grid_->addWidget(target_location_popup_z_position_line_, 2, 1);
+  target_location_popup_grid_->addWidget(target_location_popup_x_line_, 0, 1);
+  target_location_popup_grid_->addWidget(target_location_popup_y_line_, 1, 1);
+  target_location_popup_grid_->addWidget(target_location_popup_z_line_, 2, 1);
 
   target_location_popup_layout_->addWidget(target_location_popup_instructions_);
   target_location_popup_layout_->addLayout(target_location_popup_grid_);
@@ -602,9 +602,9 @@ void CalibrationWidget::askTargetLocationPopup(void)
 
 void CalibrationWidget::getTargetLocationFromPopup(void)
 {
-  ROS_INFO_STREAM(target_location_popup_x_position_line_->text().toStdString());
-  ROS_INFO_STREAM(target_location_popup_y_position_line_->text().toStdString());
-  ROS_INFO_STREAM(target_location_popup_z_position_line_->text().toStdString());
+  ROS_INFO_STREAM(target_location_popup_x_line_->text().toStdString());
+  ROS_INFO_STREAM(target_location_popup_y_line_->text().toStdString());
+  ROS_INFO_STREAM(target_location_popup_z_line_->text().toStdString());
 
   // Checking if the lines are blank
 
@@ -622,12 +622,12 @@ void CalibrationWidget::getTargetLocationFromPopup(void)
     delete target_location_popup_layout_;
     delete target_location_popup_grid_;
     delete target_location_popup_instructions_;
-    delete target_location_popup_x_position_label_;
-    delete target_location_popup_y_position_label_;
-    delete target_location_popup_z_position_label_;
-    delete target_location_popup_x_position_line_;
-    delete target_location_popup_y_position_line_;
-    delete target_location_popup_z_position_line_;
+    delete target_location_popup_x_label_;
+    delete target_location_popup_y_label_;
+    delete target_location_popup_z_label_;
+    delete target_location_popup_x_line_;
+    delete target_location_popup_y_line_;
+    delete target_location_popup_z_line_;
     delete target_location_popup_pushbutton_;
 
     target_location_popup_->close();

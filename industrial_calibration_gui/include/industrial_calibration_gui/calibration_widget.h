@@ -159,12 +159,12 @@ private:
   QVBoxLayout *target_location_popup_layout_;
   QGridLayout *target_location_popup_grid_;
   QTextBrowser *target_location_popup_instructions_;
-  QLabel *target_location_popup_x_position_label_;
-  QLabel *target_location_popup_y_position_label_;
-  QLabel *target_location_popup_z_position_label_;
-  QLineEdit *target_location_popup_x_position_line_;
-  QLineEdit *target_location_popup_y_position_line_;
-  QLineEdit *target_location_popup_z_position_line_;
+  QLabel *target_location_popup_x_label_;
+  QLabel *target_location_popup_y_label_;
+  QLabel *target_location_popup_z_label_;
+  QLineEdit *target_location_popup_x_line_;
+  QLineEdit *target_location_popup_y_line_;
+  QLineEdit *target_location_popup_z_line_;
   QPushButton *target_location_popup_pushbutton_;
   // std::vector<double> target_location_popup_position_;
 
