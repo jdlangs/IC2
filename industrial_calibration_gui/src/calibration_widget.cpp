@@ -607,7 +607,7 @@ void CalibrationWidget::startCalibrationButton(void)
 
 void CalibrationWidget::runCameraOnWristExtrinsic(void)
 {
-  CONSOLE_LOG_INFO("Running static target moving camera on wrist!");
+  CONSOLE_LOG_INFO("Running static target moving camera on wrist extrinsic calibration!");
 
   // Initial Camera Intrinsics from camera_info.
   double intrinsics[4];
@@ -678,7 +678,9 @@ void CalibrationWidget::runCameraOnWristExtrinsic(void)
 
 void CalibrationWidget::runCameraOnWristIntrinsic(void)
 {
-  CONSOLE_LOG_ERROR("Not Supported Yet!");
+  CONSOLE_LOG_INFO("Running static target moving camera on wrist intrinsic calibration!");
+
+
 }
 
 void CalibrationWidget::runCameraInWorldExtrinsic(void)
