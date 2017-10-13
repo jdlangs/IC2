@@ -53,7 +53,7 @@ enum CalibrationType
 
 class CalibrationWidget : public QWidget
 {
-  Q_OBJECT
+Q_OBJECT
 public:
   CalibrationWidget(QWidget* parent = 0);
 
