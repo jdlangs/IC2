@@ -43,7 +43,7 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~
     this, SLOT(startCalibrationButton()));
 
   target_popup_exists_ = false;
-  this->askTargetLocationPopup(); // MOVE THIS
+  target_to_camera_seed_set_ = false;
 }
 
 CalibrationWidget::~CalibrationWidget() { }
@@ -291,6 +291,15 @@ void CalibrationWidget::updateFrameList(void)
 
 void CalibrationWidget::setInputsButton(void)
 {
+  if (calibration_type_ == camera_on_wrist_intrinsic)
+  {
+    if (!target_to_camera_seed_set_)
+    {
+      this->askTargetLocationPopup();
+      return;
+    }
+  }
+
   // Checking if any of the input fields are empty.
   if (this->checkEmptyLines()) {return;}
 
@@ -564,6 +573,7 @@ void CalibrationWidget::askTargetLocationPopup(void)
   QString instructions_text = QString("Seed Target Location\n\n"
     "How far is the target origin in relation to the center of the camera?\n\n"
     "The center of the target is located at the big dot.\n\n"
+    "z is the distance from your camera to the target.\n\n"
     "Measurements are in meters.");
 
   target_location_popup_instructions_ = new QTextBrowser();
@@ -607,32 +617,67 @@ void CalibrationWidget::getTargetLocationFromPopup(void)
   ROS_INFO_STREAM(target_location_popup_z_line_->text().toStdString());
 
   // Checking if the lines are blank
-
-
-  // check if they are blank
-  // check if they are doubles
-  // set a variable
-  // if its good, delete!
-
-  bool data_good = false;
-
-  if (data_good)
+  if (target_location_popup_x_line_->text().isEmpty() 
+    || target_location_popup_y_line_->text().isEmpty()
+    || target_location_popup_z_line_->text().isEmpty())
   {
-    delete target_location_popup_;
-    delete target_location_popup_layout_;
-    delete target_location_popup_grid_;
-    delete target_location_popup_instructions_;
-    delete target_location_popup_x_label_;
-    delete target_location_popup_y_label_;
-    delete target_location_popup_z_label_;
-    delete target_location_popup_x_line_;
-    delete target_location_popup_y_line_;
-    delete target_location_popup_z_line_;
-    delete target_location_popup_pushbutton_;
-
-    target_location_popup_->close();
-    target_popup_exists_ = false;
+    CONSOLE_LOG_ERROR("Please fill out all fields, some of the lines may be empty");
+    return;
   }
+
+  // Check if fields are filled with numbers
+  double x, y, z;
+  try
+  {
+    x = std::atof(target_location_popup_x_line_->text().toStdString().c_str());
+    y = std::atof(target_location_popup_y_line_->text().toStdString().c_str());
+    z = std::atof(target_location_popup_z_line_->text().toStdString().c_str());
+  }
+  catch (std::exception &ex)
+  {
+    CONSOLE_LOG_ERROR("Could not convert inputs to doubles");
+    return;
+  }
+
+  CONSOLE_LOG_INFO("Setting distance from camera frame to target origin as: "
+    << "x: " << x << "m  y: " << y << "m  z: " << z << "m");
+
+  double qx, qy, qz, qw;
+
+  Eigen::Matrix3d m;
+  m(0,0) =  1; m(0,1) =   0; m(0,2) =  0;
+  m(1,0) =  0; m(1,1) =  -1; m(1,2) =  0;
+  m(2,0) =  0; m(2,1) =   0; m(2,2) = -1;  
+
+  industrial_calibration_libs::Pose6D temp_pose;
+  temp_pose.setBasis(m);
+  temp_pose.setOrigin(-0.1, -0.1, z);
+  temp_pose.getQuaternion(qx, qy, qz, qw);
+
+  target_to_camera_seed_.setQuaternion(qx, qy, qz, qw);
+  target_to_camera_seed_.setOrigin(x, y, z); // Meters
+  target_to_camera_seed_set_ = true;
+
+  // bool data_good = true;
+  // if (data_good)
+  // {
+  //   delete target_location_popup_;
+  //   delete target_location_popup_layout_;
+  //   delete target_location_popup_grid_;
+  //   delete target_location_popup_instructions_;
+  //   delete target_location_popup_x_label_;
+  //   delete target_location_popup_y_label_;
+  //   delete target_location_popup_z_label_;
+  //   delete target_location_popup_x_line_;
+  //   delete target_location_popup_y_line_;
+  //   delete target_location_popup_z_line_;
+  //   delete target_location_popup_pushbutton_;
+
+  //   target_location_popup_->close();
+  //   target_popup_exists_ = false;
+  // }
+  target_location_popup_->close();
+  target_popup_exists_ = false;  
 }
 
 void CalibrationWidget::startCalibrationButton(void)

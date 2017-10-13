@@ -107,10 +107,8 @@ protected Q_SLOTS:
   bool drawGrid(cv::Mat &image);
   void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
   void saveImageButton(void);
-
   void askTargetLocationPopup(void);
   void getTargetLocationFromPopup(void);
-
   void startCalibrationButton(void);
   void runCameraOnWristExtrinsic(void);
   void runCameraOnWristIntrinsic(void);
@@ -155,6 +153,7 @@ private:
 
   // Target location popup
   bool target_popup_exists_; // Prevent memory leak
+  bool target_to_camera_seed_set_;
   QWidget *target_location_popup_;
   QVBoxLayout *target_location_popup_layout_;
   QGridLayout *target_location_popup_grid_;
@@ -166,7 +165,7 @@ private:
   QLineEdit *target_location_popup_y_line_;
   QLineEdit *target_location_popup_z_line_;
   QPushButton *target_location_popup_pushbutton_;
-  // std::vector<double> target_location_popup_position_;
+  industrial_calibration_libs::Pose6D target_to_camera_seed_;
 
   // Calibration variables
   industrial_calibration_libs::Target target_;
