@@ -70,7 +70,6 @@ int main(int argc, char** argv)
   // Set your calibration parameters to be passed to the calibration object.
   industrial_calibration_libs::CameraOnWristIntrinsicParams params;
 
-
   // Seed intrinsic parameters
   params.intrinsics = industrial_calibration_libs::IntrinsicsFull(camera_info);
 
