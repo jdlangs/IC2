@@ -107,6 +107,7 @@ protected Q_SLOTS:
   bool drawGrid(cv::Mat &image);
   void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
   void saveImageButton(void);
+  void initTargetLocationPopup(void);
   void askTargetLocationPopup(void);
   void getTargetLocationFromPopup(void);
   void startCalibrationButton(void);

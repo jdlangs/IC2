@@ -44,6 +44,7 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~
 
   target_popup_exists_ = false;
   target_to_camera_seed_set_ = false;
+  this->initTargetLocationPopup();
 }
 
 CalibrationWidget::~CalibrationWidget() { }
@@ -557,6 +558,23 @@ void CalibrationWidget::saveImageButton(void)
   CONSOLE_LOG_INFO("Observation #" << index - 1 << " Saved!");
 }
 
+void CalibrationWidget::initTargetLocationPopup(void)
+{
+  target_location_popup_ = new QWidget();
+  target_location_popup_layout_ = new QVBoxLayout();
+  target_location_popup_grid_ = new QGridLayout();
+  target_location_popup_instructions_ = new QTextBrowser();
+  target_location_popup_x_label_ = new QLabel("x (m)");
+  target_location_popup_y_label_ = new QLabel("y (m)");
+  target_location_popup_z_label_ = new QLabel("z (m)");
+  target_location_popup_x_line_ = new QLineEdit();
+  target_location_popup_y_line_ = new QLineEdit();
+  target_location_popup_z_line_ = new QLineEdit();
+  target_location_popup_pushbutton_ = new QPushButton("Set Values");
+  connect(target_location_popup_pushbutton_, SIGNAL(clicked()), 
+    this, SLOT(getTargetLocationFromPopup()));
+}
+
 void CalibrationWidget::askTargetLocationPopup(void)
 {
   // Prevents user from opening a ton of popup windows.
@@ -565,30 +583,14 @@ void CalibrationWidget::askTargetLocationPopup(void)
   else 
     target_popup_exists_ = true;
 
-  target_location_popup_ = new QWidget();
-
-  target_location_popup_layout_ = new QVBoxLayout();
-  target_location_popup_grid_ = new QGridLayout();
-  
   QString instructions_text = QString("Seed Target Location\n\n"
     "How far is the target origin in relation to the center of the camera?\n\n"
     "The center of the target is located at the big dot.\n\n"
     "z is the distance from your camera to the target.\n\n"
     "Measurements are in meters.");
 
-  target_location_popup_instructions_ = new QTextBrowser();
   target_location_popup_instructions_->setText(instructions_text);
   target_location_popup_instructions_->setAlignment(Qt::AlignCenter);
-
-  target_location_popup_x_label_ = new QLabel("x (m)");
-  target_location_popup_y_label_ = new QLabel("y (m)");
-  target_location_popup_z_label_ = new QLabel("z (m)");
-
-  target_location_popup_x_line_ = new QLineEdit();
-  target_location_popup_y_line_ = new QLineEdit();
-  target_location_popup_z_line_ = new QLineEdit();
-
-  target_location_popup_pushbutton_ = new QPushButton("Set Values");
 
   target_location_popup_grid_->addWidget(target_location_popup_x_label_, 0, 0);
   target_location_popup_grid_->addWidget(target_location_popup_y_label_, 1, 0);
@@ -603,9 +605,6 @@ void CalibrationWidget::askTargetLocationPopup(void)
   target_location_popup_layout_->addWidget(target_location_popup_pushbutton_);
 
   target_location_popup_->setLayout(target_location_popup_layout_);
-
-  connect(target_location_popup_pushbutton_, SIGNAL(clicked()), 
-    this, SLOT(getTargetLocationFromPopup()));
 
   target_location_popup_->show();  
 }
@@ -654,24 +653,6 @@ void CalibrationWidget::getTargetLocationFromPopup(void)
   target_to_camera_seed_.setOrigin(x, y, z); // Meters
   target_to_camera_seed_set_ = true;
 
-  // bool data_good = true;
-  // if (data_good)
-  // {
-  //   delete target_location_popup_;
-  //   delete target_location_popup_layout_;
-  //   delete target_location_popup_grid_;
-  //   delete target_location_popup_instructions_;
-  //   delete target_location_popup_x_label_;
-  //   delete target_location_popup_y_label_;
-  //   delete target_location_popup_z_label_;
-  //   delete target_location_popup_x_line_;
-  //   delete target_location_popup_y_line_;
-  //   delete target_location_popup_z_line_;
-  //   delete target_location_popup_pushbutton_;
-
-  //   target_location_popup_->close();
-  //   target_popup_exists_ = false;
-  // }
   target_location_popup_->close();
   target_popup_exists_ = false;  
 }
