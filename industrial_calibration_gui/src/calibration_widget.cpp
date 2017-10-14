@@ -612,10 +612,6 @@ void CalibrationWidget::askTargetLocationPopup(void)
 
 void CalibrationWidget::getTargetLocationFromPopup(void)
 {
-  ROS_INFO_STREAM(target_location_popup_x_line_->text().toStdString());
-  ROS_INFO_STREAM(target_location_popup_y_line_->text().toStdString());
-  ROS_INFO_STREAM(target_location_popup_z_line_->text().toStdString());
-
   // Checking if the lines are blank
   if (target_location_popup_x_line_->text().isEmpty() 
     || target_location_popup_y_line_->text().isEmpty()
