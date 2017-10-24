@@ -41,6 +41,10 @@ CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~
     this, SLOT(saveImageButton()));
   connect(ui_->start_calibration_button, SIGNAL(clicked()),
     this, SLOT(startCalibrationButton()));
+
+  target_popup_exists_ = false;
+  target_to_camera_seed_set_ = false;
+  this->initTargetLocationPopup();
 }
 
 CalibrationWidget::~CalibrationWidget() { }
@@ -288,6 +292,15 @@ void CalibrationWidget::updateFrameList(void)
 
 void CalibrationWidget::setInputsButton(void)
 {
+  if (calibration_type_ == camera_on_wrist_intrinsic)
+  {
+    if (!target_to_camera_seed_set_)
+    {
+      this->askTargetLocationPopup();
+      return;
+    }
+  }
+
   // Checking if any of the input fields are empty.
   if (this->checkEmptyLines()) {return;}
 
@@ -513,7 +526,6 @@ void CalibrationWidget::saveImageButton(void)
 {
   // Get image
   cv::Mat image;
-
   {
     std::lock_guard<std::mutex> lock(this->camera_image_mutex_);
     camera_image_.copyTo(image); 
@@ -546,6 +558,105 @@ void CalibrationWidget::saveImageButton(void)
   CONSOLE_LOG_INFO("Observation #" << index - 1 << " Saved!");
 }
 
+void CalibrationWidget::initTargetLocationPopup(void)
+{
+  target_location_popup_ = new QWidget();
+  target_location_popup_layout_ = new QVBoxLayout();
+  target_location_popup_grid_ = new QGridLayout();
+  target_location_popup_instructions_ = new QTextBrowser();
+  target_location_popup_x_label_ = new QLabel("x (m)");
+  target_location_popup_y_label_ = new QLabel("y (m)");
+  target_location_popup_z_label_ = new QLabel("z (m)");
+  target_location_popup_x_line_ = new QLineEdit();
+  target_location_popup_y_line_ = new QLineEdit();
+  target_location_popup_z_line_ = new QLineEdit();
+  target_location_popup_pushbutton_ = new QPushButton("Set Values");
+  connect(target_location_popup_pushbutton_, SIGNAL(clicked()), 
+    this, SLOT(getTargetLocationFromPopup()));
+}
+
+void CalibrationWidget::askTargetLocationPopup(void)
+{
+  // Prevents user from opening a ton of popup windows.
+  if (target_popup_exists_)
+    return;
+  else 
+    target_popup_exists_ = true;
+
+  QString instructions_text = QString("Seed Target Location\n\n"
+    "How far is the target origin in relation to the center of the camera?\n\n"
+    "The center of the target is located at the big dot.\n\n"
+    "z is the distance from your camera to the target.\n\n"
+    "Measurements are in meters.");
+
+  target_location_popup_instructions_->setText(instructions_text);
+  target_location_popup_instructions_->setAlignment(Qt::AlignCenter);
+
+  target_location_popup_grid_->addWidget(target_location_popup_x_label_, 0, 0);
+  target_location_popup_grid_->addWidget(target_location_popup_y_label_, 1, 0);
+  target_location_popup_grid_->addWidget(target_location_popup_z_label_, 2, 0);
+
+  target_location_popup_grid_->addWidget(target_location_popup_x_line_, 0, 1);
+  target_location_popup_grid_->addWidget(target_location_popup_y_line_, 1, 1);
+  target_location_popup_grid_->addWidget(target_location_popup_z_line_, 2, 1);
+
+  target_location_popup_layout_->addWidget(target_location_popup_instructions_);
+  target_location_popup_layout_->addLayout(target_location_popup_grid_);
+  target_location_popup_layout_->addWidget(target_location_popup_pushbutton_);
+
+  target_location_popup_->setLayout(target_location_popup_layout_);
+
+  target_location_popup_->show();  
+}
+
+void CalibrationWidget::getTargetLocationFromPopup(void)
+{
+  // Checking if the lines are blank
+  if (target_location_popup_x_line_->text().isEmpty() 
+    || target_location_popup_y_line_->text().isEmpty()
+    || target_location_popup_z_line_->text().isEmpty())
+  {
+    CONSOLE_LOG_ERROR("Please fill out all fields, some of the lines may be empty");
+    return;
+  }
+
+  // Check if fields are filled with numbers
+  double x, y, z;
+  try
+  {
+    x = std::atof(target_location_popup_x_line_->text().toStdString().c_str());
+    y = std::atof(target_location_popup_y_line_->text().toStdString().c_str());
+    z = std::atof(target_location_popup_z_line_->text().toStdString().c_str());
+  }
+  catch (std::exception &ex)
+  {
+    CONSOLE_LOG_ERROR("Could not convert inputs to doubles");
+    return;
+  }
+
+  CONSOLE_LOG_INFO("Setting distance from camera frame to target origin as: "
+    << "x: " << x << "m  y: " << y << "m  z: " << z << "m");
+
+  double qx, qy, qz, qw;
+
+  Eigen::Matrix3d m;
+  m(0,0) =  1; m(0,1) =   0; m(0,2) =  0;
+  m(1,0) =  0; m(1,1) =  -1; m(1,2) =  0;
+  m(2,0) =  0; m(2,1) =   0; m(2,2) = -1;  
+
+  industrial_calibration_libs::Pose6D temp_pose;
+  temp_pose.setBasis(m);
+  temp_pose.setOrigin(-0.1, -0.1, z);
+  temp_pose.getQuaternion(qx, qy, qz, qw);
+
+  target_to_camera_seed_.setQuaternion(qx, qy, qz, qw);
+  target_to_camera_seed_.setOrigin(x, y, z); // Meters
+  target_to_camera_seed_set_ = true;
+
+  target_location_popup_->close();
+  target_popup_exists_ = false;  
+}
+
 void CalibrationWidget::startCalibrationButton(void)
 {
   // Shutdown subscribers and publishers
@@ -576,7 +687,6 @@ void CalibrationWidget::startCalibrationButton(void)
           << " you made it this far...");
         break;
 
-      // Only one supported right now...
       case camera_on_wrist_extrinsic:
         this->runCameraOnWristExtrinsic();
         break;
@@ -586,10 +696,12 @@ void CalibrationWidget::startCalibrationButton(void)
         break;
 
       case camera_in_world_extrinsic:
+        // Not supported yet.
         this->runCameraInWorldExtrinsic();
         break;
 
       case camera_in_world_intrinsic:
+        // Not supported yet
         this->runCameraInWorldIntrinsic();
         break;
 
@@ -607,7 +719,7 @@ void CalibrationWidget::startCalibrationButton(void)
 
 void CalibrationWidget::runCameraOnWristExtrinsic(void)
 {
-  CONSOLE_LOG_INFO("Running static target moving camera on wrist!");
+  CONSOLE_LOG_INFO("Running static target moving camera on wrist extrinsic calibration!");
 
   // Initial Camera Intrinsics from camera_info.
   double intrinsics[4];
@@ -678,7 +790,9 @@ void CalibrationWidget::runCameraOnWristExtrinsic(void)
 
 void CalibrationWidget::runCameraOnWristIntrinsic(void)
 {
-  CONSOLE_LOG_ERROR("Not Supported Yet!");
+  CONSOLE_LOG_INFO("Running static target moving camera on wrist intrinsic calibration!");
+
+
 }
 
 void CalibrationWidget::runCameraInWorldExtrinsic(void)
