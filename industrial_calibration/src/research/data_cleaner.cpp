@@ -29,7 +29,8 @@ int getKey(void);
 
 bool deleteImage(const cv::Mat &image);
 
-int checkCalibrationImages(const std::string &path, const ICL::Target &target);
+int checkCalibrationImages(const std::string &path, 
+  const ICL::Target &target);
 
 void renameAllImages(const std::string &data_path);
 
@@ -177,7 +178,7 @@ int main(int argc, char **argv)
   ros::NodeHandle pnh("~");
 
   std::string data_path;
-  pnh.getParam("data_path", data_path)
+  pnh.getParam("data_path", data_path);
 
   // Load Target Data
   ICL::Target target(data_path + "mcircles_9x12.yaml");
