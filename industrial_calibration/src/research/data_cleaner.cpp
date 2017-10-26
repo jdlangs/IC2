@@ -148,6 +148,10 @@ int checkCalibrationImages(const std::string &path, const ICL::Target &target)
 
 // I could probably do this up in checkCalibrationImages
 // but since speed is not an issue, i'm keeping it in its own function.
+
+// Found a bug where if you run this program twice, it will delete
+// half of the images. So... don't run this program twice once the images
+// Have been renamed.
 void renameAllImages(const std::string &data_path)
 {
   std::size_t count = 0;
@@ -186,11 +190,18 @@ int main(int argc, char **argv)
   // Delete bad calibration images.
   std::cout << "Total Images Before: " << getTotalImages(data_path) << '\n';
   std::cout << "Number Deleted: " << checkCalibrationImages(data_path, target) << '\n';
-  std::cout << "Total Images After: " << getTotalImages(data_path) << '\n';
+  int total_images_after_clean = getTotalImages(data_path);
+  std::cout << "Total Images After: " << total_images_after_clean << '\n';
 
   // Rename and sort...
   renameAllImages(data_path);
-  std::cout << "Total Images After Rename: " << getTotalImages(data_path) << '\n';
+  int total_images_after_rename = getTotalImages(data_path);
+  std::cout << "Total Images After Rename: " << total_images_after_rename << '\n';
+
+  if (total_images_after_rename != total_images_after_clean)
+  {
+    ROS_ERROR_STREAM("ABORT! ABORT! ABORT!");
+  }
 
   return 0;
 }
