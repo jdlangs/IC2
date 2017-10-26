@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <launch>
-  <arg name="data_path" value="$(find industrial_calibration_libs)/test/resources/"/>
+  <arg name="data_path"/>
 
   <!-- Debug arguments -->
   <arg name="debug" default="false"/>

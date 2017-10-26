@@ -176,7 +176,8 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "intrinsic_opencv");
   ros::NodeHandle pnh("~");
 
-  std::string data_path = "/home/gchiou/Desktop/01/";
+  std::string data_path;
+  pnh.getParam("data_path", data_path)
 
   // Load Target Data
   ICL::Target target(data_path + "mcircles_9x12.yaml");
