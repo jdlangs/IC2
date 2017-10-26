@@ -83,4 +83,8 @@ set_target_properties(extrinsic_simulate ${COMPILER_WARNINGS})
 target_link_libraries(extrinsic_simulate ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
   ${Boost_LIBRARIES} yaml-cpp)
 
-
+add_executable(intrinsic_opencv src/research/intrinsic_opencv.cpp)
+add_dependencies(intrinsic_opencv ${catkin_EXPORTED_TARGETS})
+set_target_properties(intrinsic_opencv ${COMPILER_WARNINGS})
+target_link_libraries(intrinsic_opencv ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
+  ${Boost_LIBRARIES} yaml-cpp)
