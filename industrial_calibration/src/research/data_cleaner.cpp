@@ -184,6 +184,9 @@ int main(int argc, char **argv)
   std::string data_path;
   pnh.getParam("data_path", data_path);
 
+  bool rename_files;
+  pnh.getParam("rename_files", rename_files);
+
   // Load Target Data
   ICL::Target target(data_path + "mcircles_9x12.yaml");
 
@@ -194,13 +197,16 @@ int main(int argc, char **argv)
   std::cout << "Total Images After: " << total_images_after_clean << '\n';
 
   // Rename and sort...
-  renameAllImages(data_path);
-  int total_images_after_rename = getTotalImages(data_path);
-  std::cout << "Total Images After Rename: " << total_images_after_rename << '\n';
-
-  if (total_images_after_rename != total_images_after_clean)
+  if (rename_files)
   {
-    ROS_ERROR_STREAM("ABORT! ABORT! ABORT!");
+    renameAllImages(data_path);
+    int total_images_after_rename = getTotalImages(data_path);
+    std::cout << "Total Images After Rename: " << total_images_after_rename << '\n';
+
+    if (total_images_after_rename != total_images_after_clean)
+    {
+      ROS_ERROR_STREAM("ABORT! ABORT! ABORT!");
+    }
   }
 
   return 0;

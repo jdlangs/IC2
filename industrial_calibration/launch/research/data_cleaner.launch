@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
   <arg name="data_path"/>
+  <arg name="rename_files"/>
 
   <!-- Debug arguments -->
   <arg name="debug" default="false"/>
@@ -9,5 +10,6 @@
 
   <node name="data_cleaner" pkg="industrial_calibration" type="data_cleaner" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
     <param name="data_path" value="$(arg data_path)" type="string"/>
+    <param name="rename_files" value="$(arg rename_files)" type="bool"/>
   </node>
 </launch>
