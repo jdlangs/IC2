@@ -306,8 +306,8 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "intrinsic_opencv");
   ros::NodeHandle pnh("~");
 
-  std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", "06",
-    "07", "08", "09", "10", "11", "12", "13", "14", "15" };
+  std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
+    "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
   std::string data_dir = "/home/gchiou/UTSA/Thesis/thesis_data/";
   for (std::size_t i = 0; i < 15; i++)
   {
