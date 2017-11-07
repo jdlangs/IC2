@@ -21,8 +21,6 @@
 
 typedef std::vector<cv::Mat> CalibrationImages;
 
-bool isPNG(const std::string &file_name);
-
 int getTotalImages(const std::string &path);
 
 int getKey(void);
@@ -33,14 +31,6 @@ int checkCalibrationImages(const std::string &path,
   const ICL::Target &target);
 
 void renameAllImages(const std::string &data_path);
-
-bool isPNG(const std::string &file_name)
-{
-  std::size_t dot_location = file_name.find('.');
-  std::string extension = file_name.substr(dot_location + 1);
-  if (extension.compare("png") == 0) {return true;}
-  return false;
-}
 
 int getTotalImages(const std::string &path)
 {
