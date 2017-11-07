@@ -12,13 +12,10 @@
 
 #define ICL industrial_calibration_libs
 
-typedef std::vector<cv::Mat> CalibrationImages;
-
 // Function Declarations
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
 
 // Function Implementatins
-
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
 {
   std::string data_path = data_dir + data_set + "/";
@@ -28,9 +25,20 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
 
   // Load Calibration Images
   CalibrationImages cal_images;
-  CalibrationImages cal_images;
   ROS_INFO_STREAM("Loading Calibration Images for Data Set: " << data_set);
   getCalibrationImages(data_path, cal_images);  
+
+  // Extract Observations
+  ROS_INFO_STREAM("Extracting Observations from Data Set: " << data_set);
+  ICL::ObservationExtractor observation_extractor(target);
+  for (std::size_t i = 0; i < cal_images.size(); i++)
+  {
+    cv::Mat grid_image;
+    observation_extractor.extractObservation(cal_images[i], grid_image);
+  }
+
+  // Get observations from extractor
+  ICL::ObservationData observation_data = observation_extractor.getObservationData();
 
 }
 
