@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <launch>
-  <arg name="data_path" value="$(find industrial_calibration_libs)/test/resources/"/>
+  <arg name="data_dir"/>
 
   <!-- Debug arguments -->
   <arg name="debug" default="false"/>
@@ -8,6 +8,6 @@
   <arg if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args"/>
 
   <node name="intrinsic_opencv" pkg="industrial_calibration" type="intrinsic_opencv" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
-    <param name="data_path" value="$(arg data_path)" type="string"/>
+    <param name="data_dir" value="$(arg data_dir)" type="string"/>
   </node>
 </launch>
