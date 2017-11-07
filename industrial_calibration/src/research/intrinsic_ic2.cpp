@@ -9,9 +9,6 @@
 #include <industrial_calibration/helper_functions.h>
 
 #include <opencv2/core/core.hpp>
-#include <fstream>
-
-#include <boost/filesystem.hpp>
 
 #define ICL industrial_calibration_libs
 
@@ -20,11 +17,21 @@ typedef std::vector<cv::Mat> CalibrationImages;
 // Function Declarations
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
 
-// Function Declarations
+// Function Implementatins
 
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
 {
-  std::cout << data_dir << std::endl;
+  std::string data_path = data_dir + data_set + "/";
+
+  // Load Target Data
+  ICL::Target target(data_path + "mcircles_9x12.yaml");
+
+  // Load Calibration Images
+  CalibrationImages cal_images;
+  CalibrationImages cal_images;
+  ROS_INFO_STREAM("Loading Calibration Images for Data Set: " << data_set);
+  getCalibrationImages(data_path, cal_images);  
+
 }
 
 int main(int argc, char** argv)

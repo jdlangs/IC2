@@ -15,17 +15,11 @@
 
 #include <fstream>
 
-#include <boost/filesystem.hpp>
 
 #define ICL industrial_calibration_libs
 
-typedef std::vector<cv::Mat> CalibrationImages;
 
 // Function Declarations
-void getCalibrationImages(const std::string &path, CalibrationImages &images);
-
-bool isPNG(const std::string &file_name);
-
 cv::Point2f point2dToPoint2f(const cv::Point2d &point2d);
 
 cv::Point3f point3dToPoint3f(const ICL::Point3D &point3d);
@@ -40,42 +34,13 @@ double computeReprojectionErrors(const std::vector<std::vector<cv::Point3f>> &ob
 
 std::vector<double> matToVec(const cv::Mat &mat);
 
-bool saveData(const std::string &result_path, double rms, double total_average_error,
+bool saveResultData(const std::string &result_path, double rms, double total_average_error,
   const cv::Mat &camera_matrix, const cv::Mat &dist_coeffs);
 
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
 
-// Function Definitions
-bool isPNG(const std::string &file_name)
-{
-  std::size_t dot_location = file_name.find('.');
-  std::string extension = file_name.substr(dot_location + 1);
-  if (extension.compare("png") == 0) {return true;}
-  return false;
-}
 
-void getCalibrationImages(const std::string &path, CalibrationImages &images)
-{
-  boost::filesystem::path image_dir(path);
-  boost::filesystem::directory_iterator end_iter;
-
-  if (boost::filesystem::exists(image_dir) &&
-    boost::filesystem::is_directory(image_dir))
-  {
-    for (boost::filesystem::directory_iterator dir_iter(image_dir);
-      dir_iter != end_iter; ++dir_iter)
-    {
-      if (boost::filesystem::is_regular_file(dir_iter->status()) &&
-        isPNG(dir_iter->path().filename().string()))
-      {
-        std::string image_path = path + dir_iter->path().filename().string();
-        cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_COLOR);
-        images.push_back(image);
-      }
-    }
-  }
-}
-
+// Function Implementations
 cv::Point2f point2dToPoint2f(const cv::Point2d &point2d)
 {
   cv::Point2f point2f;
@@ -129,7 +94,7 @@ std::vector<double> matToVec(const cv::Mat &mat)
   return vec;
 }
 
-bool saveData(const std::string &result_path, double rms, double total_average_error,
+bool saveResultData(const std::string &result_path, double rms, double total_average_error,
   const cv::Mat &camera_matrix, const cv::Mat &dist_coeffs)
 {
   YAML::Emitter out;
@@ -290,7 +255,7 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   ROS_INFO_STREAM("Saving Results of Data Set: " << data_set << " to "
     << result_path);
 
-  if (saveData(result_path, rms, total_average_error, camera_matrix, dist_coeffs))
+  if (saveResultData(result_path, rms, total_average_error, camera_matrix, dist_coeffs))
   {
     ROS_INFO_STREAM("Data Set: " << data_set << " Results Saved To: " << result_path);
     ROS_INFO_STREAM("Data Successfully Saved!");
