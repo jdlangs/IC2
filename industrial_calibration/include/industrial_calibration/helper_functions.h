@@ -50,6 +50,9 @@ void getQuaternion(double distance, double &qx, double &qy, double &qz,
 
 bool loadCameraInfo(const std::string &path, double *camera_info);
 
+std::string addSlashToEnd(const std::string &directory);
+
+
 bool parseYAML(const YAML::Node &node, const std::string &var_name, 
   std::vector<double> &var_value)
 {
@@ -215,4 +218,13 @@ bool loadCameraInfo(const std::string &path, double *camera_info)
   camera_info[8] = distortion_coefficients[4]; // distortion p2
 
   return success;
+}
+
+std::string addSlashToEnd(const std::string &directory)
+{
+  if (directory.back() != '/')
+  {
+    return directory + '/';
+  }
+  return directory;
 }
