@@ -90,6 +90,12 @@ set_target_properties(intrinsic_opencv ${COMPILER_WARNINGS})
 target_link_libraries(intrinsic_opencv ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
   ${Boost_LIBRARIES} yaml-cpp)
 
+add_executable(intrinsic_ic2 src/research/intrinsic_ic2.cpp)
+add_dependencies(intrinsic_ic2 ${catkin_EXPORTED_TARGETS})
+set_target_properties(intrinsic_ic2 ${COMPILER_WARNINGS})
+target_link_libraries(intrinsic_ic2 ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
+  ${Boost_LIBRARIES} yaml-cpp)
+
 add_executable(data_cleaner src/research/data_cleaner.cpp)
 add_dependencies(data_cleaner ${catkin_EXPORTED_TARGETS})
 set_target_properties(data_cleaner ${COMPILER_WARNINGS})
