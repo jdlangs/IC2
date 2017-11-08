@@ -40,6 +40,38 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   // Get observations from extractor
   ICL::ObservationData observation_data = observation_extractor.getObservationData();
 
+  // Seed parameters
+  double camera_info[9] = {0.0};
+  // camera_info[0] = 570.342224;
+  // camera_info[1] = 570.342224;
+  // camera_info[2] = 319.5;
+  // camera_info[3] = 239.5;
+  // camera_info[4] = 0.0;
+  // camera_info[5] = 0.0;
+  // camera_info[6] = 0.0;
+  // camera_info[7] = 0.0;
+  // camera_info[8] = 0.0;
+
+  ICL::ResearchIntrinsicParams params;
+  params.intrinsics = ICL::IntrinsicsFull(camera_info);
+  ICL::ResearchIntrinsic calibration(observation_data, target, params);
+  
+  calibration.setOutput(true); // Enable output to console.
+  calibration.runCalibration();
+
+  // Print out results.
+  ICL::ResearchIntrinsic::Result results = calibration.getResults();
+  ROS_INFO_STREAM("Intrinsic Parameters");
+  ROS_INFO_STREAM("----------------------------------------");
+  ROS_INFO_STREAM("Focal Length x: " << results.intrinsics[0]);
+  ROS_INFO_STREAM("Focal Length y: " << results.intrinsics[1]);
+  ROS_INFO_STREAM("Optical Center x: " << results.intrinsics[2]);
+  ROS_INFO_STREAM("Optical Center y: " << results.intrinsics[3]);
+  ROS_INFO_STREAM("Distortion k1: " << results.intrinsics[4]);
+  ROS_INFO_STREAM("Distortion k2: " << results.intrinsics[5]);
+  ROS_INFO_STREAM("Distortion k3: " << results.intrinsics[6]);
+  ROS_INFO_STREAM("Distortion p1: " << results.intrinsics[7]);
+  ROS_INFO_STREAM("Distortion p2: " << results.intrinsics[8]);    
 }
 
 int main(int argc, char** argv)

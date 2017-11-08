@@ -2,8 +2,9 @@
 
 namespace industrial_calibration_libs
 {
-CameraOnWristIntrinsic::CameraOnWristIntrinsic(const ObservationData &observation_data, const Target &target, const CameraOnWristIntrinsicParams &params) 
-  : CalibrationJob(observation_data, target)
+CameraOnWristIntrinsic::CameraOnWristIntrinsic(const ObservationData &observation_data, 
+  const Target &target, const CameraOnWristIntrinsicParams &params) : 
+  CalibrationJob(observation_data, target)
 {
   link_poses_ = params.base_to_tool;
   std::memcpy(result_.intrinsics, params.intrinsics.data, 

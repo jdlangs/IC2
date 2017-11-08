@@ -273,6 +273,73 @@ struct CameraOnWristIntrinsicCF
   Point3D point_;
 };
 
+struct ResearchIntrinsicCF
+{
+  ResearchIntrinsicCF(const double observed_x, const double observed_y,
+    Pose6D target_pose, Point3D point) : observed_x_(observed_x), 
+    observed_y_(observed_y), target_pose_(target_pose), point_(point) { }
+
+  template<typename T> bool operator() (const T* const intrinsic_parameters,
+  T* residual) const
+  {
+    T focal_length_x;
+    T focal_length_y;
+    T optical_center_x;
+    T optical_center_y;
+    T distortion_k1;
+    T distortion_k2;
+    T distortion_k3;
+    T distortion_p1;
+    T distortion_p2;
+
+    // Extract intrinsics
+    extractCameraIntrinsics(intrinsic_parameters, focal_length_x, focal_length_y, 
+      optical_center_x, optical_center_y, distortion_k1, distortion_k2, 
+      distortion_k3, distortion_p1, distortion_p2);
+
+    // Extract target angle axis and position
+    T target_pose[6];
+    target_pose[0] = static_cast<T>(target_pose_.ax);
+    target_pose[1] = static_cast<T>(target_pose_.ay);
+    target_pose[2] = static_cast<T>(target_pose_.az);
+    target_pose[3] = static_cast<T>(target_pose_.x);
+    target_pose[4] = static_cast<T>(target_pose_.y);
+    target_pose[5] = static_cast<T>(target_pose_.z);
+
+    const T* target_angle_axis(&target_pose[0]);
+    const T* target_position(&target_pose[3]);
+
+    // Transform point into camera frame
+    T camera_point[3];
+    transformPoint3D(target_angle_axis, target_position, point_.asVector(), 
+      camera_point);
+
+    // Compute projected point into image plane and residual
+    T observed_x = T(observed_x_);
+    T observed_y = T(observed_y_);
+
+    cameraPointResidualWithDistortion(camera_point, distortion_k1, distortion_k2, 
+      distortion_k3, distortion_p1, distortion_p2, focal_length_x, focal_length_y,
+      optical_center_x, optical_center_y, observed_x, observed_y, residual);
+
+    return true;
+  }
+
+  // Factory to hide the construction of the Cost Function object from
+  // client code.
+  static ceres::CostFunction *Create(const double observed_x, const double observed_y,
+    Pose6D target_pose, Point3D point)
+  {
+    return (new ceres::AutoDiffCostFunction<ResearchIntrinsicCF, 2, 9>(new 
+      ResearchIntrinsicCF(observed_x, observed_y, target_pose, point)));
+  }
+
+  double observed_x_; // Observed x location of object in the image
+  double observed_y_; // Observed y location of object in the image
+  Pose6D target_pose_;
+  Point3D point_;
+};
+
 // DELETE THIS LATER
 #if 1
 struct CameraOnWristExtrinsicIntrinsicCF
