@@ -10,9 +10,6 @@ notifications:
 env:
   global:
     - ROS_DISTRO=kinetic
-    - UPSTREAM_WORKSPACE=file
-    - ROSINSTALL_FILENAME=IC2.rosinstall
-    - NOT_TEST_INSTALL=true
   matrix:
     - ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
 install:
