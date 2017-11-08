@@ -41,16 +41,56 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   ICL::ObservationData observation_data = observation_extractor.getObservationData();
 
   // Seed parameters
-  double camera_info[9] = {0.0};
-  // camera_info[0] = 570.342224;
-  // camera_info[1] = 570.342224;
-  // camera_info[2] = 319.5;
-  // camera_info[3] = 239.5;
+  double camera_info[9];
+  camera_info[0] = 570.342224;
+  camera_info[1] = 570.342224;
+  camera_info[2] = 319.5;
+  camera_info[3] = 239.5;
+  camera_info[4] = 0.0;
+  camera_info[5] = 0.0;
+  camera_info[6] = 0.0;
+  camera_info[7] = 0.0;
+  camera_info[8] = 0.0;
+
+  // camera_info[0] = 537.7096612596631;
+  // camera_info[1] = 536.4955104533378;
+  // camera_info[2] = 328.9036170597059;
+  // camera_info[3] = 230.3843195009159;
   // camera_info[4] = 0.0;
   // camera_info[5] = 0.0;
   // camera_info[6] = 0.0;
   // camera_info[7] = 0.0;
   // camera_info[8] = 0.0;
+
+  // camera_info[0] = 1.0;
+  // camera_info[1] = 1.0;
+  // camera_info[2] = 1.0;
+  // camera_info[3] = 1.0;
+  // camera_info[4] = 0.0;
+  // camera_info[5] = 0.0;
+  // camera_info[6] = 0.0;
+  // camera_info[7] = 0.0;
+  // camera_info[8] = 0.0;
+
+/*
+[ INFO] [1510132661.136932042]: Focal Length x: 570.604
+[ INFO] [1510132661.136958861]: Focal Length y: 571.167
+[ INFO] [1510132661.136972760]: Optical Center x: 319.575
+[ INFO] [1510132661.136991198]: Optical Center y: 239.445
+
+New Method (seeded)
+[ INFO] [1510134128.680457658]: Focal Length x: 578.649
+[ INFO] [1510134128.680477353]: Focal Length y: 267.815
+[ INFO] [1510134128.680498305]: Optical Center x: 320.637
+[ INFO] [1510134128.680519398]: Optical Center y: 200.849
+
+New Method (seeded with opencv values)
+[ INFO] [1510134256.678787543]: Focal Length x: 542.053
+[ INFO] [1510134256.678803047]: Focal Length y: 260.413
+[ INFO] [1510134256.678820298]: Optical Center x: 331.072
+[ INFO] [1510134256.678840552]: Optical Center y: 195.553
+
+*/
 
   ICL::ResearchIntrinsicParams params;
   params.intrinsics = ICL::IntrinsicsFull(camera_info);
@@ -61,6 +101,8 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
 
   // Print out results.
   ICL::ResearchIntrinsic::Result results = calibration.getResults();
+  ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
+  ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
   ROS_INFO_STREAM("Intrinsic Parameters");
   ROS_INFO_STREAM("----------------------------------------");
   ROS_INFO_STREAM("Focal Length x: " << results.intrinsics[0]);
