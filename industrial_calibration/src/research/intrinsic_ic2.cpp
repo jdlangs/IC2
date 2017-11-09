@@ -10,12 +10,75 @@
 
 #include <opencv2/core/core.hpp>
 
+#include <fstream>
+
 #define ICL industrial_calibration_libs
 
 // Function Declarations
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
 
+bool saveResultdata(const std::string &result_path, double final_cost, 
+    double intrinsics[9]);
+
 // Function Implementatins
+bool saveResultdata(const std::string &result_path, double final_cost, 
+    double intrinsics[9])
+{
+  std::vector<double> camera_matrix = { intrinsics[0], 0, intrinsics[2],
+    0, intrinsics[1], intrinsics[3], 0, 0, 1 };
+  // Mine are: k1, k2, k3, p1, p2
+  // Output as: k1, k2, p1, p2, k3
+  std::vector<double> dist_coeffs = { intrinsics[4], intrinsics[5],
+    intrinsics[7], intrinsics[8], intrinsics[6] };
+
+  YAML::Emitter out;
+
+  out << YAML::BeginMap;
+
+  out << YAML::Key << "camera_matrix";
+    out << YAML::Value << YAML::BeginMap;
+      out << YAML::Key << "rows";
+        out << YAML::Value << 3;
+      out << YAML::Key << "cols";
+        out << YAML::Value << 3;
+      out << YAML::Key << "data";
+        out << YAML::Value << YAML::Flow << camera_matrix;
+    out << YAML::EndMap;
+
+  out << YAML::Key << "distortion_coefficients";
+    out << YAML::Value << YAML::BeginMap;
+      out << YAML::Key << "rows";
+        out << YAML::Value << 1;
+      out << YAML::Key << "cols";
+        out << YAML::Value << 9;
+      out << YAML::Key << "data";
+        out << YAML::Value << YAML::Flow << dist_coeffs;
+    out << YAML::EndMap;
+
+  out << YAML::Key << "reprojection_error";
+    out << YAML::Value << final_cost;
+
+  out << YAML::EndMap;
+
+  // Write to yaml file
+  if (out.good())
+  {
+    std::ofstream yaml_file(result_path);
+    if (yaml_file)
+    {
+      yaml_file << out.c_str();
+      yaml_file.close();
+      return true;
+    }
+    if (yaml_file.bad())
+    {
+      return false;
+    }
+  }
+
+  return false;
+}
+
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
 {
   std::string data_path = data_dir + data_set + "/";
@@ -40,67 +103,29 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   // Get observations from extractor
   ICL::ObservationData observation_data = observation_extractor.getObservationData();
 
-  // Seed parameters
+  // Seed parameters (Average of intrinsic values)
   double camera_info[9];
-  camera_info[0] = 570.342224;
-  camera_info[1] = 570.342224;
-  camera_info[2] = 319.5;
-  camera_info[3] = 239.5;
+  camera_info[0] = 537.1;
+  camera_info[1] = 536.1;
+  camera_info[2] = 325.5;
+  camera_info[3] = 231.9;
   camera_info[4] = 0.0;
   camera_info[5] = 0.0;
   camera_info[6] = 0.0;
   camera_info[7] = 0.0;
   camera_info[8] = 0.0;
 
-  // camera_info[0] = 537.7096612596631;
-  // camera_info[1] = 536.4955104533378;
-  // camera_info[2] = 328.9036170597059;
-  // camera_info[3] = 230.3843195009159;
-  // camera_info[4] = 0.0;
-  // camera_info[5] = 0.0;
-  // camera_info[6] = 0.0;
-  // camera_info[7] = 0.0;
-  // camera_info[8] = 0.0;
-
-  // camera_info[0] = 1.0;
-  // camera_info[1] = 1.0;
-  // camera_info[2] = 1.0;
-  // camera_info[3] = 1.0;
-  // camera_info[4] = 0.0;
-  // camera_info[5] = 0.0;
-  // camera_info[6] = 0.0;
-  // camera_info[7] = 0.0;
-  // camera_info[8] = 0.0;
-
-/*
-[ INFO] [1510132661.136932042]: Focal Length x: 570.604
-[ INFO] [1510132661.136958861]: Focal Length y: 571.167
-[ INFO] [1510132661.136972760]: Optical Center x: 319.575
-[ INFO] [1510132661.136991198]: Optical Center y: 239.445
-
-New Method (seeded)
-[ INFO] [1510134128.680457658]: Focal Length x: 578.649
-[ INFO] [1510134128.680477353]: Focal Length y: 267.815
-[ INFO] [1510134128.680498305]: Optical Center x: 320.637
-[ INFO] [1510134128.680519398]: Optical Center y: 200.849
-
-New Method (seeded with opencv values)
-[ INFO] [1510134256.678787543]: Focal Length x: 542.053
-[ INFO] [1510134256.678803047]: Focal Length y: 260.413
-[ INFO] [1510134256.678820298]: Optical Center x: 331.072
-[ INFO] [1510134256.678840552]: Optical Center y: 195.553
-
-*/
-
+  ROS_INFO_STREAM("Running Calibration for Data Set: " << data_set);
   ICL::ResearchIntrinsicParams params;
   params.intrinsics = ICL::IntrinsicsFull(camera_info);
   ICL::ResearchIntrinsic calibration(observation_data, target, params);
   
-  calibration.setOutput(true); // Enable output to console.
+  // calibration.setOutput(true); // Enable output to console.
   calibration.runCalibration();
 
   // Print out results.
   ICL::ResearchIntrinsic::Result results = calibration.getResults();
+
   ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
   ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
   ROS_INFO_STREAM("Intrinsic Parameters");
@@ -113,7 +138,19 @@ New Method (seeded with opencv values)
   ROS_INFO_STREAM("Distortion k2: " << results.intrinsics[5]);
   ROS_INFO_STREAM("Distortion k3: " << results.intrinsics[6]);
   ROS_INFO_STREAM("Distortion p1: " << results.intrinsics[7]);
-  ROS_INFO_STREAM("Distortion p2: " << results.intrinsics[8]);    
+  ROS_INFO_STREAM("Distortion p2: " << results.intrinsics[8]);
+
+  std::string result_path = data_dir + "results/ic2_" + data_set + ".yaml";  
+  if (saveResultdata(result_path, calibration.getFinalCost(), 
+    results.intrinsics))
+  {
+    ROS_INFO_STREAM("Data Set: " << data_set << " Results Saved To: " <<
+      result_path);
+  }
+  else
+  {
+    ROS_ERROR_STREAM("Failed to Save Results for Data Set: " << data_set);
+  }
 }
 
 int main(int argc, char** argv)
@@ -125,10 +162,10 @@ int main(int argc, char** argv)
   pnh.getParam("data_dir", data_dir);
   data_dir = addSlashToEnd(data_dir);
 
-  // std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
-  //   "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
+  std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
+    "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
 
-  std::vector<std::string> data_sets = { "01" };
+  // std::vector<std::string> data_sets = { "01" };
 
   for (std::size_t i = 0; i < data_sets.size(); i++)
   {

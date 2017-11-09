@@ -15,9 +15,7 @@
 
 #include <fstream>
 
-
 #define ICL industrial_calibration_libs
-
 
 // Function Declarations
 cv::Point2f point2dToPoint2f(const cv::Point2d &point2d);
@@ -208,7 +206,15 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
 
   cv::Size image_size = cal_images[0].size();
   
+  // Set seed parameters
   cv::Mat camera_matrix = cv::Mat::eye(3, 3, CV_64F);
+  camera_matrix.at<double>(0, 0) = 570.342224; // Fx
+  camera_matrix.at<double>(1, 1) = 570.342224; // Fy
+  camera_matrix.at<double>(0, 2) = 319.5; // Cx
+  camera_matrix.at<double>(1, 2) = 239.5; // Cy
+
+  // std::cout << camera_matrix << std::endl;
+
   cv::Mat dist_coeffs = cv::Mat::zeros(8, 1, CV_64F);
   
   std::vector<cv::Mat> rvecs;
@@ -216,10 +222,10 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
 
   int flag = 0;
 
-  // flag |= CV_CALIB_USE_INTRINSIC_GUESS; // Set this later
-  // flag |= CV_CALIB_FIX_ASPECT_RATIO; 
+  // flag |= CV_CALIB_FIX_ASPECT_RATIO;  
   // flag |= CV_CALIB_ZERO_TANGENT_DIST; // Hell no.
   // flag |= CV_CALIB_FIX_PRINCIPAL_POINT;
+  flag |= CV_CALIB_USE_INTRINSIC_GUESS;
   flag |= CV_CALIB_FIX_K4;
   flag |= CV_CALIB_FIX_K5;
   flag |= CV_CALIB_FIX_K6;

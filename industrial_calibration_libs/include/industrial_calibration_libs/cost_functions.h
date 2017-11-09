@@ -340,6 +340,7 @@ struct ResearchIntrinsicCF
   Point3D point_;
 };
 
+#if 0
 struct ResearchIntrinsicCF2
 {
   ResearchIntrinsicCF2(const double observed_x, const double observed_y,
@@ -396,6 +397,7 @@ struct ResearchIntrinsicCF2
   double observed_y_; // Observed y location of object in the image
   Point3D point_;
 };
+#endif
 
 // DELETE THIS LATER
 #if 1
