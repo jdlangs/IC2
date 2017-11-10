@@ -768,13 +768,28 @@ void CalibrationWidget::runCameraOnWristExtrinsic(void)
   industrial_calibration_libs::CameraOnWristExtrinsic::Result results = calibration.getResults();
 
   // Remove this later...
-  ROS_INFO_STREAM("Extrinsic Parameters");
-  ROS_INFO_STREAM("Translation x: " << results.extrinsics[3]);
-  ROS_INFO_STREAM("Translation y: " << results.extrinsics[4]);
-  ROS_INFO_STREAM("Translation z: " << results.extrinsics[5]);
-  ROS_INFO_STREAM("Rotation x: " << results.extrinsics[0]);
-  ROS_INFO_STREAM("Rotation y: " << results.extrinsics[1]);
-  ROS_INFO_STREAM("Rotation z: " << results.extrinsics[2]);
+  const double x = results.extrinsics[3];
+  const double y = results.extrinsics[4];
+  const double z = results.extrinsics[5];
+  const double rx = results.extrinsics[0];
+  const double ry = results.extrinsics[1];
+  const double rz = results.extrinsics[2];
+  ROS_INFO_STREAM("Extrinsic Parameters (Camera to Flange)");
+  ROS_INFO_STREAM("Translation x: " << x);
+  ROS_INFO_STREAM("Translation y: " << y);
+  ROS_INFO_STREAM("Translation z: " << z);
+  ROS_INFO_STREAM("Rotation x: " << rx);
+  ROS_INFO_STREAM("Rotation y: " << ry);
+  ROS_INFO_STREAM("Rotation z: " << rz);
+
+  // Convert the extrinsic result to a 6D pose and then print its inverse
+  industrial_calibration_libs::Pose6D cam_to_flange (x, y, z, rx, ry, rz);
+  industrial_calibration_libs::Pose6D flange_to_cam = cam_to_flange.getInverse();
+  double euler_x, euler_y, euler_z;
+  flange_to_cam.getEulerZYX(euler_z, euler_y, euler_x);
+  ROS_INFO_STREAM("Extrinsic Parameter (Flange to Camera) in URDF Format");
+  ROS_INFO_STREAM("xyz=\"" << flange_to_cam.x << " " << flange_to_cam.y << " " << flange_to_cam.z << "\"");
+  ROS_INFO_STREAM("rpy=\"" << euler_x << " " << euler_y << " " << euler_z << "\"");
 
   ROS_INFO_STREAM("Target to Base");
   ROS_INFO_STREAM("Translation x: " << results.target_to_base[3]);
