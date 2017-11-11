@@ -10,6 +10,8 @@ ResearchIntrinsic::ResearchIntrinsic(const ObservationData &observation_data,
     sizeof(result_.intrinsics)); 
 }
 
+
+
 bool ResearchIntrinsic::runCalibration(void)
 {
   if (!checkObservations()) {return false;}
@@ -18,13 +20,47 @@ bool ResearchIntrinsic::runCalibration(void)
   // double seed_intrinsics[9];
   // std::memcpy(seed_intrinsics, result_.intrinsics, sizeof(seed_intrinsics));
 
+  // Create vector if target_to_camera poses
+  double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
+  double *target_to_camera = new double[num_images_*6];
   for (std::size_t i = 0; i < num_images_; i++)
   {
-    double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
-    
     Pose6D target_to_camera_pose;
     this->findDistortedTarget(observation_data_[i], target_to_camera_pose,
       result_.intrinsics, target_to_camera_pose_guess);
+    target_to_camera[(6*i)+0] = target_to_camera_pose.ax;
+    target_to_camera[(6*i)+1] = target_to_camera_pose.ay;
+    target_to_camera[(6*i)+2] = target_to_camera_pose.az;
+    target_to_camera[(6*i)+3] = target_to_camera_pose.x;
+    target_to_camera[(6*i)+4] = target_to_camera_pose.y;
+    target_to_camera[(6*i)+5] = target_to_camera_pose.z;
+  }
+
+  for (std::size_t i = 0; i < num_images_; i++)
+  {
+    for (std::size_t j = 0; j < observations_per_image_; j++)
+    {
+      Point3D point = target_.getDefinition().points[j];
+      double observed_x = observation_data_[i][j].x;    
+      double observed_y = observation_data_[i][j].y;    
+
+      ceres::CostFunction *cost_function =
+        ResearchIntrinsicCF3::Create(observed_x, observed_y, 
+          point, num_images_, i);      
+      problem_.AddResidualBlock(cost_function, NULL, result_.intrinsics,
+        target_to_camera);      
+    }
+  }
+
+
+#if 0
+  for (std::size_t i = 0; i < num_images_; i++)
+  {
+    // double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
+
+    // Pose6D target_to_camera_pose;
+    // this->findDistortedTarget(observation_data_[i], target_to_camera_pose,
+      // result_.intrinsics, target_to_camera_pose_guess);
 
 #if 0
     // double target_to_camera[6];
@@ -116,13 +152,15 @@ bool ResearchIntrinsic::runCalibration(void)
       //   target_to_camera);
     }
   }
-
+#endif
   // Solve
   options_.linear_solver_type = ceres::DENSE_SCHUR;
   options_.minimizer_progress_to_stdout = output_results_; 
   options_.max_num_iterations = 9001;
 
   ceres::Solve(options_, &problem_, &summary_);
+  
+  delete[] target_to_camera;
 
   if (output_results_)
   {

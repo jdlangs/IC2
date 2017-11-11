@@ -120,7 +120,7 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   params.intrinsics = ICL::IntrinsicsFull(camera_info);
   ICL::ResearchIntrinsic calibration(observation_data, target, params);
   
-  // calibration.setOutput(true); // Enable output to console.
+  calibration.setOutput(true); // Enable output to console.
   calibration.runCalibration();
 
   // Print out results.
@@ -162,10 +162,10 @@ int main(int argc, char** argv)
   pnh.getParam("data_dir", data_dir);
   data_dir = addSlashToEnd(data_dir);
 
-  std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
-    "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
+  // std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
+  //   "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
 
-  // std::vector<std::string> data_sets = { "01" };
+  std::vector<std::string> data_sets = { "01" };
 
   for (std::size_t i = 0; i < data_sets.size(); i++)
   {
