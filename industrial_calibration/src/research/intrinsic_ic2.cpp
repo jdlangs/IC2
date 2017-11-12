@@ -2,7 +2,6 @@
   This file will run through the data set using industrial_calibration's 
   circle grid finder and calibration solver.
 */
-
 #include <ros/ros.h>
 #include <yaml-cpp/yaml.h>
 #include <industrial_calibration_libs/industrial_calibration_libs.h>
@@ -14,11 +13,17 @@
 
 #define ICL industrial_calibration_libs
 
+#define VISUALIZE_RESULTS
+// #define SAVE_DATA
+
 // Function Declarations
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
 
 bool saveResultdata(const std::string &result_path, double final_cost, 
     double intrinsics[9]);
+
+void visualizeResults(const ICL::ResearchIntrinsic::Result &results,
+  const ICL::Target &target, const CalibrationImages cal_images);
 
 // Function Implementatins
 bool saveResultdata(const std::string &result_path, double final_cost, 
@@ -77,6 +82,141 @@ bool saveResultdata(const std::string &result_path, double final_cost,
   }
 
   return false;
+}
+
+void visualizeResults(const ICL::ResearchIntrinsic::Result &results,
+  const ICL::Target &target, const CalibrationImages cal_images)
+{
+  for (std::size_t i = 0; i < cal_images.size(); i++)
+  {
+    ICL::Pose6D target_to_camera_p = results.target_to_camera_poses[i].asPose6D();
+    double t_to_c[6];
+
+    t_to_c[0] = target_to_camera_p.ax;
+    t_to_c[1] = target_to_camera_p.ay;
+    t_to_c[2] = target_to_camera_p.az;
+    t_to_c[3] = target_to_camera_p.x;
+    t_to_c[4] = target_to_camera_p.y;
+    t_to_c[5] = target_to_camera_p.z;
+
+    const double* target_angle_axis(&t_to_c[0]);
+    const double* target_position(&t_to_c[3]);
+
+    ICL::ObservationPoints observation_points;
+
+    for (std::size_t j = 0; j < target.getDefinition().points.size(); j++)
+    {
+      double camera_point[3];
+      ICL::Point3D target_point(target.getDefinition().points[j]);
+
+      ICL::transformPoint3D(target_angle_axis, target_position, 
+        target_point.asVector(), camera_point);
+
+      double fx, fy, cx, cy, k1, k2, k3, p1, p2;
+      fx  = results.intrinsics[0]; /** focal length x */
+      fy  = results.intrinsics[1]; /** focal length y */
+      cx  = results.intrinsics[2]; /** central point x */
+      cy  = results.intrinsics[3]; /** central point y */
+      k1  = results.intrinsics[4]; /** distortion k1  */
+      k2  = results.intrinsics[5]; /** distortion k2  */
+      k3  = results.intrinsics[6]; /** distortion k3  */
+      p1  = results.intrinsics[7]; /** distortion p1  */
+      p2  = results.intrinsics[8]; /** distortion p2  */      
+
+      // fx  = 537.1;
+      // fy  = 536.1;
+      // cx  = 325.5;
+      // cy  = 231.9;
+      // k1  = 0.0;
+      // k2  = 0.0;
+      // k3  = 0.0;
+      // p1  = 0.0;
+      // p2  = 0.0; 
+
+      // fx  = 537.816;
+      // fy  = 537.058;
+      // cx  = 325.5556;
+      // cy  = 231.885;
+      // k1  = 0.0;
+      // k2  = 0.0;
+      // k3  = 0.0;
+      // p1  = 0.0;
+      // p2  = 0.0; 
+
+#if 1
+      double xp1 = camera_point[0];   
+      double yp1 = camera_point[1];
+      double zp1 = camera_point[2];
+
+      double xp, yp;
+      if (std::roundf(zp1*10000)/10000 == 0.0)
+      {
+        xp = xp1;
+        yp = yp1;
+      }
+      else
+      {
+        xp = xp1 / zp1;
+        yp = yp1 / zp1;
+      }
+
+      double xp2 = xp * xp;
+      double yp2 = yp * yp;
+      double r2 = xp2 + yp2;
+      double r4 = r2 * r2;
+      double r6 = r2 * r4;
+
+      double xpp = xp
+        + k1 * r2 * xp    // 2nd order term
+        + k2 * r4 * xp    // 4th order term
+        + k3 * r6 * xp    // 6th order term  
+        + p2 * (r2 + 2.0 * xp2) // tangential
+        + p1 * xp * yp * 2.0; // other tangential term
+
+      double ypp = yp
+        + k1 * r2 * yp    // 2nd order term
+        + k2 * r4 * yp    // 4th order term
+        + k3 * r6 * yp    // 6th order term
+        + p1 * (r2 + 2.0 * yp2) // tangential term
+        + p2 * xp * yp * 2.0; // other tangential term      
+
+      double point_x = fx * xpp + cx;
+      double point_y = fy * ypp + cy;
+
+      cv::Point2d cv_point(point_x, point_y);
+      observation_points.push_back(cv_point);
+#endif
+#if 0   
+      double xp1 = camera_point[0];
+      double yp1 = camera_point[1];
+      double zp1 = camera_point[2];
+
+      double xp, yp;
+      if (std::roundf(zp1*10000)/10000 == 0.0)
+      {
+        xp = xp1;
+        yp = yp1;
+      }
+      else
+      {
+        xp = xp1 / zp1;
+        yp = yp1 / zp1;
+      }
+
+      double point_x = fx * xp + cx;
+      double point_y = fy * yp + cy;
+
+      cv::Point2d cv_point(point_x, point_y);
+      observation_points.push_back(cv_point);
+#endif       
+    }
+
+    cv::Mat result_image;
+    drawResultPoints(cal_images[i], result_image, observation_points,
+      target.getDefinition().target_rows, target.getDefinition().target_cols);
+    cv::imshow("Result Image", result_image);
+    cv::waitKey(0);
+  }  
 }
 
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
@@ -140,6 +280,12 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   ROS_INFO_STREAM("Distortion p1: " << results.intrinsics[7]);
   ROS_INFO_STREAM("Distortion p2: " << results.intrinsics[8]);
 
+#ifdef VISUALIZE_RESULTS
+  visualizeResults(results, target, cal_images);
+#else
+#endif
+
+#ifdef SAVE_DATA
   std::string result_path = data_dir + "results/ic2_" + data_set + ".yaml";  
   if (saveResultdata(result_path, calibration.getFinalCost(), 
     results.intrinsics))
@@ -151,6 +297,8 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   {
     ROS_ERROR_STREAM("Failed to Save Results for Data Set: " << data_set);
   }
+#else
+#endif
 }
 
 int main(int argc, char** argv)

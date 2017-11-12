@@ -7,19 +7,41 @@ ResearchIntrinsic::ResearchIntrinsic(const ObservationData &observation_data,
   CalibrationJob(observation_data, target)
 {
   std::memcpy(result_.intrinsics, params.intrinsics.data, 
-    sizeof(result_.intrinsics)); 
+    sizeof(result_.intrinsics));
 }
-
-
 
 bool ResearchIntrinsic::runCalibration(void)
 {
   if (!checkObservations()) {return false;}
   
-  // For each observation, find the pose between camera and target.
-  // double seed_intrinsics[9];
-  // std::memcpy(seed_intrinsics, result_.intrinsics, sizeof(seed_intrinsics));
+  double camera_intrinsics_seed[9];
+  std::memcpy(camera_intrinsics_seed, result_.intrinsics, sizeof(camera_intrinsics_seed));
 
+  // Calculate the guess pose for every image based off of guess intrinsics
+  double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
+  for (std::size_t i = 0; i < num_images_; i++)
+  {
+    Pose6D target_to_camera_pose;
+    this->findDistortedTarget(observation_data_[i], target_to_camera_pose,
+      camera_intrinsics_seed, target_to_camera_pose_guess);
+      // result_.intrinsics, target_to_camera_pose_guess);
+
+    result_.target_to_camera_poses.push_back(Extrinsics(target_to_camera_pose));
+
+    for (std::size_t j = 0; j < observations_per_image_; j++)
+    {
+      Point3D point = target_.getDefinition().points[j];
+      double observed_x = observation_data_[i][j].x;    
+      double observed_y = observation_data_[i][j].y;    
+
+      ceres::CostFunction *cost_function =
+        ResearchIntrinsicCF::Create(observed_x, observed_y, 
+          result_.target_to_camera_poses[i].asPose6D(), point);
+      problem_.AddResidualBlock(cost_function, NULL, result_.intrinsics);        
+    }
+  }
+
+#if 0
   // Create vector if target_to_camera poses
   double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
   double *target_to_camera = new double[num_images_*6];
@@ -51,16 +73,16 @@ bool ResearchIntrinsic::runCalibration(void)
         target_to_camera);      
     }
   }
-
+#endif
 
 #if 0
   for (std::size_t i = 0; i < num_images_; i++)
   {
-    // double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
+    double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
 
-    // Pose6D target_to_camera_pose;
-    // this->findDistortedTarget(observation_data_[i], target_to_camera_pose,
-      // result_.intrinsics, target_to_camera_pose_guess);
+    Pose6D target_to_camera_pose;
+    this->findDistortedTarget(observation_data_[i], target_to_camera_pose,
+      result_.intrinsics, target_to_camera_pose_guess);
 
 #if 0
     // double target_to_camera[6];
@@ -153,6 +175,7 @@ bool ResearchIntrinsic::runCalibration(void)
     }
   }
 #endif
+
   // Solve
   options_.linear_solver_type = ceres::DENSE_SCHUR;
   options_.minimizer_progress_to_stdout = output_results_; 
@@ -160,7 +183,7 @@ bool ResearchIntrinsic::runCalibration(void)
 
   ceres::Solve(options_, &problem_, &summary_);
   
-  delete[] target_to_camera;
+  // delete[] target_to_camera;
 
   if (output_results_)
   {

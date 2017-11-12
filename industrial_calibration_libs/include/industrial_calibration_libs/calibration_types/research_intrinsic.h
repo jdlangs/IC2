@@ -16,6 +16,7 @@ public:
   struct Result
   {
     double intrinsics[9];
+    std::vector<Extrinsics> target_to_camera_poses;
   };
 
   ResearchIntrinsic(const ObservationData &observation_data,
