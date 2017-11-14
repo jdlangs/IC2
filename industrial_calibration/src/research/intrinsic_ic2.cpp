@@ -13,8 +13,8 @@
 
 #define ICL industrial_calibration_libs
 
-#define VISUALIZE_RESULTS
-// #define SAVE_DATA
+// #define VISUALIZE_RESULTS
+#define SAVE_DATA
 
 // Function Declarations
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
@@ -310,10 +310,10 @@ int main(int argc, char** argv)
   pnh.getParam("data_dir", data_dir);
   data_dir = addSlashToEnd(data_dir);
 
-  // std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
-  //   "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
+  std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
+    "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
 
-  std::vector<std::string> data_sets = { "01" };
+  // std::vector<std::string> data_sets = { "01" };
 
   for (std::size_t i = 0; i < data_sets.size(); i++)
   {

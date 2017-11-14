@@ -340,7 +340,7 @@ struct ResearchIntrinsicCF
   Point3D point_;
 };
 
-#if 0
+#if 1
 struct ResearchIntrinsicCF2
 {
   ResearchIntrinsicCF2(const double observed_x, const double observed_y,
@@ -393,6 +393,69 @@ struct ResearchIntrinsicCF2
       ResearchIntrinsicCF2(observed_x, observed_y, point)));
   }
 
+  double observed_x_; // Observed x location of object in the image
+  double observed_y_; // Observed y location of object in the image
+  Point3D point_;
+};
+#endif
+
+#if 0
+struct ResearchIntrinsicCF3
+{
+  ResearchIntrinsicCF3(const double observed_x, const double observed_y,
+    Point3D point, int pose_index) : observed_x_(observed_x), observed_y_(observed_y), 
+    point_(point), pose_index_(pose_index) { }
+
+  // template<typename T> bool operator() (const T* const intrinsic_parameters,
+  // const T* const target_pose, T* residual) const
+  template<typename T> bool operator() (const T* const intrinsic_parameters, 
+    T const* const* target_pose, T* residuals) const    
+  {
+    T focal_length_x;
+    T focal_length_y;
+    T optical_center_x;
+    T optical_center_y;
+    T distortion_k1;
+    T distortion_k2;
+    T distortion_k3;
+    T distortion_p1;
+    T distortion_p2;
+
+    // Extract intrinsics
+    extractCameraIntrinsics(intrinsic_parameters, focal_length_x, focal_length_y, 
+      optical_center_x, optical_center_y, distortion_k1, distortion_k2, 
+      distortion_k3, distortion_p1, distortion_p2);
+
+    const T* target_angle_axis(&target_poses[pose_index_][0]);
+    const T* target_position(&target_pose[pose_index_][3]);
+
+    // Transform point into camera frame
+    T camera_point[3];
+    transformPoint3D(target_angle_axis, target_position, point_.asVector(), 
+      camera_point);
+
+    // Compute projected point into image plane and residual
+    T observed_x = T(observed_x_);
+    T observed_y = T(observed_y_);
+
+    cameraPointResidualWithDistortion(camera_point, distortion_k1, distortion_k2, 
+      distortion_k3, distortion_p1, distortion_p2, focal_length_x, focal_length_y,
+      optical_center_x, optical_center_y, observed_x, observed_y, residual);
+
+    return true;
+  }
+
+  // Factory to hide the construction of the Cost Function object from
+  // client code.
+  static ceres::CostFunction *Create(const double observed_x, const double observed_y,
+    Point3D point, int pose_index)
+  {
+
+    return (new ceres::DynamicAutoDiffCostFunction<ResearchIntrinsicCF3, 2, 9, 6>(new 
+      ResearchIntrinsicCF3(observed_x, observed_y, point, pose_index)));
+  }
+
+  int pose_index_;
   double observed_x_; // Observed x location of object in the image
   double observed_y_; // Observed y location of object in the image
   Point3D point_;

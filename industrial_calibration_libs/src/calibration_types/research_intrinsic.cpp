@@ -17,6 +17,69 @@ bool ResearchIntrinsic::runCalibration(void)
   double camera_intrinsics_seed[9];
   std::memcpy(camera_intrinsics_seed, result_.intrinsics, sizeof(camera_intrinsics_seed));
 
+  double* extrinsics = new double[num_images_*6];
+  double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
+
+  for (std::size_t i = 0; i < num_images_; i++)
+  {
+    Pose6D target_to_camera_pose;
+    this->findDistortedTarget(observation_data_[i], target_to_camera_pose,
+      camera_intrinsics_seed, target_to_camera_pose_guess);
+
+    extrinsics[6*i + 0] = target_to_camera_pose.ax;
+    extrinsics[6*i + 1] = target_to_camera_pose.ay;
+    extrinsics[6*i + 2] = target_to_camera_pose.az;
+    extrinsics[6*i + 3] = target_to_camera_pose.x;
+    extrinsics[6*i + 4] = target_to_camera_pose.y;
+    extrinsics[6*i + 5] = target_to_camera_pose.z;
+  }
+
+  for (std::size_t i = 0; i < num_images_; i++)
+  {
+    for (std::size_t j = 0; j < observations_per_image_; j++)
+    {
+      Point3D point = target_.getDefinition().points[j];
+      double observed_x = observation_data_[i][j].x;    
+      double observed_y = observation_data_[i][j].y;
+
+      ceres::CostFunction *cost_function =
+        ResearchIntrinsicCF2::Create(observed_x, observed_y, point);
+      problem_.AddResidualBlock(cost_function, NULL, result_.intrinsics,
+        &extrinsics[6*i]);               
+    }
+  }
+
+  // Solve
+  options_.linear_solver_type = ceres::DENSE_SCHUR;
+  options_.minimizer_progress_to_stdout = output_results_; 
+  options_.max_num_iterations = 9001;
+
+  ceres::Solve(options_, &problem_, &summary_);
+  
+  for (std::size_t i = 0; i < num_images_; i++)
+  {
+    Pose6D target_to_camera_pose(extrinsics[6*i+3], extrinsics[6*i+4], extrinsics[6*i+5],
+      extrinsics[6*i+0], extrinsics[6*i+1], extrinsics[6*i+2]);
+    result_.target_to_camera_poses.push_back(Extrinsics(target_to_camera_pose));
+  }
+
+  delete[] extrinsics;
+
+  if (output_results_)
+  {
+    std::cout << summary_.FullReport() << '\n';  
+  }
+
+  if (summary_.termination_type != ceres::NO_CONVERGENCE)
+  {
+    initial_cost_ = summary_.initial_cost / total_observations_;
+    final_cost_ = summary_.final_cost / total_observations_;
+    return true;    
+  }
+
+  return false;
+
+#if 0
   // Calculate the guess pose for every image based off of guess intrinsics
   double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
   for (std::size_t i = 0; i < num_images_; i++)
@@ -40,7 +103,7 @@ bool ResearchIntrinsic::runCalibration(void)
       problem_.AddResidualBlock(cost_function, NULL, result_.intrinsics);        
     }
   }
-
+#endif
 #if 0
   // Create vector if target_to_camera poses
   double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
@@ -175,7 +238,7 @@ bool ResearchIntrinsic::runCalibration(void)
     }
   }
 #endif
-
+#if 0
   // Solve
   options_.linear_solver_type = ceres::DENSE_SCHUR;
   options_.minimizer_progress_to_stdout = output_results_; 
@@ -198,6 +261,7 @@ bool ResearchIntrinsic::runCalibration(void)
   }
 
   return false;
+#endif
 }
 
 // Copied from camera_on_wrist_intrinsic.cpp, should probably break out
@@ -257,7 +321,7 @@ bool ResearchIntrinsic::findDistortedTarget(const ObservationPoints &observation
 
   if (summary.termination_type != ceres::NO_CONVERGENCE)
   {
-    if (output_results_)
+    // if (output_results_)
     {
       double initial_cost = summary.initial_cost / observations_per_image_;
       double final_cost = summary.final_cost / observations_per_image_;
