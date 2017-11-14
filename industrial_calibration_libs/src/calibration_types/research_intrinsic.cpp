@@ -22,6 +22,7 @@ bool ResearchIntrinsic::runCalibration(void)
 
   for (std::size_t i = 0; i < num_images_; i++)
   {
+#if 1              
     Pose6D target_to_camera_pose;
     this->findDistortedTarget(observation_data_[i], target_to_camera_pose,
       camera_intrinsics_seed, target_to_camera_pose_guess);
@@ -32,6 +33,14 @@ bool ResearchIntrinsic::runCalibration(void)
     extrinsics[6*i + 3] = target_to_camera_pose.x;
     extrinsics[6*i + 4] = target_to_camera_pose.y;
     extrinsics[6*i + 5] = target_to_camera_pose.z;
+#endif
+
+    // extrinsics[6*i + 0] = target_to_camera_pose_guess[0];
+    // extrinsics[6*i + 1] = target_to_camera_pose_guess[1];
+    // extrinsics[6*i + 2] = target_to_camera_pose_guess[2];
+    // extrinsics[6*i + 3] = target_to_camera_pose_guess[3];
+    // extrinsics[6*i + 4] = target_to_camera_pose_guess[4];
+    // extrinsics[6*i + 5] = target_to_camera_pose_guess[5];   
   }
 
   for (std::size_t i = 0; i < num_images_; i++)
