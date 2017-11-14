@@ -60,6 +60,17 @@ bool isPNG(const std::string &file_name);
 
 void getCalibrationImages(const std::string &path, CalibrationImages &images);
 
+// https://stackoverflow.com/questions/33665257/
+// how-to-overload-ostream-for-vector-to-print-all-collection-from-vector
+template<class T>
+std::ostream& operator<<(std::ostream& stream, const std::vector<T>& values)
+{
+    stream << "[ ";
+    std::copy( std::begin(values), std::end(values), std::ostream_iterator<T>(stream, " ") );
+    stream << ']';
+    return stream;
+}
+
 bool parseYAML(const YAML::Node &node, const std::string &var_name, 
   std::vector<double> &var_value)
 {
