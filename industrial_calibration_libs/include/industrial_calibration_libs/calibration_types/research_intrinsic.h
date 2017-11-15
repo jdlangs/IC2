@@ -8,6 +8,7 @@ struct ResearchIntrinsicParams
 {
   // Unknown Values
   IntrinsicsFull intrinsics;
+  std::vector<Extrinsics> target_to_camera_seed;
 };
 
 class ResearchIntrinsic : public CalibrationJob

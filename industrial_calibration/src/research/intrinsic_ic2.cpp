@@ -13,8 +13,8 @@
 
 #define ICL industrial_calibration_libs
 
-#define OUTPUT_EXTRINSICS
-// #define VISUALIZE_RESULTS
+// #define OUTPUT_EXTRINSICS
+#define VISUALIZE_RESULTS
 // #define SAVE_DATA
 
 // Function Declarations
@@ -310,25 +310,17 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   camera_info[7] = 0.0;
   camera_info[8] = 0.0;
 
-  // Get seed extrinsics
-  std::vector<ICL::Extrinsics> extrinsics_seed;
-  if (!loadSeedExtrinsics(data_path, cal_images.size(), extrinsics_seed))
-  {
-    ROS_ERROR_STREAM("Failure");
-  }
-
-  for (std::size_t i = 0; i < extrinsics_seed.size(); i++)
-  {
-    ICL::Extrinsics t = extrinsics_seed[i];
-    std::vector<double> tv = {t.data[0], t.data[1], t.data[2],
-      t.data[3], t.data[4], t.data[5]};
-    ROS_INFO_STREAM(tv);
-  }
-
-#if 0
   ROS_INFO_STREAM("Running Calibration for Data Set: " << data_set);
   ICL::ResearchIntrinsicParams params;
   params.intrinsics = ICL::IntrinsicsFull(camera_info);
+
+  // Get seed extrinsics
+  params.target_to_camera_seed;
+  if (!loadSeedExtrinsics(data_path, cal_images.size(), params.target_to_camera_seed))
+  {
+    ROS_ERROR_STREAM("Failed to load seed extrinsics");
+  }
+
   ICL::ResearchIntrinsic calibration(observation_data, target, params);
   
   calibration.setOutput(true); // Enable output to console.
@@ -384,7 +376,6 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
     ROS_INFO_STREAM("tvecs: " << tvecs);
   }
 #else
-#endif
 #endif
 }
 

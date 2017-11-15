@@ -8,21 +8,22 @@ ResearchIntrinsic::ResearchIntrinsic(const ObservationData &observation_data,
 {
   std::memcpy(result_.intrinsics, params.intrinsics.data, 
     sizeof(result_.intrinsics));
+  result_.target_to_camera_poses = params.target_to_camera_seed;
 }
 
 bool ResearchIntrinsic::runCalibration(void)
 {
   if (!checkObservations()) {return false;}
   
-  double camera_intrinsics_seed[9];
-  std::memcpy(camera_intrinsics_seed, result_.intrinsics, sizeof(camera_intrinsics_seed));
+  // double camera_intrinsics_seed[9];
+  // std::memcpy(camera_intrinsics_seed, result_.intrinsics, sizeof(camera_intrinsics_seed));
 
   double* extrinsics = new double[num_images_*6];
-  double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
+  // double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
 
-  for (std::size_t i = 0; i < num_images_; i++)
+  for (std::size_t i = 0; i < result_.target_to_camera_poses.size(); i++)
   {
-#if 1              
+#if 0              
     Pose6D target_to_camera_pose;
     this->findDistortedTarget(observation_data_[i], target_to_camera_pose,
       camera_intrinsics_seed, target_to_camera_pose_guess);
@@ -41,6 +42,13 @@ bool ResearchIntrinsic::runCalibration(void)
     // extrinsics[6*i + 3] = target_to_camera_pose_guess[3];
     // extrinsics[6*i + 4] = target_to_camera_pose_guess[4];
     // extrinsics[6*i + 5] = target_to_camera_pose_guess[5];   
+
+    extrinsics[6*i + 0] = result_.target_to_camera_poses[i].data[0];
+    extrinsics[6*i + 1] = result_.target_to_camera_poses[i].data[1];
+    extrinsics[6*i + 2] = result_.target_to_camera_poses[i].data[2];
+    extrinsics[6*i + 3] = result_.target_to_camera_poses[i].data[3];
+    extrinsics[6*i + 4] = result_.target_to_camera_poses[i].data[4];
+    extrinsics[6*i + 5] = result_.target_to_camera_poses[i].data[5];       
   }
 
   for (std::size_t i = 0; i < num_images_; i++)
