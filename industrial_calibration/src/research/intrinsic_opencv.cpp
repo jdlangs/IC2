@@ -16,6 +16,7 @@
 #include <fstream>
 
 #define ICL industrial_calibration_libs
+#define SAVE_ESTIMATED_EXTRINSICS
 
 // Function Declarations
 cv::Point2f point2dToPoint2f(const cv::Point2d &point2d);
@@ -34,6 +35,10 @@ std::vector<double> matToVec(const cv::Mat &mat);
 
 bool saveResultData(const std::string &result_path, double rms, double total_average_error,
   const cv::Mat &camera_matrix, const cv::Mat &dist_coeffs);
+
+bool saveEstimatedExtrinsics(const std::string &estimated_poses_path, 
+  const std::string &data_set, const std::vector<cv::Mat> &rvecs, 
+  const std::vector<cv::Mat> &tvecs);
 
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
 
@@ -146,6 +151,48 @@ bool saveResultData(const std::string &result_path, double rms, double total_ave
   return false;
 }
 
+bool saveEstimatedExtrinsics(const std::string &estimated_poses_path, 
+  const std::string &data_set, const std::vector<cv::Mat> &rvecs, 
+  const std::vector<cv::Mat> &tvecs)
+{
+  YAML::Emitter out;
+
+  out << YAML::BeginMap;
+
+  if (rvecs.size() == tvecs.size())
+  {
+    for (std::size_t i = 0; i < rvecs.size(); i++)
+    {
+      out << YAML::Key << "rvec_" + std::to_string(i);
+        out << YAML::Value << YAML::Flow << matToVec(rvecs[i].t());
+      out << YAML::Key << "tvec_" + std::to_string(i);
+        out << YAML::Value << YAML::Flow << matToVec(tvecs[i].t());
+    }
+  }
+  else {return false;}
+
+  out << YAML::EndMap;
+
+  // Write to yaml file
+  if (out.good())
+  {
+    std::ofstream yaml_file(estimated_poses_path);
+    if (yaml_file)
+    {
+      yaml_file << out.c_str();
+      yaml_file.close();
+      return true;
+    }
+    if (yaml_file.bad())
+    {
+      return false;
+    }
+  }
+
+  return false;  
+}
+
+
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
 {
   std::string data_path = data_dir + data_set + "/";
@@ -247,7 +294,7 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   double total_average_error = computeReprojectionErrors(object_points,
     image_points, rvecs, tvecs, camera_matrix, dist_coeffs, reprojection_errors);
 
-  bool DISPLAY_RESULTS = false;
+  bool DISPLAY_RESULTS = true;
   if (DISPLAY_RESULTS)
   {
     ROS_INFO_STREAM("Data Set: " << data_set << " results:");
@@ -270,6 +317,15 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   {
     ROS_ERROR_STREAM("Failed to Save Results for Data Set: " << data_set);
   }
+
+#ifdef SAVE_ESTIMATED_EXTRINSICS
+  std::string estimated_poses_path = data_dir + data_set + "/estimated_poses.yaml";
+  if (!saveEstimatedExtrinsics(estimated_poses_path, data_set, rvecs, tvecs))
+  {
+    ROS_ERROR_STREAM("Failed to Save Estimated Poses for Data Set: " << data_set);
+  }
+#else
+#endif
 }
 
 int main(int argc, char **argv)
@@ -283,6 +339,8 @@ int main(int argc, char **argv)
 
   std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
     "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
+
+  // std::vector<std::string> data_sets = { "01" };
 
   for (std::size_t i = 0; i < data_sets.size(); i++)
   {
