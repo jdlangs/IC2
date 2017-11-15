@@ -13,11 +13,15 @@
 
 #define ICL industrial_calibration_libs
 
+#define OUTPUT_EXTRINSICS
 // #define VISUALIZE_RESULTS
-#define SAVE_DATA
+// #define SAVE_DATA
 
 // Function Declarations
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
+
+bool loadSeedExtrinsics(const std::string &data_path, std::size_t num_images,
+  std::vector<ICL::Extrinsics> &extrinsics_seed);
 
 bool saveResultdata(const std::string &result_path, double final_cost, 
     double intrinsics[9]);
@@ -82,6 +86,57 @@ bool saveResultdata(const std::string &result_path, double final_cost,
   }
 
   return false;
+}
+
+bool loadSeedExtrinsics(const std::string &data_path, std::size_t num_images,
+  std::vector<ICL::Extrinsics> &extrinsics_seed)
+{
+  extrinsics_seed.reserve(num_images);
+
+  YAML::Node extrinsics_seed_yaml;
+  std::string path = data_path + "estimated_poses.yaml";
+
+  try
+  {
+    extrinsics_seed_yaml = YAML::LoadFile(path);
+    if (!extrinsics_seed_yaml["rvec_0"]) {return false;}
+  }
+  catch (YAML::BadFile &bf) {return false;}
+
+  for (std::size_t i = 0; i < num_images; i++)
+  {
+    ICL::Extrinsics extrinsics_temp;
+    std::vector<double> rvecs; rvecs.reserve(3);
+    std::vector<double> tvecs; tvecs.reserve(3);
+
+    if (extrinsics_seed_yaml["rvec_" + std::to_string(i)] 
+      && extrinsics_seed_yaml["tvec_" + std::to_string(i)])
+    {
+      for (std::size_t j = 0; 
+        j < extrinsics_seed_yaml["rvec_" + std::to_string(i)].size();
+        j++)
+      {
+        double value = extrinsics_seed_yaml["rvec_" + std::to_string(i)][j].as<double>();
+        rvecs.push_back(value);
+      }
+      for (std::size_t j = 0; 
+        j < extrinsics_seed_yaml["tvec_" + std::to_string(i)].size();
+        j++)
+      {
+        double value = extrinsics_seed_yaml["tvec_" + std::to_string(i)][j].as<double>();
+        tvecs.push_back(value);        
+      }      
+    }
+    // Check
+    if (rvecs.size() == tvecs.size())
+    {
+      extrinsics_temp = ICL::Extrinsics(rvecs[0], rvecs[1], rvecs[2],
+        tvecs[0], tvecs[1], tvecs[2]);
+      extrinsics_seed.push_back(extrinsics_temp);
+    }
+    else {return false;}
+  }
+  return true;
 }
 
 void visualizeResults(const ICL::ResearchIntrinsic::Result &results,
@@ -255,6 +310,22 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   camera_info[7] = 0.0;
   camera_info[8] = 0.0;
 
+  // Get seed extrinsics
+  std::vector<ICL::Extrinsics> extrinsics_seed;
+  if (!loadSeedExtrinsics(data_path, cal_images.size(), extrinsics_seed))
+  {
+    ROS_ERROR_STREAM("Failure");
+  }
+
+  for (std::size_t i = 0; i < extrinsics_seed.size(); i++)
+  {
+    ICL::Extrinsics t = extrinsics_seed[i];
+    std::vector<double> tv = {t.data[0], t.data[1], t.data[2],
+      t.data[3], t.data[4], t.data[5]};
+    ROS_INFO_STREAM(tv);
+  }
+
+#if 0
   ROS_INFO_STREAM("Running Calibration for Data Set: " << data_set);
   ICL::ResearchIntrinsicParams params;
   params.intrinsics = ICL::IntrinsicsFull(camera_info);
@@ -299,6 +370,22 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   }
 #else
 #endif
+
+#ifdef OUTPUT_EXTRINSICS
+  for (std::size_t i = 0; i < cal_images.size(); i++)
+  {
+    std::vector<double> rvecs = {results.target_to_camera_poses[i].data[0], 
+      results.target_to_camera_poses[i].data[1], 
+      results.target_to_camera_poses[i].data[2]};
+    std::vector<double> tvecs = {results.target_to_camera_poses[i].data[3],
+      results.target_to_camera_poses[i].data[4],
+      results.target_to_camera_poses[i].data[5]};
+    ROS_INFO_STREAM("rvecs: " << rvecs);
+    ROS_INFO_STREAM("tvecs: " << tvecs);
+  }
+#else
+#endif
+#endif
 }
 
 int main(int argc, char** argv)
@@ -310,10 +397,10 @@ int main(int argc, char** argv)
   pnh.getParam("data_dir", data_dir);
   data_dir = addSlashToEnd(data_dir);
 
-  std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
-    "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
+  // std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
+  //   "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
 
-  // std::vector<std::string> data_sets = { "01" };
+  std::vector<std::string> data_sets = { "01" };
 
   for (std::size_t i = 0; i < data_sets.size(); i++)
   {
