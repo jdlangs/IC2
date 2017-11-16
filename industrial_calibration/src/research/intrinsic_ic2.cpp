@@ -15,7 +15,7 @@
 
 // #define OUTPUT_EXTRINSICS
 // #define VISUALIZE_RESULTS
-#define SAVE_DATA
+// #define SAVE_DATA
 
 // Function Declarations
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
@@ -178,27 +178,6 @@ void visualizeResults(const ICL::ResearchIntrinsic::Result &results,
       p1  = results.intrinsics[7]; /** distortion p1  */
       p2  = results.intrinsics[8]; /** distortion p2  */      
 
-      // fx  = 537.1;
-      // fy  = 536.1;
-      // cx  = 325.5;
-      // cy  = 231.9;
-      // k1  = 0.0;
-      // k2  = 0.0;
-      // k3  = 0.0;
-      // p1  = 0.0;
-      // p2  = 0.0; 
-
-      // fx  = 537.816;
-      // fy  = 537.058;
-      // cx  = 325.5556;
-      // cy  = 231.885;
-      // k1  = 0.0;
-      // k2  = 0.0;
-      // k3  = 0.0;
-      // p1  = 0.0;
-      // p2  = 0.0; 
-
-#if 1
       double xp1 = camera_point[0];   
       double yp1 = camera_point[1];
       double zp1 = camera_point[2];
@@ -240,30 +219,6 @@ void visualizeResults(const ICL::ResearchIntrinsic::Result &results,
 
       cv::Point2d cv_point(point_x, point_y);
       observation_points.push_back(cv_point);
-#endif
-#if 0   
-      double xp1 = camera_point[0];
-      double yp1 = camera_point[1];
-      double zp1 = camera_point[2];
-
-      double xp, yp;
-      if (std::roundf(zp1*10000)/10000 == 0.0)
-      {
-        xp = xp1;
-        yp = yp1;
-      }
-      else
-      {
-        xp = xp1 / zp1;
-        yp = yp1 / zp1;
-      }
-
-      double point_x = fx * xp + cx;
-      double point_y = fy * yp + cy;
-
-      cv::Point2d cv_point(point_x, point_y);
-      observation_points.push_back(cv_point);
-#endif       
     }
 
     cv::Mat result_image;

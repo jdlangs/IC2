@@ -60,7 +60,7 @@ bool ResearchIntrinsic::runCalibration(void)
       double observed_y = observation_data_[i][j].y;
 
       ceres::CostFunction *cost_function =
-        ResearchIntrinsicCF2::Create(observed_x, observed_y, point);
+        ResearchIntrinsicCF::Create(observed_x, observed_y, point);
       problem_.AddResidualBlock(cost_function, NULL, result_.intrinsics,
         &extrinsics[6*i]);               
     }
@@ -175,8 +175,8 @@ bool ResearchIntrinsic::findDistortedTarget(const ObservationPoints &observation
   return false;
 }
 
-void ResearchIntrinsic::displayCovariance(void) 
+bool ResearchIntrinsic::displayCovariance(void) 
 {
-
+  return false;
 }
 } // namespace industrial_calibration_libs
