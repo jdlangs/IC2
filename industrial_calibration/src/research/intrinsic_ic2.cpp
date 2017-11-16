@@ -14,8 +14,8 @@
 #define ICL industrial_calibration_libs
 
 // #define OUTPUT_EXTRINSICS
-#define VISUALIZE_RESULTS
-// #define SAVE_DATA
+// #define VISUALIZE_RESULTS
+#define SAVE_DATA
 
 // Function Declarations
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
@@ -300,6 +300,10 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
 
   // Seed parameters (Average of intrinsic values)
   double camera_info[9];
+  // camera_info[0] = 570.34;
+  // camera_info[1] = 570.34;
+  // camera_info[2] = 319.5;
+  // camera_info[3] = 239.5;  
   camera_info[0] = 537.1;
   camera_info[1] = 536.1;
   camera_info[2] = 325.5;
@@ -388,10 +392,10 @@ int main(int argc, char** argv)
   pnh.getParam("data_dir", data_dir);
   data_dir = addSlashToEnd(data_dir);
 
-  // std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
-  //   "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
+  std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
+    "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
 
-  std::vector<std::string> data_sets = { "01" };
+  // std::vector<std::string> data_sets = { "01" };
 
   for (std::size_t i = 0; i < data_sets.size(); i++)
   {
