@@ -2,6 +2,7 @@
 
 namespace industrial_calibration_libs
 {
+// ResearchIntrinsic
 ResearchIntrinsic::ResearchIntrinsic(const ObservationData &observation_data,
   const Target &target, const ResearchIntrinsicParams &params) :
   CalibrationJob(observation_data, target)
@@ -177,6 +178,111 @@ bool ResearchIntrinsic::findDistortedTarget(const ObservationPoints &observation
 
 bool ResearchIntrinsic::displayCovariance(void) 
 {
+  return false;
+}
+
+// --------------------------------------------------------------------------------
+
+// ResearchIntrinsicTheory
+ResearchIntrinsicTheory::ResearchIntrinsicTheory(const ObservationData &observation_data,
+  const Target &target, const ResearchIntrinsicParams &params) :
+  CalibrationJob(observation_data, target)
+{
+  double camera_matrix[4];
+  double distortion_k[3];
+  double distortion_p[2];
+
+  camera_matrix[0] = params.intrinsics.data[0];
+  camera_matrix[1] = params.intrinsics.data[1];
+  camera_matrix[2] = params.intrinsics.data[2];
+  camera_matrix[3] = params.intrinsics.data[3];
+  distortion_k[0] = params.intrinsics.data[4];
+  distortion_k[1] = params.intrinsics.data[5];
+  distortion_k[2] = params.intrinsics.data[6];
+  distortion_p[0] = params.intrinsics.data[7];
+  distortion_p[1] = params.intrinsics.data[8];
+
+  std::memcpy(result_.camera_matrix, camera_matrix, sizeof(result_.camera_matrix));
+  std::memcpy(result_.distortion_k, distortion_k, sizeof(result_.distortion_k));
+  std::memcpy(result_.distortion_p, distortion_p, sizeof(result_.distortion_p));
+
+  // std::memcpy(result_.camera_matrix, &params.intrinsics.data[0], sizeof(result_.camera_matrix));
+  // std::memcpy(result_.distortion_k, &params.intrinsics.data[4], sizeof(result_.distortion_k));
+  // std::memcpy(result_.distortion_p, &params.intrinsics.data[7], sizeof(result_.distortion_p));
+
+  result_.target_to_camera_poses = params.target_to_camera_seed;
+}
+
+bool ResearchIntrinsicTheory::runCalibration(void)
+{
+  if (!checkObservations()) {return false;}
+
+  double* extrinsics = new double[num_images_*6];
+
+  for (std::size_t i = 0; i < result_.target_to_camera_poses.size(); i++)
+  {
+    extrinsics[6*i + 0] = result_.target_to_camera_poses[i].data[0];
+    extrinsics[6*i + 1] = result_.target_to_camera_poses[i].data[1];
+    extrinsics[6*i + 2] = result_.target_to_camera_poses[i].data[2];
+    extrinsics[6*i + 3] = result_.target_to_camera_poses[i].data[3];
+    extrinsics[6*i + 4] = result_.target_to_camera_poses[i].data[4];
+    extrinsics[6*i + 5] = result_.target_to_camera_poses[i].data[5];       
+  }
+
+  for (std::size_t i = 0; i < num_images_; i++)
+  {
+    for (std::size_t j = 0; j < observations_per_image_; j++)
+    {
+      Point3D point = target_.getDefinition().points[j];
+      double observed_x = observation_data_[i][j].x;    
+      double observed_y = observation_data_[i][j].y;
+
+      ceres::CostFunction *cost_function =
+        ResearchIntrinsicTheoryCF::Create(observed_x, observed_y, point);
+      problem_.AddResidualBlock(cost_function, NULL, result_.camera_matrix,
+        result_.distortion_k, result_.distortion_p, &extrinsics[6*i]);               
+    }
+  }
+
+  // Solve
+  options_.linear_solver_type = ceres::DENSE_SCHUR;
+  options_.minimizer_progress_to_stdout = output_results_; 
+  options_.max_num_iterations = 9001;
+
+  problem_.SetParameterBlockConstant(result_.distortion_p);
+  ceres::Solve(options_, &problem_, &summary_);
+  problem_.SetParameterBlockConstant(result_.camera_matrix);
+  problem_.SetParameterBlockConstant(result_.distortion_k);
+
+  for (std::size_t i = 0; i < num_images_; i++)
+  {
+    problem_.SetParameterBlockConstant(&extrinsics[6*i]);
+  }
+
+  problem_.SetParameterBlockVariable(result_.distortion_p);
+  ceres::Solve(options_, &problem_, &summary_);
+  
+  for (std::size_t i = 0; i < num_images_; i++)
+  {
+    Pose6D target_to_camera_pose(extrinsics[6*i+3], extrinsics[6*i+4], extrinsics[6*i+5],
+      extrinsics[6*i+0], extrinsics[6*i+1], extrinsics[6*i+2]);
+    result_.target_to_camera_poses.push_back(Extrinsics(target_to_camera_pose));
+  }
+
+  delete[] extrinsics;
+
+  if (output_results_)
+  {
+    std::cout << summary_.FullReport() << '\n';  
+  }
+
+  if (summary_.termination_type != ceres::NO_CONVERGENCE)
+  {
+    initial_cost_ = summary_.initial_cost / total_observations_;
+    final_cost_ = summary_.final_cost / total_observations_;
+    return true;    
+  }
+
   return false;
 }
 } // namespace industrial_calibration_libs

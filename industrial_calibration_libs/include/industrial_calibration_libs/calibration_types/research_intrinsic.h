@@ -37,5 +37,45 @@ private:
 
   Result result_;
 };
+
+class ResearchIntrinsicTheory : public CalibrationJob
+{
+public:
+  struct Result
+  {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"  
+    union
+    {
+      double intrinsics[9];
+      struct
+      {
+        double camera_matrix[4];
+        double distortion_k[3];
+        double distortion_p[2];     
+      };
+    };
+#pragma GCC diagnostic pop
+    std::vector<Extrinsics> target_to_camera_poses;
+  };
+
+  ResearchIntrinsicTheory(const ObservationData &observation_data,
+    const Target &target, const ResearchIntrinsicParams &params);
+
+  ~ResearchIntrinsicTheory(void) { }
+
+  bool runCalibration(void);
+
+  bool displayCovariance(void);
+
+  Result getResults(void) {return result_;}
+
+private:
+  bool findDistortedTarget(const ObservationPoints &observation_points,
+    Pose6D &position, double intrinsics[9], double guess_pose[6]);
+
+  Result result_;
+};
+
 } // namespace industrial_calibration_libs
 #endif // RESEARCH_INTRINSIC_H

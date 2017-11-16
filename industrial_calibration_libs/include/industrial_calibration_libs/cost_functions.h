@@ -330,6 +330,61 @@ struct ResearchIntrinsicCF
   Point3D point_;
 };
 
+struct ResearchIntrinsicTheoryCF
+{
+  ResearchIntrinsicTheoryCF(const double observed_x, const double observed_y,
+    Point3D point) : observed_x_(observed_x), 
+    observed_y_(observed_y), point_(point) { }
+
+  template<typename T> bool operator() (const T* const camera_matrix,
+    const T* const distortion_k, const T* const distortion_p,
+    const T* const target_pose, T* residual) const
+  {
+    T focal_length_x = camera_matrix[0];
+    T focal_length_y = camera_matrix[1];
+    T optical_center_x = camera_matrix[2];
+    T optical_center_y = camera_matrix[3];
+
+    T distortion_k1 = distortion_k[0];
+    T distortion_k2 = distortion_k[1];
+    T distortion_k3 = distortion_k[2];
+
+    T distortion_p1 = distortion_p[0];
+    T distortion_p2 = distortion_p[1];
+
+    const T* target_angle_axis(&target_pose[0]);
+    const T* target_position(&target_pose[3]);
+
+    // Transform point into camera frame
+    T camera_point[3];
+    transformPoint3D(target_angle_axis, target_position, point_.asVector(), 
+      camera_point);
+
+    // Compute projected point into image plane and residual
+    T observed_x = T(observed_x_);
+    T observed_y = T(observed_y_);
+
+    cameraPointResidualWithDistortion(camera_point, distortion_k1, distortion_k2, 
+      distortion_k3, distortion_p1, distortion_p2, focal_length_x, focal_length_y,
+      optical_center_x, optical_center_y, observed_x, observed_y, residual);
+
+    return true;
+  }
+
+  // Factory to hide the construction of the Cost Function object from
+  // client code.
+  static ceres::CostFunction *Create(const double observed_x, const double observed_y,
+    Point3D point)
+  {
+    return (new ceres::AutoDiffCostFunction<ResearchIntrinsicTheoryCF, 2, 4, 3, 2, 6>(new 
+      ResearchIntrinsicTheoryCF(observed_x, observed_y, point)));
+  }
+
+  double observed_x_; // Observed x location of object in the image
+  double observed_y_; // Observed y location of object in the image
+  Point3D point_;
+};
+
 // DELETE THIS LATER
 #if 1
 struct CameraOnWristExtrinsicIntrinsicCF

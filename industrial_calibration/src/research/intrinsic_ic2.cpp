@@ -13,9 +13,11 @@
 
 #define ICL industrial_calibration_libs
 
-// #define OUTPUT_EXTRINSICS
-// #define VISUALIZE_RESULTS
-// #define SAVE_DATA
+#define RUN_THEORY true
+#define RUN_ALL false
+#define OUTPUT_EXTRINSICS false
+#define VISUALIZE_RESULTS false
+#define SAVE_DATA false
 
 // Function Declarations
 void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
@@ -280,13 +282,41 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
     ROS_ERROR_STREAM("Failed to load seed extrinsics");
   }
 
+#if RUN_THEORY
+  ICL::ResearchIntrinsicTheory calibration(observation_data, target, params);
+#else
   ICL::ResearchIntrinsic calibration(observation_data, target, params);
+#endif
   
   calibration.setOutput(true); // Enable output to console.
   calibration.runCalibration();
 
+// #if RUN_THEORY
+//   // Print out results.
+//   ICL::ResearchIntrinsicTheory::Result results = calibration.getResults();
+
+//   ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
+//   ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
+//   ROS_INFO_STREAM("Intrinsic Parameters");
+//   ROS_INFO_STREAM("----------------------------------------");
+//   ROS_INFO_STREAM("Focal Length x: " << results.camera_matrix[0]);
+//   ROS_INFO_STREAM("Focal Length y: " << results.camera_matrix[1]);
+//   ROS_INFO_STREAM("Optical Center x: " << results.camera_matrix[2]);
+//   ROS_INFO_STREAM("Optical Center y: " << results.camera_matrix[3]);
+//   ROS_INFO_STREAM("Distortion k1: " << results.distortion_k[0]);
+//   ROS_INFO_STREAM("Distortion k2: " << results.distortion_k[1]);
+//   ROS_INFO_STREAM("Distortion k3: " << results.distortion_k[2]);
+//   ROS_INFO_STREAM("Distortion p1: " << results.distortion_p[0]);
+//   ROS_INFO_STREAM("Distortion p2: " << results.distortion_p[1]);
+// #else
+// #endif
+
   // Print out results.
+#if RUN_THEORY
+  ICL::ResearchIntrinsicTheory::Result results = calibration.getResults();
+#else
   ICL::ResearchIntrinsic::Result results = calibration.getResults();
+#endif
 
   ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
   ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
@@ -302,12 +332,12 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   ROS_INFO_STREAM("Distortion p1: " << results.intrinsics[7]);
   ROS_INFO_STREAM("Distortion p2: " << results.intrinsics[8]);
 
-#ifdef VISUALIZE_RESULTS
+#if VISUALIZE_RESULTS
   visualizeResults(results, target, cal_images);
 #else
 #endif
 
-#ifdef SAVE_DATA
+#if SAVE_DATA
   std::string result_path = data_dir + "results/ic2_" + data_set + ".yaml";  
   if (saveResultdata(result_path, calibration.getFinalCost(), 
     results.intrinsics))
@@ -322,7 +352,7 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
 #else
 #endif
 
-#ifdef OUTPUT_EXTRINSICS
+#if OUTPUT_EXTRINSICS
   for (std::size_t i = 0; i < cal_images.size(); i++)
   {
     std::vector<double> rvecs = {results.target_to_camera_poses[i].data[0], 
@@ -347,11 +377,13 @@ int main(int argc, char** argv)
   pnh.getParam("data_dir", data_dir);
   data_dir = addSlashToEnd(data_dir);
 
+#if RUN_ALL
   std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
     "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
-
-  // std::vector<std::string> data_sets = { "01" };
-
+#else
+  std::vector<std::string> data_sets = { "01" };
+#endif
+  
   for (std::size_t i = 0; i < data_sets.size(); i++)
   {
     calibrateDataSet(data_dir, data_sets[i]);
