@@ -23,11 +23,14 @@ public:
   ResearchIntrinsic(const ObservationData &observation_data,
     const Target &target, const ResearchIntrinsicParams &params);
 
-  ~ResearchIntrinsic(void) { }
+  ~ResearchIntrinsic(void) 
+  { 
+    delete[] extrinsics_;
+  }
 
   bool runCalibration(void);
 
-  bool displayCovariance(void);
+  void displayCovariance(void);
 
   Result getResults(void) {return result_;}
 
@@ -36,6 +39,7 @@ private:
     Pose6D &position, double intrinsics[9], double guess_pose[6]);
 
   Result result_;
+  double* extrinsics_;
 };
 
 class ResearchIntrinsicTheory : public CalibrationJob
@@ -66,7 +70,7 @@ public:
 
   bool runCalibration(void);
 
-  bool displayCovariance(void);
+  void displayCovariance(void);
 
   Result getResults(void) {return result_;}
 
@@ -75,6 +79,7 @@ private:
     Pose6D &position, double intrinsics[9], double guess_pose[6]);
 
   Result result_;
+  double* extrinsics_;
 };
 
 } // namespace industrial_calibration_libs

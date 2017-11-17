@@ -290,26 +290,7 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   
   calibration.setOutput(true); // Enable output to console.
   calibration.runCalibration();
-
-// #if RUN_THEORY
-//   // Print out results.
-//   ICL::ResearchIntrinsicTheory::Result results = calibration.getResults();
-
-//   ROS_INFO_STREAM("Initial Cost: " << calibration.getInitialCost());
-//   ROS_INFO_STREAM("Final Cost: " << calibration.getFinalCost());
-//   ROS_INFO_STREAM("Intrinsic Parameters");
-//   ROS_INFO_STREAM("----------------------------------------");
-//   ROS_INFO_STREAM("Focal Length x: " << results.camera_matrix[0]);
-//   ROS_INFO_STREAM("Focal Length y: " << results.camera_matrix[1]);
-//   ROS_INFO_STREAM("Optical Center x: " << results.camera_matrix[2]);
-//   ROS_INFO_STREAM("Optical Center y: " << results.camera_matrix[3]);
-//   ROS_INFO_STREAM("Distortion k1: " << results.distortion_k[0]);
-//   ROS_INFO_STREAM("Distortion k2: " << results.distortion_k[1]);
-//   ROS_INFO_STREAM("Distortion k3: " << results.distortion_k[2]);
-//   ROS_INFO_STREAM("Distortion p1: " << results.distortion_p[0]);
-//   ROS_INFO_STREAM("Distortion p2: " << results.distortion_p[1]);
-// #else
-// #endif
+  calibration.displayCovariance();
 
   // Print out results.
 #if RUN_THEORY
@@ -383,7 +364,7 @@ int main(int argc, char** argv)
 #else
   std::vector<std::string> data_sets = { "01" };
 #endif
-  
+
   for (std::size_t i = 0; i < data_sets.size(); i++)
   {
     calibrateDataSet(data_dir, data_sets[i]);

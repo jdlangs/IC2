@@ -1,4 +1,5 @@
 #include <industrial_calibration_libs/calibration_types/research_intrinsic.h>
+#include <iomanip>
 
 namespace industrial_calibration_libs
 {
@@ -19,7 +20,7 @@ bool ResearchIntrinsic::runCalibration(void)
   // double camera_intrinsics_seed[9];
   // std::memcpy(camera_intrinsics_seed, result_.intrinsics, sizeof(camera_intrinsics_seed));
 
-  double* extrinsics = new double[num_images_*6];
+  extrinsics_ = new double[num_images_*6];
   // double target_to_camera_pose_guess[6] = {0.0, 0.0, 0.0, 0.15, 0.15, 0.25};
 
   for (std::size_t i = 0; i < result_.target_to_camera_poses.size(); i++)
@@ -44,12 +45,12 @@ bool ResearchIntrinsic::runCalibration(void)
     // extrinsics[6*i + 4] = target_to_camera_pose_guess[4];
     // extrinsics[6*i + 5] = target_to_camera_pose_guess[5];   
 
-    extrinsics[6*i + 0] = result_.target_to_camera_poses[i].data[0];
-    extrinsics[6*i + 1] = result_.target_to_camera_poses[i].data[1];
-    extrinsics[6*i + 2] = result_.target_to_camera_poses[i].data[2];
-    extrinsics[6*i + 3] = result_.target_to_camera_poses[i].data[3];
-    extrinsics[6*i + 4] = result_.target_to_camera_poses[i].data[4];
-    extrinsics[6*i + 5] = result_.target_to_camera_poses[i].data[5];       
+    extrinsics_[6*i + 0] = result_.target_to_camera_poses[i].data[0];
+    extrinsics_[6*i + 1] = result_.target_to_camera_poses[i].data[1];
+    extrinsics_[6*i + 2] = result_.target_to_camera_poses[i].data[2];
+    extrinsics_[6*i + 3] = result_.target_to_camera_poses[i].data[3];
+    extrinsics_[6*i + 4] = result_.target_to_camera_poses[i].data[4];
+    extrinsics_[6*i + 5] = result_.target_to_camera_poses[i].data[5];       
   }
 
   for (std::size_t i = 0; i < num_images_; i++)
@@ -63,7 +64,7 @@ bool ResearchIntrinsic::runCalibration(void)
       ceres::CostFunction *cost_function =
         ResearchIntrinsicCF::Create(observed_x, observed_y, point);
       problem_.AddResidualBlock(cost_function, NULL, result_.intrinsics,
-        &extrinsics[6*i]);               
+        &extrinsics_[6*i]);               
     }
   }
 
@@ -76,12 +77,10 @@ bool ResearchIntrinsic::runCalibration(void)
   
   for (std::size_t i = 0; i < num_images_; i++)
   {
-    Pose6D target_to_camera_pose(extrinsics[6*i+3], extrinsics[6*i+4], extrinsics[6*i+5],
-      extrinsics[6*i+0], extrinsics[6*i+1], extrinsics[6*i+2]);
+    Pose6D target_to_camera_pose(extrinsics_[6*i+3], extrinsics_[6*i+4], extrinsics_[6*i+5],
+      extrinsics_[6*i+0], extrinsics_[6*i+1], extrinsics_[6*i+2]);
     result_.target_to_camera_poses.push_back(Extrinsics(target_to_camera_pose));
   }
-
-  delete[] extrinsics;
 
   if (output_results_)
   {
@@ -176,9 +175,97 @@ bool ResearchIntrinsic::findDistortedTarget(const ObservationPoints &observation
   return false;
 }
 
-bool ResearchIntrinsic::displayCovariance(void) 
+void ResearchIntrinsic::displayCovariance(void) 
 {
-  return false;
+  // Not calling computeCovariance() since this is weird...
+  ceres::Covariance::Options covariance_options;
+  covariance_options.algorithm_type = ceres::DENSE_SVD;
+  ceres::Covariance covariance(covariance_options);  
+
+  std::vector<const double*> covariance_blocks;
+  std::vector<int> block_sizes;
+  std::vector<std::string> block_names;
+  std::vector<std::pair<const double*, const double*>> covariance_pairs;
+
+  // Intrinsics
+  covariance_blocks.push_back(result_.intrinsics);
+  block_sizes.push_back(9);
+  block_names.push_back("Intrinsics1");
+
+  covariance_blocks.push_back(result_.intrinsics);
+  block_sizes.push_back(9);
+  block_names.push_back("Intrinsics2");
+
+  // Create pairs from every combination of blocks in request
+  for (std::size_t i = 0; i < covariance_blocks.size(); i++)
+  {
+    for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+    {
+      covariance_pairs.push_back(std::make_pair(covariance_blocks[i],
+        covariance_blocks[j]));      
+    }
+  }
+  
+  covariance.Compute(covariance_pairs, &problem_);
+
+  if (output_results_)
+  {
+    std::cout << "Covariance Blocks: " << '\n';
+    for (std::size_t i = 0; i < covariance_blocks.size(); i++)
+    {
+      for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+      {
+        std::cout << "Covariance [" << block_names[i] << ", " 
+          << block_names[j] << "]" << '\n';
+
+        int N = block_sizes[i];
+        int M = block_sizes[j];
+        double* ij_cov_block = new double[N*M];
+
+        covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
+          ij_cov_block);
+
+        for (int q = 0; q < N; q++)
+        {
+          std::cout << "[";
+          for (int k = 0; k < M; k++)
+          {
+            double sigma_i = sqrt(ij_cov_block[q*N+q]);
+            double sigma_j = sqrt(ij_cov_block[k*N+k]);
+            if (q == k)
+            {
+              if (sigma_i > 1.0 || sigma_i < -1.0)
+              {
+                std::cout << " " << std::right << std::setw(9) << std::scientific 
+                  << std::setprecision(1) << sigma_i;              
+              }
+              else
+              {
+                std::cout << " " << std::right << std::setw(9) << std::fixed
+                  << std::setprecision(5) << sigma_i;
+              }
+            }
+            else
+            {
+              if (ij_cov_block[q*N + k]/(sigma_i * sigma_j) > 1.0 ||
+                ij_cov_block[q*N + k]/(sigma_i * sigma_j) < -1.0)
+              {
+                std::cout << " " << std::right << std::setw(9) << std::scientific
+                  << std::setprecision(1) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+              }
+              else
+              {
+                std::cout << " " << std::right << std::setw(9) << std::fixed 
+                  << std::setprecision(5) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+              }
+            }
+          }
+          std::cout << "]" << '\n';
+        }
+        delete [] ij_cov_block;
+      }
+    }
+  }
 }
 
 // --------------------------------------------------------------------------------
@@ -217,16 +304,16 @@ bool ResearchIntrinsicTheory::runCalibration(void)
 {
   if (!checkObservations()) {return false;}
 
-  double* extrinsics = new double[num_images_*6];
+  extrinsics_ = new double[num_images_*6];
 
   for (std::size_t i = 0; i < result_.target_to_camera_poses.size(); i++)
   {
-    extrinsics[6*i + 0] = result_.target_to_camera_poses[i].data[0];
-    extrinsics[6*i + 1] = result_.target_to_camera_poses[i].data[1];
-    extrinsics[6*i + 2] = result_.target_to_camera_poses[i].data[2];
-    extrinsics[6*i + 3] = result_.target_to_camera_poses[i].data[3];
-    extrinsics[6*i + 4] = result_.target_to_camera_poses[i].data[4];
-    extrinsics[6*i + 5] = result_.target_to_camera_poses[i].data[5];       
+    extrinsics_[6*i + 0] = result_.target_to_camera_poses[i].data[0];
+    extrinsics_[6*i + 1] = result_.target_to_camera_poses[i].data[1];
+    extrinsics_[6*i + 2] = result_.target_to_camera_poses[i].data[2];
+    extrinsics_[6*i + 3] = result_.target_to_camera_poses[i].data[3];
+    extrinsics_[6*i + 4] = result_.target_to_camera_poses[i].data[4];
+    extrinsics_[6*i + 5] = result_.target_to_camera_poses[i].data[5];       
   }
 
   for (std::size_t i = 0; i < num_images_; i++)
@@ -240,7 +327,7 @@ bool ResearchIntrinsicTheory::runCalibration(void)
       ceres::CostFunction *cost_function =
         ResearchIntrinsicTheoryCF::Create(observed_x, observed_y, point);
       problem_.AddResidualBlock(cost_function, NULL, result_.camera_matrix,
-        result_.distortion_k, result_.distortion_p, &extrinsics[6*i]);               
+        result_.distortion_k, result_.distortion_p, &extrinsics_[6*i]);               
     }
   }
 
@@ -256,7 +343,7 @@ bool ResearchIntrinsicTheory::runCalibration(void)
 
   for (std::size_t i = 0; i < num_images_; i++)
   {
-    problem_.SetParameterBlockConstant(&extrinsics[6*i]);
+    problem_.SetParameterBlockConstant(&extrinsics_[6*i]);
   }
 
   problem_.SetParameterBlockVariable(result_.distortion_p);
@@ -264,12 +351,10 @@ bool ResearchIntrinsicTheory::runCalibration(void)
   
   for (std::size_t i = 0; i < num_images_; i++)
   {
-    Pose6D target_to_camera_pose(extrinsics[6*i+3], extrinsics[6*i+4], extrinsics[6*i+5],
-      extrinsics[6*i+0], extrinsics[6*i+1], extrinsics[6*i+2]);
+    Pose6D target_to_camera_pose(extrinsics_[6*i+3], extrinsics_[6*i+4], extrinsics_[6*i+5],
+      extrinsics_[6*i+0], extrinsics_[6*i+1], extrinsics_[6*i+2]);
     result_.target_to_camera_poses.push_back(Extrinsics(target_to_camera_pose));
   }
-
-  delete[] extrinsics;
 
   if (output_results_)
   {
@@ -284,5 +369,98 @@ bool ResearchIntrinsicTheory::runCalibration(void)
   }
 
   return false;
+}
+
+void ResearchIntrinsicTheory::displayCovariance(void) 
+{
+  // Not calling computeCovariance() since this is weird...
+  ceres::Covariance::Options covariance_options;
+  covariance_options.algorithm_type = ceres::DENSE_SVD;
+  ceres::Covariance covariance(covariance_options);  
+
+  std::vector<const double*> covariance_blocks;
+  std::vector<int> block_sizes;
+  std::vector<std::string> block_names;
+  std::vector<std::pair<const double*, const double*>> covariance_pairs;
+
+  // Intrinsics
+  covariance_blocks.push_back(result_.intrinsics);
+  block_sizes.push_back(9);
+  block_names.push_back("Intrinsics1");
+  
+  covariance_blocks.push_back(result_.intrinsics);
+  block_sizes.push_back(9);
+  block_names.push_back("Intrinsics2");
+
+  // Create pairs from every combination of blocks in request
+  for (std::size_t i = 0; i < covariance_blocks.size(); i++)
+  {
+    for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+    {
+      covariance_pairs.push_back(std::make_pair(covariance_blocks[i],
+        covariance_blocks[j]));      
+    }
+  }
+  
+  covariance.Compute(covariance_pairs, &problem_);
+
+  if (output_results_)
+  {
+    std::cout << "Covariance Blocks: " << '\n';
+    for (std::size_t i = 0; i < covariance_blocks.size(); i++)
+    {
+      for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+      {
+        std::cout << "Covariance [" << block_names[i] << ", " 
+          << block_names[j] << "]" << '\n';
+
+        int N = block_sizes[i];
+        int M = block_sizes[j];
+        double* ij_cov_block = new double[N*M];
+
+        covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
+          ij_cov_block);
+
+        for (int q = 0; q < N; q++)
+        {
+          std::cout << "[";
+          for (int k = 0; k < M; k++)
+          {
+            double sigma_i = sqrt(ij_cov_block[q*N+q]);
+            double sigma_j = sqrt(ij_cov_block[k*N+k]);
+            if (q == k)
+            {
+              if (sigma_i > 1.0 || sigma_i < -1.0)
+              {
+                std::cout << " " << std::right << std::setw(9) << std::scientific 
+                  << std::setprecision(1) << sigma_i;              
+              }
+              else
+              {
+                std::cout << " " << std::right << std::setw(9) << std::fixed
+                  << std::setprecision(5) << sigma_i;
+              }
+            }
+            else
+            {
+              if (ij_cov_block[q*N + k]/(sigma_i * sigma_j) > 1.0 ||
+                ij_cov_block[q*N + k]/(sigma_i * sigma_j) < -1.0)
+              {
+                std::cout << " " << std::right << std::setw(9) << std::scientific
+                  << std::setprecision(1) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+              }
+              else
+              {
+                std::cout << " " << std::right << std::setw(9) << std::fixed 
+                  << std::setprecision(5) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+              }
+            }
+          }
+          std::cout << "]" << '\n';
+        }
+        delete [] ij_cov_block;
+      }
+    }
+  }
 }
 } // namespace industrial_calibration_libs
