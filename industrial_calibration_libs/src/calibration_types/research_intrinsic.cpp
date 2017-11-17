@@ -283,9 +283,11 @@ ResearchIntrinsicTheory::ResearchIntrinsicTheory(const ObservationData &observat
   camera_matrix[1] = params.intrinsics.data[1];
   camera_matrix[2] = params.intrinsics.data[2];
   camera_matrix[3] = params.intrinsics.data[3];
+
   distortion_k[0] = params.intrinsics.data[4];
   distortion_k[1] = params.intrinsics.data[5];
   distortion_k[2] = params.intrinsics.data[6];
+
   distortion_p[0] = params.intrinsics.data[7];
   distortion_p[1] = params.intrinsics.data[8];
 
@@ -336,8 +338,12 @@ bool ResearchIntrinsicTheory::runCalibration(void)
   options_.minimizer_progress_to_stdout = output_results_; 
   options_.max_num_iterations = 9001;
 
+  // Set distortion p's to constant and solve for rest
   problem_.SetParameterBlockConstant(result_.distortion_p);
   ceres::Solve(options_, &problem_, &summary_);
+
+  // Set camera_matrix, distortion_k, and extrinsics constant and
+  // solve for distortion_p
   problem_.SetParameterBlockConstant(result_.camera_matrix);
   problem_.SetParameterBlockConstant(result_.distortion_k);
 
@@ -349,6 +355,10 @@ bool ResearchIntrinsicTheory::runCalibration(void)
   problem_.SetParameterBlockVariable(result_.distortion_p);
   ceres::Solve(options_, &problem_, &summary_);
   
+  problem_.SetParameterBlockVariable(result_.camera_matrix);
+  problem_.SetParameterBlockVariable(result_.distortion_k);
+
+  // Push data to result
   for (std::size_t i = 0; i < num_images_; i++)
   {
     Pose6D target_to_camera_pose(extrinsics_[6*i+3], extrinsics_[6*i+4], extrinsics_[6*i+5],
@@ -383,14 +393,27 @@ void ResearchIntrinsicTheory::displayCovariance(void)
   std::vector<std::string> block_names;
   std::vector<std::pair<const double*, const double*>> covariance_pairs;
 
-  // Intrinsics
+  // Intrinsic Matrix
   covariance_blocks.push_back(result_.intrinsics);
   block_sizes.push_back(9);
-  block_names.push_back("Intrinsics1");
+  block_names.push_back("Intrinsics");
+
+#if 0
+  // Camera Matrix
+  covariance_blocks.push_back(result_.camera_matrix);
+  block_sizes.push_back(4);
+  block_names.push_back("Camera Matrix [fx, fy, cx, cy]");
   
-  covariance_blocks.push_back(result_.intrinsics);
-  block_sizes.push_back(9);
-  block_names.push_back("Intrinsics2");
+  // Distortion K
+  covariance_blocks.push_back(result_.distortion_k);
+  block_sizes.push_back(3);
+  block_names.push_back("Distortion (k1, k2, k3)");
+
+  // Distortion P
+  covariance_blocks.push_back(result_.distortion_p);
+  block_sizes.push_back(2);
+  block_names.push_back("Distortion (p1, p2)");
+#endif
 
   // Create pairs from every combination of blocks in request
   for (std::size_t i = 0; i < covariance_blocks.size(); i++)
