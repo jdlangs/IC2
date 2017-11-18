@@ -70,7 +70,11 @@ public:
 
   bool runCalibration(void);
 
-  void displayCovariance(void);
+  void displayCovariance(void) { }
+
+  void displayCovarianceA(void);
+
+  void displayCovarianceB(void);
 
   Result getResults(void) {return result_;}
 

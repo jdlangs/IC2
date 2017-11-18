@@ -342,6 +342,8 @@ bool ResearchIntrinsicTheory::runCalibration(void)
   problem_.SetParameterBlockConstant(result_.distortion_p);
   ceres::Solve(options_, &problem_, &summary_);
 
+  this->displayCovarianceA();
+
   // Set camera_matrix, distortion_k, and extrinsics constant and
   // solve for distortion_p
   problem_.SetParameterBlockConstant(result_.camera_matrix);
@@ -355,6 +357,8 @@ bool ResearchIntrinsicTheory::runCalibration(void)
   problem_.SetParameterBlockVariable(result_.distortion_p);
   ceres::Solve(options_, &problem_, &summary_);
   
+  this->displayCovarianceB();
+
   problem_.SetParameterBlockVariable(result_.camera_matrix);
   problem_.SetParameterBlockVariable(result_.distortion_k);
 
@@ -381,7 +385,7 @@ bool ResearchIntrinsicTheory::runCalibration(void)
   return false;
 }
 
-void ResearchIntrinsicTheory::displayCovariance(void) 
+void ResearchIntrinsicTheory::displayCovarianceA(void) 
 {
   // Not calling computeCovariance() since this is weird...
   ceres::Covariance::Options covariance_options;
@@ -393,27 +397,15 @@ void ResearchIntrinsicTheory::displayCovariance(void)
   std::vector<std::string> block_names;
   std::vector<std::pair<const double*, const double*>> covariance_pairs;
 
-  // Intrinsic Matrix
-  covariance_blocks.push_back(result_.intrinsics);
-  block_sizes.push_back(9);
-  block_names.push_back("Intrinsics");
-
-#if 0
-  // Camera Matrix
+  // camera_matrix
   covariance_blocks.push_back(result_.camera_matrix);
   block_sizes.push_back(4);
-  block_names.push_back("Camera Matrix [fx, fy, cx, cy]");
-  
-  // Distortion K
+  block_names.push_back("Camera Matrix (fx, fy, cx, cy)");
+
+  // distortion_k
   covariance_blocks.push_back(result_.distortion_k);
   block_sizes.push_back(3);
   block_names.push_back("Distortion (k1, k2, k3)");
-
-  // Distortion P
-  covariance_blocks.push_back(result_.distortion_p);
-  block_sizes.push_back(2);
-  block_names.push_back("Distortion (p1, p2)");
-#endif
 
   // Create pairs from every combination of blocks in request
   for (std::size_t i = 0; i < covariance_blocks.size(); i++)
@@ -444,6 +436,17 @@ void ResearchIntrinsicTheory::displayCovariance(void)
         covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
           ij_cov_block);
 
+        std::cout << "[";
+        for (int q = 0; q < N; q++) 
+        {
+          for (int k = 0; k < M; k++)
+          {
+            std::cout << " " << ij_cov_block[q*N+k];
+          }
+          std::cout << "]" << '\n';
+        }
+
+#if 0
         for (int q = 0; q < N; q++)
         {
           std::cout << "[";
@@ -481,6 +484,108 @@ void ResearchIntrinsicTheory::displayCovariance(void)
           }
           std::cout << "]" << '\n';
         }
+#endif
+        delete [] ij_cov_block;
+      }
+    }
+  }
+}
+
+void ResearchIntrinsicTheory::displayCovarianceB(void) 
+{
+  // Not calling computeCovariance() since this is weird...
+  ceres::Covariance::Options covariance_options;
+  covariance_options.algorithm_type = ceres::DENSE_SVD;
+  ceres::Covariance covariance(covariance_options);  
+
+  std::vector<const double*> covariance_blocks;
+  std::vector<int> block_sizes;
+  std::vector<std::string> block_names;
+  std::vector<std::pair<const double*, const double*>> covariance_pairs;
+
+  // Distortion P
+  covariance_blocks.push_back(result_.distortion_p);
+  block_sizes.push_back(2);
+  block_names.push_back("Distortion (p1, p2)");
+
+  // Create pairs from every combination of blocks in request
+  for (std::size_t i = 0; i < covariance_blocks.size(); i++)
+  {
+    for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+    {
+      covariance_pairs.push_back(std::make_pair(covariance_blocks[i],
+        covariance_blocks[j]));      
+    }
+  }
+  
+  covariance.Compute(covariance_pairs, &problem_);
+
+  if (output_results_)
+  {
+    std::cout << "Covariance Blocks: " << '\n';
+    for (std::size_t i = 0; i < covariance_blocks.size(); i++)
+    {
+      for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+      {
+        std::cout << "Covariance [" << block_names[i] << ", " 
+          << block_names[j] << "]" << '\n';
+
+        int N = block_sizes[i];
+        int M = block_sizes[j];
+        double* ij_cov_block = new double[N*M];
+
+        covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
+          ij_cov_block);
+
+        std::cout << "[";
+        for (int q = 0; q < N; q++) 
+        {
+          for (int k = 0; k < M; k++)
+          {
+            std::cout << " " << ij_cov_block[q*N+k];
+          }
+          std::cout << "]" << '\n';
+        }
+
+#if 0
+        for (int q = 0; q < N; q++)
+        {
+          std::cout << "[";
+          for (int k = 0; k < M; k++)
+          {
+            double sigma_i = sqrt(ij_cov_block[q*N+q]);
+            double sigma_j = sqrt(ij_cov_block[k*N+k]);
+            if (q == k)
+            {
+              if (sigma_i > 1.0 || sigma_i < -1.0)
+              {
+                std::cout << " " << std::right << std::setw(9) << std::scientific 
+                  << std::setprecision(1) << sigma_i;              
+              }
+              else
+              {
+                std::cout << " " << std::right << std::setw(9) << std::fixed
+                  << std::setprecision(5) << sigma_i;
+              }
+            }
+            else
+            {
+              if (ij_cov_block[q*N + k]/(sigma_i * sigma_j) > 1.0 ||
+                ij_cov_block[q*N + k]/(sigma_i * sigma_j) < -1.0)
+              {
+                std::cout << " " << std::right << std::setw(9) << std::scientific
+                  << std::setprecision(1) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+              }
+              else
+              {
+                std::cout << " " << std::right << std::setw(9) << std::fixed 
+                  << std::setprecision(5) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
+              }
+            }
+          }
+          std::cout << "]" << '\n';
+        }
+#endif
         delete [] ij_cov_block;
       }
     }
