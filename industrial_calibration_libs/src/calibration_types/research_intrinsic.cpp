@@ -417,90 +417,101 @@ void ResearchIntrinsicTheory::displayCovarianceA(void)
     }
   }
   
-  covariance.Compute(covariance_pairs, &problem_);
-
-  if (output_results_)
+  if (covariance.Compute(covariance_pairs, &problem_))
   {
-    std::cout << "Covariance Blocks: " << '\n';
-    for (std::size_t i = 0; i < covariance_blocks.size(); i++)
+    if (output_results_)
     {
-      for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+      std::cout << "Covariance Blocks: " << '\n';
+      for (std::size_t i = 0; i < covariance_blocks.size(); i++)
       {
-        std::cout << "Covariance [" << block_names[i] << ", " 
-          << block_names[j] << "]" << '\n';
-
-        int N = block_sizes[i];
-        int M = block_sizes[j];
-        double* ij_cov_block = new double[N*M];
-
-        covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
-          ij_cov_block);
-
-        for (int q = 0; q < N; q++) 
+        for (std::size_t j = 0; j < covariance_blocks.size(); j++)
         {
-          std::cout << "[";
-          for (int k = 0; k < M; k++)
+          std::cout << "Covariance [" << block_names[i] << ", " 
+            << block_names[j] << "]" << '\n';
+
+          int N = block_sizes[i];
+          int M = block_sizes[j];
+          double* ij_cov_block = new double[N*M];
+
+          covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
+            ij_cov_block);
+
+          for (int q = 0; q < N; q++) 
           {
-            double value = ij_cov_block[q*N+k];
-
-            if (value > 1.0 || value < -1.0)
+            std::cout << "[";
+            for (int k = 0; k < M; k++)
             {
-              std::cout << " " << std::right << std::setw(9) << std::scientific
-                << std::setprecision(1) << value;
-            }
-            else
-            {
-              std::cout << " " << std::right << std::setw(9) << std::fixed
-                << std::setprecision(5) << value;
-            }
+              double value = ij_cov_block[q*N+k];
 
-          }
-          std::cout << "]" << '\n';
-        }
-
-#if 0
-        for (int q = 0; q < N; q++)
-        {
-          std::cout << "[";
-          for (int k = 0; k < M; k++)
-          {
-            double sigma_i = sqrt(ij_cov_block[q*N+q]);
-            double sigma_j = sqrt(ij_cov_block[k*N+k]);
-            if (q == k)
-            {
-              if (sigma_i > 1.0 || sigma_i < -1.0)
+              if (value > 1.0 || value < -1.0)
               {
-                std::cout << " " << std::right << std::setw(9) << std::scientific 
-                  << std::setprecision(1) << sigma_i;              
+                std::cout << " " << std::setprecision(15) << value;
               }
               else
               {
-                std::cout << " " << std::right << std::setw(9) << std::fixed
-                  << std::setprecision(5) << sigma_i;
+                std::cout << " " << std::setprecision(15) << value;
               }
+
             }
-            else
-            {
-              if (ij_cov_block[q*N + k]/(sigma_i * sigma_j) > 1.0 ||
-                ij_cov_block[q*N + k]/(sigma_i * sigma_j) < -1.0)
-              {
-                std::cout << " " << std::right << std::setw(9) << std::scientific
-                  << std::setprecision(1) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
-              }
-              else
-              {
-                std::cout << " " << std::right << std::setw(9) << std::fixed 
-                  << std::setprecision(5) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
-              }
-            }
+            std::cout << "]" << '\n';
           }
-          std::cout << "]" << '\n';
+          delete [] ij_cov_block;
         }
-#endif
-        delete [] ij_cov_block;
       }
     }
   }
+  else
+  {
+    std::cerr << "Failed to Compute Jacobian in displayCovarianceA()" << '\n';
+  }
+
+  //   if (output_results_)
+  //   {
+  //     std::cout << "Covariance Blocks: " << '\n';
+  //     for (std::size_t i = 0; i < covariance_blocks.size(); i++)
+  //     {
+  //       for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+  //       {
+  //         std::cout << "Covariance [" << block_names[i] << ", " 
+  //           << block_names[j] << "]" << '\n';
+
+  //         int N = block_sizes[i];
+  //         int M = block_sizes[j];
+  //         double* ij_cov_block = new double[N*M];
+
+  //         covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
+  //           ij_cov_block);
+
+  //         for (int q = 0; q < N; q++) 
+  //         {
+  //           std::cout << "[";
+  //           for (int k = 0; k < M; k++)
+  //           {
+  //             double value = ij_cov_block[q*N+k];
+
+  //             if (value > 1.0 || value < -1.0)
+  //             {
+  //               std::cout << " " << std::right << std::setw(9) << std::scientific
+  //                 << std::setprecision(1) << value;
+  //             }
+  //             else
+  //             {
+  //               std::cout << " " << std::right << std::setw(9) << std::fixed
+  //                 << std::setprecision(5) << value;
+  //             }
+
+  //           }
+  //           std::cout << "]" << '\n';
+  //         }
+  //         delete [] ij_cov_block;
+  //       }
+  //     }
+  //   }
+  // }
+  // else
+  // {
+  //   std::cerr << "Failed to Compute Jacobian in displayCovarianceA()" << '\n';
+  // }
 }
 
 void ResearchIntrinsicTheory::displayCovarianceB(void) 
@@ -530,89 +541,54 @@ void ResearchIntrinsicTheory::displayCovarianceB(void)
     }
   }
   
-  covariance.Compute(covariance_pairs, &problem_);
-
-  if (output_results_)
+  if (covariance.Compute(covariance_pairs, &problem_))
   {
-    std::cout << "Covariance Blocks: " << '\n';
-    for (std::size_t i = 0; i < covariance_blocks.size(); i++)
+    if (output_results_)
     {
-      for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+      std::cout << "Covariance Blocks: " << '\n';
+      for (std::size_t i = 0; i < covariance_blocks.size(); i++)
       {
-        std::cout << "Covariance [" << block_names[i] << ", " 
-          << block_names[j] << "]" << '\n';
-
-        int N = block_sizes[i];
-        int M = block_sizes[j];
-        double* ij_cov_block = new double[N*M];
-
-        covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
-          ij_cov_block);
-
-        for (int q = 0; q < N; q++) 
+        for (std::size_t j = 0; j < covariance_blocks.size(); j++)
         {
-          std::cout << "[";
-          for (int k = 0; k < M; k++)
+          std::cout << "Covariance [" << block_names[i] << ", " 
+            << block_names[j] << "]" << '\n';
+
+          int N = block_sizes[i];
+          int M = block_sizes[j];
+          double* ij_cov_block = new double[N*M];
+
+          covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
+            ij_cov_block);
+
+          for (int q = 0; q < N; q++) 
           {
-            double value = ij_cov_block[q*N+k];
-
-            if (value > 1.0 || value < -1.0)
+            std::cout << "[";
+            for (int k = 0; k < M; k++)
             {
-              std::cout << " " << std::right << std::setw(9) << std::scientific
-                << std::setprecision(1) << value;
-            }
-            else
-            {
-              std::cout << " " << std::right << std::setw(9) << std::fixed
-                << std::setprecision(5) << value;
-            }
+              double value = ij_cov_block[q*N+k];
 
-          }
-          std::cout << "]" << '\n';
-        }
-
-#if 0
-        for (int q = 0; q < N; q++)
-        {
-          std::cout << "[";
-          for (int k = 0; k < M; k++)
-          {
-            double sigma_i = sqrt(ij_cov_block[q*N+q]);
-            double sigma_j = sqrt(ij_cov_block[k*N+k]);
-            if (q == k)
-            {
-              if (sigma_i > 1.0 || sigma_i < -1.0)
+              if (value > 1.0 || value < -1.0)
               {
-                std::cout << " " << std::right << std::setw(9) << std::scientific 
-                  << std::setprecision(1) << sigma_i;              
+                std::cout << " " << std::right << std::setw(9) << std::scientific
+                  << std::setprecision(1) << value;
               }
               else
               {
                 std::cout << " " << std::right << std::setw(9) << std::fixed
-                  << std::setprecision(5) << sigma_i;
+                  << std::setprecision(5) << value;
               }
+
             }
-            else
-            {
-              if (ij_cov_block[q*N + k]/(sigma_i * sigma_j) > 1.0 ||
-                ij_cov_block[q*N + k]/(sigma_i * sigma_j) < -1.0)
-              {
-                std::cout << " " << std::right << std::setw(9) << std::scientific
-                  << std::setprecision(1) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
-              }
-              else
-              {
-                std::cout << " " << std::right << std::setw(9) << std::fixed 
-                  << std::setprecision(5) << ij_cov_block[q*N + k]/(sigma_i * sigma_j);
-              }
-            }
+            std::cout << "]" << '\n';
           }
-          std::cout << "]" << '\n';
+          delete [] ij_cov_block;
         }
-#endif
-        delete [] ij_cov_block;
       }
     }
+  }
+  else
+  {
+    std::cerr << "Failed to Compute Jacobian in displayCovarianceB()" << '\n';
   }
 }
 } // namespace industrial_calibration_libs
