@@ -436,12 +436,24 @@ void ResearchIntrinsicTheory::displayCovarianceA(void)
         covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
           ij_cov_block);
 
-        std::cout << "[";
         for (int q = 0; q < N; q++) 
         {
+          std::cout << "[";
           for (int k = 0; k < M; k++)
           {
-            std::cout << " " << ij_cov_block[q*N+k];
+            double value = ij_cov_block[q*N+k];
+
+            if (value > 1.0 || value < -1.0)
+            {
+              std::cout << " " << std::right << std::setw(9) << std::scientific
+                << std::setprecision(1) << value;
+            }
+            else
+            {
+              std::cout << " " << std::right << std::setw(9) << std::fixed
+                << std::setprecision(5) << value;
+            }
+
           }
           std::cout << "]" << '\n';
         }
@@ -537,12 +549,24 @@ void ResearchIntrinsicTheory::displayCovarianceB(void)
         covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
           ij_cov_block);
 
-        std::cout << "[";
         for (int q = 0; q < N; q++) 
         {
+          std::cout << "[";
           for (int k = 0; k < M; k++)
           {
-            std::cout << " " << ij_cov_block[q*N+k];
+            double value = ij_cov_block[q*N+k];
+
+            if (value > 1.0 || value < -1.0)
+            {
+              std::cout << " " << std::right << std::setw(9) << std::scientific
+                << std::setprecision(1) << value;
+            }
+            else
+            {
+              std::cout << " " << std::right << std::setw(9) << std::fixed
+                << std::setprecision(5) << value;
+            }
+
           }
           std::cout << "]" << '\n';
         }
