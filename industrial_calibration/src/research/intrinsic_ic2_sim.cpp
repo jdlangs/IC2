@@ -258,10 +258,10 @@ void calibrateSimDataSet(const std::string &data_dir, const std::string &data_se
 #if 01
   // Seed parameters (Average of intrinsic values)
   double camera_info[9];
-  camera_info[0] = 0.0; //537.1;
-  camera_info[1] = 0.0; //536.1;
-  camera_info[2] = 0.0; //325.5;
-  camera_info[3] = 0.0; //231.9;
+  camera_info[0] = 0.0;
+  camera_info[1] = 0.0;
+  camera_info[2] = 0.0;
+  camera_info[3] = 0.0;
   camera_info[4] = 0.0;
   camera_info[5] = 0.0;
   camera_info[6] = 0.0;
