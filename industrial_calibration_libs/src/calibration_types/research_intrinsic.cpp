@@ -342,7 +342,7 @@ bool ResearchIntrinsicTheory::runCalibration(void)
   problem_.SetParameterBlockConstant(result_.distortion_p);
   ceres::Solve(options_, &problem_, &summary_);
 
-  this->displayCovarianceA();
+  // this->displayCovarianceA();
 
   // Set camera_matrix, distortion_k, and extrinsics constant and
   // solve for distortion_p
@@ -357,10 +357,10 @@ bool ResearchIntrinsicTheory::runCalibration(void)
   problem_.SetParameterBlockVariable(result_.distortion_p);
   ceres::Solve(options_, &problem_, &summary_);
   
-  this->displayCovarianceB();
+  // this->displayCovarianceB();
 
-  problem_.SetParameterBlockVariable(result_.camera_matrix);
-  problem_.SetParameterBlockVariable(result_.distortion_k);
+  // problem_.SetParameterBlockVariable(result_.camera_matrix);
+  // problem_.SetParameterBlockVariable(result_.distortion_k);
 
   // Push data to result
   for (std::size_t i = 0; i < num_images_; i++)
