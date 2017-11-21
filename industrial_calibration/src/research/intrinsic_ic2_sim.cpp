@@ -1,5 +1,5 @@
 /*
-  This file will run through the data set using industrial_calibration's 
+  This file will simulate data using the  
   circle grid finder and calibration solver.
 */
 #include <ros/ros.h>
