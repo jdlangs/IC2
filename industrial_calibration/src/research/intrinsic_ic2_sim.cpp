@@ -14,22 +14,18 @@
 #define ICL industrial_calibration_libs
 
 #define RUN_THEORY true
-#define RUN_ALL false
+#define RUN_ALL true
 #define OUTPUT_EXTRINSICS false
-#define VISUALIZE_RESULTS false
-#define SAVE_DATA false
+#define SAVE_DATA true
 
 // Function Declarations
-void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
-
-bool loadSeedExtrinsics(const std::string &data_path, std::size_t num_images,
-  std::vector<ICL::Extrinsics> &extrinsics_seed);
-
 bool saveResultdata(const std::string &result_path, double final_cost, 
     double intrinsics[9]);
 
-void visualizeResults(const ICL::ResearchIntrinsic::Result &results,
-  const ICL::Target &target, const CalibrationImages cal_images);
+void calibrateSimDataSet(const std::string &data_dir, const std::string &data_set);
+
+bool loadSeedExtrinsics(const std::string &data_path, std::size_t num_images,
+  std::vector<ICL::Extrinsics> &extrinsics_seed);
 
 // Function Implementatins
 bool saveResultdata(const std::string &result_path, double final_cost, 
@@ -61,7 +57,7 @@ bool saveResultdata(const std::string &result_path, double final_cost,
       out << YAML::Key << "rows";
         out << YAML::Value << 1;
       out << YAML::Key << "cols";
-        out << YAML::Value << 9;
+        out << YAML::Value << 5;
       out << YAML::Key << "data";
         out << YAML::Value << YAML::Flow << dist_coeffs;
     out << YAML::EndMap;
@@ -141,44 +137,79 @@ bool loadSeedExtrinsics(const std::string &data_path, std::size_t num_images,
   return true;
 }
 
-void visualizeResults(const ICL::ResearchIntrinsic::Result &results,
-  const ICL::Target &target, const CalibrationImages cal_images)
+void calibrateSimDataSet(const std::string &data_dir, const std::string &data_set)
 {
-  for (std::size_t i = 0; i < cal_images.size(); i++)
+  std::string data_path = data_dir + data_set + "/";
+
+  // We are going to use the original target for now.
+  // TODO(gChiou): Make a fake target that can fill the FoV
+  ICL::Target target(data_path + "mcircles_9x12.yaml");
+
+  // I'm lazy, so we are going to load all the images just so I know how
+  // many poses there are...
+  CalibrationImages cal_images;
+  ROS_INFO_STREAM("Loading Calibration Images for Data Set: " << data_set);
+  getCalibrationImages(data_path, cal_images);    
+
+  // Load Poses
+  std::vector<ICL::Extrinsics> poses;
+  if (!loadSeedExtrinsics(data_path, cal_images.size(), poses))
+    ROS_ERROR_STREAM("Failed to load poses");
+
+  // My pretend intrinsics, this should probably be loaded in somewhere else
+  double fake_intrinsics[9];
+  fake_intrinsics[0] = 570.542;  /** focal length x  */
+  fake_intrinsics[1] = 570.531;  /** focal length y  */
+  fake_intrinsics[2] = 325.451;  /** central point x */
+  fake_intrinsics[3] = 352.217;  /** central point y */
+  fake_intrinsics[4] = 1.5241;   /** distortion k1   */
+  fake_intrinsics[5] = -0.2341;  /** distortion k2   */
+  fake_intrinsics[6] = 0.3123;    /** distortion k3   */
+  fake_intrinsics[7] = -.3584;   /** distortion p1   */
+  fake_intrinsics[8] = 0.2511;    /** distortion p2   */   
+
+  // Create "fake" observations from poses
+  ICL::ObservationData observation_data;
+  observation_data.resize(poses.size());
+
+  // For every image
+  for (std::size_t i = 0; i < poses.size(); i++)
   {
-    ICL::Pose6D target_to_camera_p = results.target_to_camera_poses[i].asPose6D();
-    double t_to_c[6];
+    // Get the current pose
+    ICL::Pose6D target_to_camera_pose6D = poses[i].asPose6D();
+    double target_to_camera[6];
 
-    t_to_c[0] = target_to_camera_p.ax;
-    t_to_c[1] = target_to_camera_p.ay;
-    t_to_c[2] = target_to_camera_p.az;
-    t_to_c[3] = target_to_camera_p.x;
-    t_to_c[4] = target_to_camera_p.y;
-    t_to_c[5] = target_to_camera_p.z;
+    target_to_camera[0] = target_to_camera_pose6D.ax;
+    target_to_camera[1] = target_to_camera_pose6D.ay;
+    target_to_camera[2] = target_to_camera_pose6D.az;
+    target_to_camera[3] = target_to_camera_pose6D.x;
+    target_to_camera[4] = target_to_camera_pose6D.y;
+    target_to_camera[5] = target_to_camera_pose6D.z;
 
-    const double* target_angle_axis(&t_to_c[0]);
-    const double* target_position(&t_to_c[3]);
+    const double* target_angle_axis(&target_to_camera[0]);
+    const double* target_position(&target_to_camera[3]);
 
-    ICL::ObservationPoints observation_points;
-
+    // For every point on the target
     for (std::size_t j = 0; j < target.getDefinition().points.size(); j++)
     {
+      // Project the point into the image plane using the fake intrinsics
       double camera_point[3];
       ICL::Point3D target_point(target.getDefinition().points[j]);
 
-      ICL::transformPoint3D(target_angle_axis, target_position, 
+      ICL::transformPoint3D(target_angle_axis, target_position,
         target_point.asVector(), camera_point);
 
+      // Apply the intrinsics
       double fx, fy, cx, cy, k1, k2, k3, p1, p2;
-      fx  = results.intrinsics[0]; /** focal length x */
-      fy  = results.intrinsics[1]; /** focal length y */
-      cx  = results.intrinsics[2]; /** central point x */
-      cy  = results.intrinsics[3]; /** central point y */
-      k1  = results.intrinsics[4]; /** distortion k1  */
-      k2  = results.intrinsics[5]; /** distortion k2  */
-      k3  = results.intrinsics[6]; /** distortion k3  */
-      p1  = results.intrinsics[7]; /** distortion p1  */
-      p2  = results.intrinsics[8]; /** distortion p2  */      
+      fx = fake_intrinsics[0]; /** focal length x  */ 
+      fy = fake_intrinsics[1]; /** focal length y  */
+      cx = fake_intrinsics[2]; /** central point x */
+      cy = fake_intrinsics[3]; /** central point y */
+      k1 = fake_intrinsics[4]; /** distortion k1   */
+      k2 = fake_intrinsics[5]; /** distortion k2   */
+      k3 = fake_intrinsics[6]; /** distortion k3   */
+      p1 = fake_intrinsics[7]; /** distortion p1   */
+      p2 = fake_intrinsics[8]; /** distortion p2   */
 
       double xp1 = camera_point[0];   
       double yp1 = camera_point[1];
@@ -219,52 +250,18 @@ void visualizeResults(const ICL::ResearchIntrinsic::Result &results,
       double point_x = fx * xpp + cx;
       double point_y = fy * ypp + cy;
 
-      cv::Point2d cv_point(point_x, point_y);
-      observation_points.push_back(cv_point);
+      cv::Point2d observation_point(point_x, point_y);
+      observation_data[i].push_back(observation_point);
     }
-
-    cv::Mat result_image;
-    drawResultPoints(cal_images[i], result_image, observation_points,
-      target.getDefinition().target_rows, target.getDefinition().target_cols);
-    cv::imshow("Result Image", result_image);
-    cv::waitKey(0);
-  }  
-}
-
-void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
-{
-  std::string data_path = data_dir + data_set + "/";
-
-  // Load Target Data
-  ICL::Target target(data_path + "mcircles_9x12.yaml");
-
-  // Load Calibration Images
-  CalibrationImages cal_images;
-  ROS_INFO_STREAM("Loading Calibration Images for Data Set: " << data_set);
-  getCalibrationImages(data_path, cal_images);  
-
-  // Extract Observations
-  ROS_INFO_STREAM("Extracting Observations from Data Set: " << data_set);
-  ICL::ObservationExtractor observation_extractor(target);
-  for (std::size_t i = 0; i < cal_images.size(); i++)
-  {
-    cv::Mat grid_image;
-    observation_extractor.extractObservation(cal_images[i], grid_image);
   }
 
-  // Get observations from extractor
-  ICL::ObservationData observation_data = observation_extractor.getObservationData();
-
+#if 01
   // Seed parameters (Average of intrinsic values)
   double camera_info[9];
-  // camera_info[0] = 570.34;
-  // camera_info[1] = 570.34;
-  // camera_info[2] = 319.5;
-  // camera_info[3] = 239.5;  
-  camera_info[0] = 537.1;
-  camera_info[1] = 536.1;
-  camera_info[2] = 325.5;
-  camera_info[3] = 231.9;
+  camera_info[0] = 0.0; //537.1;
+  camera_info[1] = 0.0; //536.1;
+  camera_info[2] = 0.0; //325.5;
+  camera_info[3] = 0.0; //231.9;
   camera_info[4] = 0.0;
   camera_info[5] = 0.0;
   camera_info[6] = 0.0;
@@ -290,7 +287,7 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   
   calibration.setOutput(true); // Enable output to console.
   calibration.runCalibration();
-  calibration.displayCovariance();
+  // calibration.displayCovariance();
 
   // Print out results.
 #if RUN_THEORY
@@ -312,11 +309,6 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   ROS_INFO_STREAM("Distortion k3: " << results.intrinsics[6]);
   ROS_INFO_STREAM("Distortion p1: " << results.intrinsics[7]);
   ROS_INFO_STREAM("Distortion p2: " << results.intrinsics[8]);
-
-#if VISUALIZE_RESULTS
-  visualizeResults(results, target, cal_images);
-#else
-#endif
 
 #if SAVE_DATA
   std::string result_path = data_dir + "results/ic2_" + data_set + ".yaml";  
@@ -347,6 +339,7 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   }
 #else
 #endif
+#endif
 }
 
 int main(int argc, char** argv)
@@ -354,9 +347,6 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "intrinsic_opencv");
   ros::NodeHandle pnh("~");
   
-  ROS_INFO_STREAM("SIM");
-
-  #if 0
   std::string data_dir;
   pnh.getParam("data_dir", data_dir);
   data_dir = addSlashToEnd(data_dir);
@@ -370,8 +360,8 @@ int main(int argc, char** argv)
 
   for (std::size_t i = 0; i < data_sets.size(); i++)
   {
-    calibrateDataSet(data_dir, data_sets[i]);
+    calibrateSimDataSet(data_dir, data_sets[i]);
   }
-  #endif
+
   return 0;
 }
