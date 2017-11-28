@@ -8,7 +8,7 @@
   <arg if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args"/>
 
   <arg name="sim" default="false"/>
-  <arg unless="$(arg sim)" name="node" value="intrinsic_ic2"/>
+  <arg unless="$(arg sim)" name="node" value="intrinsic_ic2_single"/>
   <arg if="$(arg sim)" name="node" value="intrinsic_ic2_sim"/>
 
   <node name="$(arg node)" pkg="industrial_calibration" type="$(arg node)" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
