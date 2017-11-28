@@ -14,6 +14,14 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
 )
 
+# OpenMP
+find_package(OpenMP REQUIRED)
+if(OPENMP_FOUND)
+  message(STATUS "OPENMP FOUND")
+  set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})
+  set(OpenMP_LIBS gomp)
+endif()
+
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS signals thread)
 find_package(OpenCV REQUIRED)
@@ -29,7 +37,7 @@ catkin_package(
 
   DEPENDS 
   Boost
-  OpenCV 
+  OpenCV
 )
 
 ###########
@@ -94,7 +102,8 @@ add_executable(intrinsic_opencv_single src/research/intrinsic_opencv_single.cpp)
 add_dependencies(intrinsic_opencv_single ${catkin_EXPORTED_TARGETS})
 set_target_properties(intrinsic_opencv_single ${COMPILER_WARNINGS})
 target_link_libraries(intrinsic_opencv_single ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
-  ${Boost_LIBRARIES} yaml-cpp)
+  ${Boost_LIBRARIES} yaml-cpp ${OpenMP_LIBS})
+target_compile_options(intrinsic_opencv_single PRIVATE ${OpenMP_FLAGS})
 
 add_executable(intrinsic_ic2 src/research/intrinsic_ic2.cpp)
 add_dependencies(intrinsic_ic2 ${catkin_EXPORTED_TARGETS})
