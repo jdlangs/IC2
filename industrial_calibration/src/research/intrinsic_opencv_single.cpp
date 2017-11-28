@@ -135,7 +135,7 @@ bool saveResultData(const std::string &result_path,
       << results[i].rms << '\n';
   }
   result_file.close();
-  
+
   return true;
 }
 
@@ -286,7 +286,7 @@ void calibrateObservationSet(const std::string &data_dir,
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "intrinsic_opencv");
+  ros::init(argc, argv, "intrinsic_opencv_single");
   ros::NodeHandle pnh("~");
 
   std::string data_dir;

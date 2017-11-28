@@ -351,7 +351,7 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "intrinsic_opencv");
+  ros::init(argc, argv, "intrinsic_ic2_single");
   ros::NodeHandle pnh("~");
   
   std::string data_dir;
