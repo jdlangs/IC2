@@ -17,6 +17,17 @@
 
 #define ICL industrial_calibration_libs
 #define SAVE_ESTIMATED_EXTRINSICS
+#define DISPLAY_RESULTS
+// #define DEBUG_OUTPUTS
+
+struct CalibrationResult
+{
+  std::size_t observation_set;
+  double rms;
+  double total_average_error;
+  cv::Mat camera_matrix;
+  cv::Mat dist_coeffs;
+};
 
 // Function Declarations
 cv::Point2f point2dToPoint2f(const cv::Point2d &point2d);
@@ -33,14 +44,19 @@ double computeReprojectionErrors(const std::vector<std::vector<cv::Point3f>> &ob
 
 std::vector<double> matToVec(const cv::Mat &mat);
 
-bool saveResultData(const std::string &result_path, double rms, double total_average_error,
-  const cv::Mat &camera_matrix, const cv::Mat &dist_coeffs);
+bool saveResultData(const std::string &result_path,
+  const std::vector<CalibrationResult> &results);
 
 bool saveEstimatedExtrinsics(const std::string &estimated_poses_path, 
   const std::string &data_set, const std::vector<cv::Mat> &rvecs, 
   const std::vector<cv::Mat> &tvecs);
 
-void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
+void calibrateObservationSet(const std::string &data_dir,
+  const ICL::ObservationData &observation_data,
+  const cv::Size &image_size,
+  const ICL::TargetDefinition &target_definition,
+  const std::size_t &observation_set_index,
+  std::vector<CalibrationResult> &results);
 
 
 // Function Implementations
@@ -97,58 +113,30 @@ std::vector<double> matToVec(const cv::Mat &mat)
   return vec;
 }
 
-bool saveResultData(const std::string &result_path, double rms, double total_average_error,
-  const cv::Mat &camera_matrix, const cv::Mat &dist_coeffs)
+bool saveResultData(const std::string &result_path, 
+  const std::vector<CalibrationResult> &results)
 {
-  YAML::Emitter out;
+  std::ofstream result_file;
+  result_file.open(result_path);
 
-  out << YAML::BeginMap;
-
-  out << YAML::Key << "camera_matrix";
-    out << YAML::Value << YAML::BeginMap;
-      out << YAML::Key << "rows";
-        out << YAML::Value << camera_matrix.rows;
-      out << YAML::Key << "cols";
-        out << YAML::Value << camera_matrix.cols;
-      out << YAML::Key << "data";
-        out << YAML::Value << YAML::Flow << matToVec(camera_matrix);
-    out << YAML::EndMap;
-
-  out << YAML::Key << "distortion_coefficients";
-    out << YAML::Value << YAML::BeginMap;
-      out << YAML::Key << "rows";
-        out << YAML::Value << dist_coeffs.rows;
-      out << YAML::Key << "cols";
-        out << YAML::Value << dist_coeffs.cols;
-      out << YAML::Key << "data";
-        out << YAML::Value << YAML::Flow << matToVec(dist_coeffs);
-    out << YAML::EndMap;
-
-  out << YAML::Key << "reprojection_error";
-    out << YAML::Value << rms;
-
-  out << YAML::Key << "total_average_error";
-    out << YAML::Value << total_average_error;
-
-  out << YAML::EndMap;
-
-  // Write to yaml file
-  if (out.good())
+  result_file << "Set,Fx,Fy,Cx,Cy,k1,k2,p1,p2,k3,Reprj Error" << '\n';
+  for (std::size_t i = 0; i < results.size(); i++)
   {
-    std::ofstream yaml_file(result_path);
-    if (yaml_file)
-    {
-      yaml_file << out.c_str();
-      yaml_file.close();
-      return true;
-    }
-    if (yaml_file.bad())
-    {
-      return false;
-    }
+    result_file << results[i].observation_set << ','
+      << results[i].camera_matrix.at<double>(0,0) << ','
+      << results[i].camera_matrix.at<double>(1,1) << ','
+      << results[i].camera_matrix.at<double>(0,2) << ','
+      << results[i].camera_matrix.at<double>(1,2) << ','
+      << results[i].dist_coeffs.at<double>(0,0) << ','
+      << results[i].dist_coeffs.at<double>(1,0) << ','
+      << results[i].dist_coeffs.at<double>(2,0) << ','
+      << results[i].dist_coeffs.at<double>(3,0) << ','
+      << results[i].dist_coeffs.at<double>(4,0) << ','
+      << results[i].rms << '\n';
   }
-
-  return false;
+  result_file.close();
+  
+  return true;
 }
 
 bool saveEstimatedExtrinsics(const std::string &estimated_poses_path, 
@@ -193,36 +181,17 @@ bool saveEstimatedExtrinsics(const std::string &estimated_poses_path,
 }
 
 
-void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
+void calibrateObservationSet(const std::string &data_dir, 
+  const ICL::ObservationData &observation_data,
+  const cv::Size &image_size,
+  const ICL::TargetDefinition &target_definition,
+  const std::size_t &observation_set_index,
+  std::vector<CalibrationResult> &results)
 {
-  std::string data_path = data_dir + data_set + "/";
-
-  // Load Target Data
-  ICL::Target target(data_path + "mcircles_9x12.yaml");
-
-  // Load Calibration Images
-  CalibrationImages cal_images;
-  ROS_INFO_STREAM("Loading Calibration Images for Data Set: " << data_set);
-  getCalibrationImages(data_path, cal_images);
-
-  // Extract Observations
-  ROS_INFO_STREAM("Extracting Observations from Data Set: " << data_set);
-  ICL::ObservationExtractor observation_extractor(target);
-  for (std::size_t i = 0; i < cal_images.size(); i++)
-  {
-    cv::Mat grid_image;
-    observation_extractor.extractObservation(cal_images[i], grid_image);
-  }
-
-  // Get observations from extractor
-  ICL::ObservationData observation_data = observation_extractor.getObservationData();
-
   // Convert target points to std::vector<std::vector<cv::Point2f>>
   // ICL::TargetDefinition::points = std::vector<ICL::Point3D>
   std::vector<std::vector<cv::Point3f>> object_points;
   object_points.reserve(observation_data.size());
-
-  ICL::TargetDefinition target_definition = target.getDefinition();
 
   std::vector<cv::Point3f> object_points_temp;
   object_points_temp.reserve(target_definition.points.size());
@@ -251,17 +220,8 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
     image_points.push_back(observation_temp);
   }
 
-  cv::Size image_size = cal_images[0].size();
-  
   // Set seed parameters
   cv::Mat camera_matrix = cv::Mat::eye(3, 3, CV_64F);
-  camera_matrix.at<double>(0, 0) = 570.342224; // Fx
-  camera_matrix.at<double>(1, 1) = 570.342224; // Fy
-  camera_matrix.at<double>(0, 2) = 319.5; // Cx
-  camera_matrix.at<double>(1, 2) = 239.5; // Cy
-
-  // std::cout << camera_matrix << std::endl;
-
   cv::Mat dist_coeffs = cv::Mat::zeros(8, 1, CV_64F);
   
   std::vector<cv::Mat> rvecs;
@@ -272,12 +232,12 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   // flag |= CV_CALIB_FIX_ASPECT_RATIO;  
   // flag |= CV_CALIB_ZERO_TANGENT_DIST; // Hell no.
   // flag |= CV_CALIB_FIX_PRINCIPAL_POINT;
-  flag |= CV_CALIB_USE_INTRINSIC_GUESS;
+  // flag |= CV_CALIB_USE_INTRINSIC_GUESS;
   flag |= CV_CALIB_FIX_K4;
   flag |= CV_CALIB_FIX_K5;
   flag |= CV_CALIB_FIX_K6;
 
-  ROS_INFO_STREAM("Running Calibration on Data Set: " << data_set);
+  ROS_INFO_STREAM("Running Calibration on Observation Set: " << observation_set_index);
   double rms = cv::calibrateCamera(object_points, image_points, image_size,
     camera_matrix, dist_coeffs, rvecs, tvecs, flag);
 
@@ -288,41 +248,37 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   else 
     ROS_INFO_STREAM("cv::checkRange() does not say OK");
 
-  ROS_INFO_STREAM("Calculating Reprojection Errors for Data Set: " << data_set);
+  ROS_INFO_STREAM("Calculating Reprojection Errors for Observation Set: " 
+    << observation_set_index);
   
   std::vector<float> reprojection_errors;
   double total_average_error = computeReprojectionErrors(object_points,
     image_points, rvecs, tvecs, camera_matrix, dist_coeffs, reprojection_errors);
 
-  bool DISPLAY_RESULTS = true;
-  if (DISPLAY_RESULTS)
-  {
-    ROS_INFO_STREAM("Data Set: " << data_set << " results:");
-    ROS_INFO_STREAM("Re-projection error reported by cv::calibrateCamera: " << rms);
-    ROS_INFO_STREAM("Total Average Error: " << total_average_error);
-    ROS_INFO_STREAM("Camera Matrix = \n" << camera_matrix);
-    ROS_INFO_STREAM("Distortion Coefficients = " << dist_coeffs);
-  }
+#ifdef DISPLAY_RESULTS
+  ROS_INFO_STREAM("Observation Set: " << observation_set_index << " results:");
+  ROS_INFO_STREAM("Re-projection error reported by cv::calibrateCamera: " << rms);
+  ROS_INFO_STREAM("Total Average Error: " << total_average_error);
+  ROS_INFO_STREAM("Camera Matrix = \n" << camera_matrix);
+  ROS_INFO_STREAM("Distortion Coefficients = \n" << dist_coeffs);
+#endif
 
-  std::string result_path = data_dir + "results/opencv_" + data_set + ".yaml";
-  ROS_INFO_STREAM("Saving Results of Data Set: " << data_set << " to "
-    << result_path);
-
-  if (saveResultData(result_path, rms, total_average_error, camera_matrix, dist_coeffs))
-  {
-    ROS_INFO_STREAM("Data Set: " << data_set << " Results Saved To: " << result_path);
-    ROS_INFO_STREAM("Data Successfully Saved!");
-  }
-  else
-  {
-    ROS_ERROR_STREAM("Failed to Save Results for Data Set: " << data_set);
-  }
+  // Set result
+  CalibrationResult result;
+  result.observation_set = observation_set_index;
+  result.rms = rms;
+  result.total_average_error = total_average_error;
+  result.camera_matrix = camera_matrix;
+  result.dist_coeffs = dist_coeffs;
+  results[observation_set_index] = result;
 
 #ifdef SAVE_ESTIMATED_EXTRINSICS
-  std::string estimated_poses_path = data_dir + data_set + "/estimated_poses.yaml";
-  if (!saveEstimatedExtrinsics(estimated_poses_path, data_set, rvecs, tvecs))
+  std::string estimated_poses_path = data_dir + "results/" 
+    + std::to_string(observation_set_index) + "_estimated_poses.yaml";
+  if (!saveEstimatedExtrinsics(estimated_poses_path, 
+    std::to_string(observation_set_index), rvecs, tvecs))
   {
-    ROS_ERROR_STREAM("Failed to Save Estimated Poses for Data Set: " << data_set);
+    ROS_ERROR_STREAM("Failed to Save Estimated Poses for Observation Set: " << observation_set_index);
   }
 #else
 #endif
@@ -337,15 +293,71 @@ int main(int argc, char **argv)
   pnh.getParam("data_dir", data_dir);
   data_dir = addSlashToEnd(data_dir);
 
-  std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
-    "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
+  // This calibration will run on a single data set but leave out 
+  // a single image every calibration.
 
-  // std::vector<std::string> data_sets = { "01" };
+  // Load target data
+  ICL::Target target(data_dir + "mcircles_11x15.yaml");
 
-  for (std::size_t i = 0; i < data_sets.size(); i++)
+  // Load Calibration Images
+  CalibrationImages cal_images;
+  ROS_INFO_STREAM("Loading calibration images from: " << data_dir);
+  getCalibrationImages(data_dir, cal_images);
+
+  // Extract Observations
+  ROS_INFO_STREAM("Extracting observations from data");
+  ICL::ObservationExtractor observation_extractor(target);
+  for (std::size_t i = 0; i < cal_images.size(); i++)
   {
-    calibrateDataSet(data_dir, data_sets[i]);
+    cv::Mat grid_image;
+    observation_extractor.extractObservation(cal_images[i], grid_image);
   }
+
+  // Get Observations from extractor
+  ICL::ObservationData observation_data = observation_extractor.getObservationData();
+
+  // Split observations into sets
+  std::vector<ICL::ObservationData> observation_sets;
+  observation_sets.reserve(observation_data.size());
+  for (std::size_t i = 0; i < observation_data.size(); i++)
+  {
+    ICL::ObservationData temp_observation_data;
+    temp_observation_data.reserve(observation_data.size()-1);
+
+    for (std::size_t j = 0; j < observation_data.size(); j++)
+    {
+      if (i != j)
+      {
+        temp_observation_data.push_back(observation_data[j]);
+      }
+    }
+    observation_sets.push_back(temp_observation_data);
+  }
+
+#ifdef DEBUG_OUTPUTS
+  ROS_INFO_STREAM("Total Observation Sets: " << observation_sets.size());
+  for (std::size_t i = 0; i  < observation_sets.size(); i++)
+  {
+    ROS_INFO_STREAM("Observation Set: " << i << " Total Observations: " << observation_sets[i].size());
+  }
+#endif
+
+  // Results
+  std::vector<CalibrationResult> results;
+  results.resize(observation_sets.size());
+
+  // Run the calibration on each set
+  #pragma omp parallel for
+  for (std::size_t i = 0; i < observation_sets.size(); i++)
+  {
+    calibrateObservationSet(data_dir, observation_sets[i], 
+      cal_images[0].size(), target.getDefinition(), i,
+      results);
+  }
+
+  std::string result_path = data_dir + "results/opencv_results.csv";
+  ROS_INFO_STREAM("Saving Results to: " << result_path);
+  saveResultData(result_path, results);
 
   return 0;
 }
