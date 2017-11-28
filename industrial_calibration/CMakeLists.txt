@@ -111,6 +111,13 @@ set_target_properties(intrinsic_ic2 ${COMPILER_WARNINGS})
 target_link_libraries(intrinsic_ic2 ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
   ${Boost_LIBRARIES} yaml-cpp)
 
+add_executable(intrinsic_ic2_single src/research/intrinsic_ic2_single.cpp)
+add_dependencies(intrinsic_ic2_single ${catkin_EXPORTED_TARGETS})
+set_target_properties(intrinsic_ic2_single ${COMPILER_WARNINGS})
+target_link_libraries(intrinsic_ic2_single ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
+  ${Boost_LIBRARIES} yaml-cpp ${OpenMP_LIBS})
+target_compile_options(intrinsic_ic2_single PRIVATE ${OpenMP_FLAGS})
+
 add_executable(intrinsic_ic2_sim src/research/intrinsic_ic2_sim.cpp)
 add_dependencies(intrinsic_ic2_sim ${catkin_EXPORTED_TARGETS})
 set_target_properties(intrinsic_ic2_sim ${COMPILER_WARNINGS})
