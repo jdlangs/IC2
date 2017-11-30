@@ -14,89 +14,69 @@
 #define ICL industrial_calibration_libs
 
 #define RUN_THEORY true
-#define RUN_ALL false
 #define OUTPUT_EXTRINSICS false
 #define VISUALIZE_RESULTS false
 #define SAVE_DATA false
 
+struct CalibrationResult
+{
+  std::size_t observation_set;
+  double rms;
+  double total_average_error;
+  double intrinsics[9];
+};
+
 // Function Declarations
-void calibrateDataSet(const std::string &data_dir, const std::string &data_set);
+void calibrateObservationSet(const std::string &data_dir,
+  const ICL::ObservationData &observation_data,
+  const ICL::Target &target,
+  const std::size_t &observation_set_index,
+  std::vector<CalibrationResult> &out_results);
 
-bool loadSeedExtrinsics(const std::string &data_path, std::size_t num_images,
-  std::vector<ICL::Extrinsics> &extrinsics_seed);
+bool loadSeedExtrinsics(const std::string &data_path, const std::size_t &index,
+  std::size_t num_images, std::vector<ICL::Extrinsics> &extrinsics_seed);
 
-bool saveResultdata(const std::string &result_path, double final_cost, 
-    double intrinsics[9]);
+bool saveResultData(const std::string &result_path,
+  const std::vector<CalibrationResult> &results);
 
 void visualizeResults(const ICL::ResearchIntrinsic::Result &results,
   const ICL::Target &target, const CalibrationImages cal_images);
 
 // Function Implementatins
-bool saveResultdata(const std::string &result_path, double final_cost, 
-    double intrinsics[9])
+bool saveResultData(const std::string &result_path, 
+  const std::vector<CalibrationResult> &results)
 {
-  std::vector<double> camera_matrix = { intrinsics[0], 0, intrinsics[2],
-    0, intrinsics[1], intrinsics[3], 0, 0, 1 };
-  // Mine are: k1, k2, k3, p1, p2
-  // Output as: k1, k2, p1, p2, k3
-  std::vector<double> dist_coeffs = { intrinsics[4], intrinsics[5],
-    intrinsics[7], intrinsics[8], intrinsics[6] };
+  std::ofstream result_file;
+  result_file.open(result_path);
 
-  YAML::Emitter out;
-
-  out << YAML::BeginMap;
-
-  out << YAML::Key << "camera_matrix";
-    out << YAML::Value << YAML::BeginMap;
-      out << YAML::Key << "rows";
-        out << YAML::Value << 3;
-      out << YAML::Key << "cols";
-        out << YAML::Value << 3;
-      out << YAML::Key << "data";
-        out << YAML::Value << YAML::Flow << camera_matrix;
-    out << YAML::EndMap;
-
-  out << YAML::Key << "distortion_coefficients";
-    out << YAML::Value << YAML::BeginMap;
-      out << YAML::Key << "rows";
-        out << YAML::Value << 1;
-      out << YAML::Key << "cols";
-        out << YAML::Value << 9;
-      out << YAML::Key << "data";
-        out << YAML::Value << YAML::Flow << dist_coeffs;
-    out << YAML::EndMap;
-
-  out << YAML::Key << "reprojection_error";
-    out << YAML::Value << final_cost;
-
-  out << YAML::EndMap;
-
-  // Write to yaml file
-  if (out.good())
+  result_file << "Set,Fx,Fy,Cx,Cy,k1,k2,p1,p2,k3,Reprj Error" << '\n';
+  for (std::size_t i = 0; i < results.size(); i++)
   {
-    std::ofstream yaml_file(result_path);
-    if (yaml_file)
-    {
-      yaml_file << out.c_str();
-      yaml_file.close();
-      return true;
-    }
-    if (yaml_file.bad())
-    {
-      return false;
-    }
+    result_file << results[i].observation_set << ','
+      << results[i].intrinsics[0] << ','
+      << results[i].intrinsics[1] << ','
+      << results[i].intrinsics[2] << ','
+      << results[i].intrinsics[3] << ','
+      << results[i].intrinsics[4] << ','
+      << results[i].intrinsics[5] << ','
+      << results[i].intrinsics[7] << ','
+      << results[i].intrinsics[8] << ','
+      << results[i].intrinsics[6] << ','
+      << results[i].rms << '\n';
   }
+  result_file.close();
 
-  return false;
+  return true;
 }
 
-bool loadSeedExtrinsics(const std::string &data_path, std::size_t num_images,
-  std::vector<ICL::Extrinsics> &extrinsics_seed)
+bool loadSeedExtrinsics(const std::string &data_path, const std::size_t &index,
+  std::size_t num_images, std::vector<ICL::Extrinsics> &extrinsics_seed)
 {
   extrinsics_seed.reserve(num_images);
 
   YAML::Node extrinsics_seed_yaml;
-  std::string path = data_path + "estimated_poses.yaml";
+  std::string path = data_path + "results/" + std::to_string(index) 
+    + "_estimated_poses.yaml";
 
   try
   {
@@ -231,53 +211,32 @@ void visualizeResults(const ICL::ResearchIntrinsic::Result &results,
   }  
 }
 
-void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
+void calibrateObservationSet(const std::string &data_dir,
+  const ICL::ObservationData &observation_data,
+  const ICL::Target &target,
+  const std::size_t &observation_set_index,
+  std::vector<CalibrationResult> &out_results)
 {
-  std::string data_path = data_dir + data_set + "/";
-
-  // Load Target Data
-  ICL::Target target(data_path + "mcircles_9x12.yaml");
-
-  // Load Calibration Images
-  CalibrationImages cal_images;
-  ROS_INFO_STREAM("Loading Calibration Images for Data Set: " << data_set);
-  getCalibrationImages(data_path, cal_images);  
-
-  // Extract Observations
-  ROS_INFO_STREAM("Extracting Observations from Data Set: " << data_set);
-  ICL::ObservationExtractor observation_extractor(target);
-  for (std::size_t i = 0; i < cal_images.size(); i++)
-  {
-    cv::Mat grid_image;
-    observation_extractor.extractObservation(cal_images[i], grid_image);
-  }
-
-  // Get observations from extractor
-  ICL::ObservationData observation_data = observation_extractor.getObservationData();
-
-  // Seed parameters (Average of intrinsic values)
-  double camera_info[9];
-  // camera_info[0] = 570.34;
-  // camera_info[1] = 570.34;
-  // camera_info[2] = 319.5;
-  // camera_info[3] = 239.5;  
-  camera_info[0] = 537.1;
-  camera_info[1] = 536.1;
-  camera_info[2] = 325.5;
-  camera_info[3] = 231.9;
+  // Seed parameters (Average of intrinsic values from OpenCV)
+  double camera_info[9]; 
+  camera_info[0] = 533.2;
+  camera_info[1] = 534.3;
+  camera_info[2] = 316.4;
+  camera_info[3] = 233.2;
   camera_info[4] = 0.0;
   camera_info[5] = 0.0;
   camera_info[6] = 0.0;
   camera_info[7] = 0.0;
   camera_info[8] = 0.0;
 
-  ROS_INFO_STREAM("Running Calibration for Data Set: " << data_set);
+  ROS_INFO_STREAM("Running Calibration for Observation Set: " << observation_set_index);
   ICL::ResearchIntrinsicParams params;
   params.intrinsics = ICL::IntrinsicsFull(camera_info);
 
   // Get seed extrinsics
   params.target_to_camera_seed;
-  if (!loadSeedExtrinsics(data_path, cal_images.size(), params.target_to_camera_seed))
+  if (!loadSeedExtrinsics(data_dir, observation_set_index, 
+    observation_data.size(), params.target_to_camera_seed))
   {
     ROS_ERROR_STREAM("Failed to load seed extrinsics");
   }
@@ -290,7 +249,7 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   
   calibration.setOutput(true); // Enable output to console.
   calibration.runCalibration();
-  calibration.displayCovariance();
+  // calibration.displayCovariance();
 
   // Print out results.
 #if RUN_THEORY
@@ -313,23 +272,16 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   ROS_INFO_STREAM("Distortion p1: " << results.intrinsics[7]);
   ROS_INFO_STREAM("Distortion p2: " << results.intrinsics[8]);
 
+  // Set result
+  CalibrationResult result;
+  result.observation_set = observation_set_index;
+  result.rms = calibration.getFinalCost();
+  result.total_average_error = calibration.getFinalCost();
+  std::memcpy(result.intrinsics, results.intrinsics, sizeof(result.intrinsics));
+  out_results[observation_set_index] = result;
+
 #if VISUALIZE_RESULTS
   visualizeResults(results, target, cal_images);
-#else
-#endif
-
-#if SAVE_DATA
-  std::string result_path = data_dir + "results/ic2_" + data_set + ".yaml";  
-  if (saveResultdata(result_path, calibration.getFinalCost(), 
-    results.intrinsics))
-  {
-    ROS_INFO_STREAM("Data Set: " << data_set << " Results Saved To: " <<
-      result_path);
-  }
-  else
-  {
-    ROS_ERROR_STREAM("Failed to Save Results for Data Set: " << data_set);
-  }
 #else
 #endif
 
@@ -358,17 +310,66 @@ int main(int argc, char** argv)
   pnh.getParam("data_dir", data_dir);
   data_dir = addSlashToEnd(data_dir);
 
-#if RUN_ALL
-  std::vector<std::string> data_sets = { "01", "02", "03", "04", "05", 
-    "06", "07", "08", "09", "10", "11", "12", "13", "14", "15" };
-#else
-  std::vector<std::string> data_sets = { "01" };
-#endif
+  // This calibration will run on a single data set but leave out 
+  // a single image every calibration.
 
-  for (std::size_t i = 0; i < data_sets.size(); i++)
+  // Load target data
+  ICL::Target target(data_dir + "mcircles_11x15.yaml");
+
+  // Load Calibration Images
+  CalibrationImages cal_images;
+  ROS_INFO_STREAM("Loading calibration images from: " << data_dir);
+  getCalibrationImages(data_dir, cal_images);
+
+  // Extract Observations
+  ROS_INFO_STREAM("Extracting observations from data");
+  ICL::ObservationExtractor observation_extractor(target);
+  for (std::size_t i = 0; i < cal_images.size(); i++)
   {
-    calibrateDataSet(data_dir, data_sets[i]);
+    cv::Mat grid_image;
+    observation_extractor.extractObservation(cal_images[i], grid_image);
   }
+
+  // Get Observations from extractor
+  ICL::ObservationData observation_data = observation_extractor.getObservationData();
+
+  // Split observations into sets
+  std::vector<ICL::ObservationData> observation_sets;
+  observation_sets.reserve(observation_data.size());
+  for (std::size_t i = 0; i < observation_data.size(); i++)
+  {
+    ICL::ObservationData temp_observation_data;
+    temp_observation_data.reserve(observation_data.size()-1);
+
+    for (std::size_t j = 0; j < observation_data.size(); j++)
+    {
+      if (i != j)
+      {
+        temp_observation_data.push_back(observation_data[j]);
+      }
+    }
+    observation_sets.push_back(temp_observation_data);
+  }
+
+  // Results
+  std::vector<CalibrationResult> results;
+  results.resize(observation_sets.size());
+
+  // Run the calibration on each set
+  #pragma omp parallel for
+  for (std::size_t i = 0; i < observation_sets.size(); i++)
+  {
+    calibrateObservationSet(data_dir, observation_sets[i], 
+      target, i, results);
+  }
+
+#ifdef RUN_THEORY
+  std::string result_path = data_dir + "results/ic2_theory_results.csv";
+#else
+  std::string result_path = data_dir + "results/ic2_results.csv";
+#endif
+  ROS_INFO_STREAM("Saving Results to: " << result_path);
+  saveResultData(result_path, results);
 
   return 0;
 }
