@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 <launch>
-  <arg name="cols" default="10"/>
-  <arg name="rows" default="10"/>
+  <arg name="cols" default="15"/>
+  <arg name="rows" default="11"/>
   <arg name="from_link" default="base_link"/>
   <arg name="to_link" default="tool0"/>
   <arg name="save_path" default="$(find industrial_calibration)"/>
-  <arg name="image_topic" default="/camera/rgb/image_rect_color"/>
+  <arg name="image_topic" default="/camera/rgb/image_raw"/>
   <arg name="camera_info_topic" default="/camera/rgb/camera_info"/>
   <arg name="joint_state_topic" default="/joint_states"/>
 
