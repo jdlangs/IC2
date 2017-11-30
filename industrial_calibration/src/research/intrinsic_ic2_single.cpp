@@ -13,7 +13,7 @@
 
 #define ICL industrial_calibration_libs
 
-#define RUN_THEORY true
+#define RUN_THEORY false
 #define OUTPUT_EXTRINSICS false
 #define VISUALIZE_RESULTS false
 #define SAVE_DATA false
@@ -36,6 +36,8 @@ void calibrateObservationSet(const std::string &data_dir,
 bool loadSeedExtrinsics(const std::string &data_path, const std::size_t &index,
   std::size_t num_images, std::vector<ICL::Extrinsics> &extrinsics_seed);
 
+void loadCalibrationImages(const std::string &path, CalibrationImages &images);
+
 bool saveResultData(const std::string &result_path,
   const std::vector<CalibrationResult> &results);
 
@@ -43,6 +45,17 @@ void visualizeResults(const ICL::ResearchIntrinsic::Result &results,
   const ICL::Target &target, const CalibrationImages cal_images);
 
 // Function Implementatins
+void loadCalibrationImages(const std::string &path, CalibrationImages &images)
+{
+  // I know there are 900 images so i'm just going to hard code it...
+  for (std::size_t i = 0; i < 900; i++)
+  {
+    std::string image_path = path + std::to_string(i+1) + ".png";
+    cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_COLOR);
+    images.push_back(image);
+  }
+}
+
 bool saveResultData(const std::string &result_path, 
   const std::vector<CalibrationResult> &results)
 {
@@ -310,16 +323,21 @@ int main(int argc, char** argv)
   pnh.getParam("data_dir", data_dir);
   data_dir = addSlashToEnd(data_dir);
 
-  // This calibration will run on a single data set but leave out 
-  // a single image every calibration.
+  // I changed some things up so data_dir isn't actually where the data is
+  std::string real_data_dir = data_dir + "data/";
+
+  // This calibration will run thruogh 900 images and split them into 30 sets of 30
+  // The camera was moved to 30 different poses on a tripod and 30 images were taken
+  // at each pose with _slight_ adjustments so that each image is different.
+  // Images will be taken from 1, 31, 61, 91 ... then 2, 32, 62, etc...
 
   // Load target data
   ICL::Target target(data_dir + "mcircles_11x15.yaml");
 
   // Load Calibration Images
-  CalibrationImages cal_images;
-  ROS_INFO_STREAM("Loading calibration images from: " << data_dir);
-  getCalibrationImages(data_dir, cal_images);
+  CalibrationImages cal_images; // Maybe i should put this on the heap???
+  ROS_INFO_STREAM("Loading calibration images from: " << real_data_dir);
+  loadCalibrationImages(real_data_dir, cal_images);
 
   // Extract Observations
   ROS_INFO_STREAM("Extracting observations from data");
@@ -328,6 +346,7 @@ int main(int argc, char** argv)
   {
     cv::Mat grid_image;
     observation_extractor.extractObservation(cal_images[i], grid_image);
+    if (i % 50 == 0) {ROS_INFO_STREAM("Extracting Observations ... Image[" << i << "]");}
   }
 
   // Get Observations from extractor
@@ -335,18 +354,15 @@ int main(int argc, char** argv)
 
   // Split observations into sets
   std::vector<ICL::ObservationData> observation_sets;
-  observation_sets.reserve(observation_data.size());
-  for (std::size_t i = 0; i < observation_data.size(); i++)
+  observation_sets.reserve(30); // 30 sets of 30 images
+
+  for (std::size_t i = 0; i < 30; i++)
   {
     ICL::ObservationData temp_observation_data;
-    temp_observation_data.reserve(observation_data.size()-1);
-
-    for (std::size_t j = 0; j < observation_data.size(); j++)
+    temp_observation_data.reserve(30); // 30 sets of 30 images
+    for (std::size_t j = 0; j < 30; j++)
     {
-      if (i != j)
-      {
-        temp_observation_data.push_back(observation_data[j]);
-      }
+      temp_observation_data.push_back(observation_data[i+30*j]);
     }
     observation_sets.push_back(temp_observation_data);
   }
@@ -363,7 +379,7 @@ int main(int argc, char** argv)
       target, i, results);
   }
 
-#ifdef RUN_THEORY
+#if RUN_THEORY
   std::string result_path = data_dir + "results/ic2_theory_results.csv";
 #else
   std::string result_path = data_dir + "results/ic2_results.csv";
