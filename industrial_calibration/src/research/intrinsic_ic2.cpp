@@ -13,7 +13,7 @@
 
 #define ICL industrial_calibration_libs
 
-#define RUN_THEORY true
+#define RUN_THEORY false
 #define RUN_ALL false
 #define OUTPUT_EXTRINSICS false
 #define VISUALIZE_RESULTS false
@@ -290,7 +290,7 @@ void calibrateDataSet(const std::string &data_dir, const std::string &data_set)
   
   calibration.setOutput(true); // Enable output to console.
   calibration.runCalibration();
-  calibration.displayCovariance();
+  // calibration.displayCovariance();
 
   // Print out results.
 #if RUN_THEORY

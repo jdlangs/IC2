@@ -140,6 +140,269 @@ template<typename T> inline void cameraPointResidualWithDistortion(T point[3],
   residual[1] = fy * ypp + cy - oy;
 }
 
+#if 0
+// This one had no effect on the results.
+template<typename T> inline void cameraCircResidualDist(T point[3], 
+  T &circle_diameter, T R_TtoC[9], T &k1, T &k2, T &k3, T &p1, T &p2, 
+  T &fx, T &fy, T &cx, T &cy, T &ox, T &oy, T residual[2])
+{
+  T xp1 = point[0];
+  T yp1 = point[1];
+  T zp1 = point[2];
+  T r = circle_diameter / T(2.0);
+  T PI = T(3.1415);
+
+  /*
+      [R1, R2, R3]
+  R = [R4, R5, R6]
+      [R7, R8, R9]
+
+  R_TtoC in Column Major = [R1, R4, R7, R2, R5, R8, R3, R6, R9]
+                         = [0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 ]
+  */
+
+  T R7 = R_TtoC[2];
+  T R8 = R_TtoC[5];
+
+  T theta1;
+  T theta2;
+
+  if (R8 == T(0.0))
+  {
+    theta1 = T(PI / T(2.0));
+    theta2 = T(-PI / T(2.0));
+  }
+  else
+  {
+    theta1 = atan(R8/R7);
+    theta2 = theta1+T(PI);
+  }
+
+  T rs = r*sin(theta1);
+  T rc = r*cos(theta1);
+
+  T xp = xp1 + R_TtoC[0]*rs + R_TtoC[3]*rc;
+  T yp = yp1 + R_TtoC[1]*rs + R_TtoC[4]*rc;
+  T zp = zp1 + R_TtoC[2]*rs + R_TtoC[5]*rc;
+
+  if(zp == T(0.0))
+  {
+    xp =xp1;
+    yp =yp1;
+  }
+  else
+  {
+    xp = xp1 / zp;
+    yp = yp1 / zp;
+  }
+
+  // Temporary variables for distortion model.
+  T xp2 = xp * xp;    // x^2
+  T yp2 = yp * yp;    // y^2 
+  T r2  = xp2 + yp2;  // r^2 radius squared 
+  T r4  = r2 * r2;    // r^4 
+  T r6  = r2 * r4;    // r^6 
+  
+  // Apply the distortion coefficients to refine pixel location
+  T xpp1 = xp 
+    + k1 * r2 * xp    // 2nd order term
+    + k2 * r4 * xp    // 4th order term
+    + k3 * r6 * xp    // 6th order term
+    + p2 * (r2 + T(2.0) * xp2) // tangential
+    + p1 * xp * yp * T(2.0); // other tangential term
+
+  T ypp1 = yp 
+    + k1 * r2 * yp    // 2nd order term
+    + k2 * r4 * yp    // 4th order term
+    + k3 * r6 * yp    // 6th order term
+    + p1 * (r2 + T(2.0) * yp2) // tangential term
+    + p2 * xp * yp * T(2.0); // other tangential term
+
+  // Second point
+  rs = r*sin(theta2);
+  rc = r*cos(theta2);
+
+  xp = xp1 + R_TtoC[0]*rs + R_TtoC[3]*rc;
+  yp = yp1 + R_TtoC[1]*rs + R_TtoC[4]*rc;
+  zp = zp1 + R_TtoC[2]*rs + R_TtoC[5]*rc;
+
+  if(zp == T(0.0))
+  {
+    xp =xp1;
+    yp =yp1;
+  }
+  else
+  {
+    xp = xp1 / zp;
+    yp = yp1 / zp;
+  }
+
+  // Temporary variables for distortion model.
+  xp2 = xp * xp;    // x^2
+  yp2 = yp * yp;    // y^2 
+  r2  = xp2 + yp2;  // r^2 radius squared 
+  r4  = r2 * r2;    // r^4 
+  r6  = r2 * r4;    // r^6 
+  
+  // Apply the distortion coefficients to refine pixel location
+  T xpp2 = xp 
+    + k1 * r2 * xp    // 2nd order term
+    + k2 * r4 * xp    // 4th order term
+    + k3 * r6 * xp    // 6th order term
+    + p2 * (r2 + T(2.0) * xp2) // tangential
+    + p1 * xp * yp * T(2.0); // other tangential term
+
+  T ypp2 = yp 
+    + k1 * r2 * yp    // 2nd order term
+    + k2 * r4 * yp    // 4th order term
+    + k3 * r6 * yp    // 6th order term
+    + p1 * (r2 + T(2.0) * yp2) // tangential term
+    + p2 * xp * yp * T(2.0); // other tangential term
+
+  residual[0] = fx * (xpp1+xpp2)/T(2.0) + cx - ox;
+  residual[1] = fy * (ypp1+ypp2)/T(2.0) + cy - oy;
+}
+#endif
+
+#if 1
+template<typename T> inline void cameraCircResidualDist(T point[3], 
+  T &circle_diameter, T R_TtoC[9], T &k1, T &k2, T &k3, T &p1, T &p2, 
+  T &fx, T &fy, T &cx, T &cy, T &ox, T &oy, T residual[2])
+{
+  T xp1 = point[0];
+  T yp1 = point[1];
+  T zp1 = point[2];
+  T r = circle_diameter / T(2.0);
+  T PI = T(3.1415);
+
+  /*
+      [R1, R2, R3]
+  R = [R4, R5, R6]
+      [R7, R8, R9]
+
+  R_TtoC in Column Major = [R1, R4, R7, R2, R5, R8, R3, R6, R9]
+                         = [0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 ]
+  */
+
+  T R7 = R_TtoC[2];
+  T R8 = R_TtoC[5];
+
+  T theta1;
+  T theta2;
+
+  if (R8 == T(0.0))
+  {
+    theta1 = T(PI / T(2.0));
+    theta2 = T(-PI / T(2.0));
+  }
+  else
+  {
+    theta1 = atan(R7/R8);
+    theta2 = theta1+T(PI);
+  }
+
+  T rs = r*sin(theta1);
+  T rc = r*cos(theta1);
+
+  T xp = xp1 + R_TtoC[0]*rs + R_TtoC[3]*rc;
+  T yp = yp1 + R_TtoC[1]*rs + R_TtoC[4]*rc;
+  T zp = zp1 + R_TtoC[2]*rs + R_TtoC[5]*rc;
+
+#if 0
+  if(zp == T(0.0))
+  {
+    xp =xp1;
+    yp =yp1;
+  }
+  else
+  {
+    xp = xp1 / zp;
+    yp = yp1 / zp;
+  }
+#endif
+
+  if (zp != T(0.0))
+  {
+    xp = xp / zp;
+    yp = yp / zp;
+  }
+
+  // Temporary variables for distortion model.
+  T xp2 = xp * xp;    // x^2
+  T yp2 = yp * yp;    // y^2 
+  T r2  = xp2 + yp2;  // r^2 radius squared 
+  T r4  = r2 * r2;    // r^4 
+  T r6  = r2 * r4;    // r^6 
+  
+  // Apply the distortion coefficients to refine pixel location
+  T xpp1 = xp 
+    + k1 * r2 * xp    // 2nd order term
+    + k2 * r4 * xp    // 4th order term
+    + k3 * r6 * xp    // 6th order term
+    + p2 * (r2 + T(2.0) * xp2) // tangential
+    + p1 * xp * yp * T(2.0); // other tangential term
+
+  T ypp1 = yp 
+    + k1 * r2 * yp    // 2nd order term
+    + k2 * r4 * yp    // 4th order term
+    + k3 * r6 * yp    // 6th order term
+    + p1 * (r2 + T(2.0) * yp2) // tangential term
+    + p2 * xp * yp * T(2.0); // other tangential term
+
+  // Second point
+  rs = r*sin(theta2);
+  rc = r*cos(theta2);
+
+  xp = xp1 + R_TtoC[0]*rs + R_TtoC[3]*rc;
+  yp = yp1 + R_TtoC[1]*rs + R_TtoC[4]*rc;
+  zp = zp1 + R_TtoC[2]*rs + R_TtoC[5]*rc;
+
+#if 0
+  if(zp == T(0.0))
+  {
+    xp =xp1;
+    yp =yp1;
+  }
+  else
+  {
+    xp = xp1 / zp;
+    yp = yp1 / zp;
+  }
+#endif
+
+  if (zp != T(0.0))
+  {
+    xp = xp / zp;
+    yp = yp / zp;
+  }  
+
+  // Temporary variables for distortion model.
+  xp2 = xp * xp;    // x^2
+  yp2 = yp * yp;    // y^2 
+  r2  = xp2 + yp2;  // r^2 radius squared 
+  r4  = r2 * r2;    // r^4 
+  r6  = r2 * r4;    // r^6 
+  
+  // Apply the distortion coefficients to refine pixel location
+  T xpp2 = xp 
+    + k1 * r2 * xp    // 2nd order term
+    + k2 * r4 * xp    // 4th order term
+    + k3 * r6 * xp    // 6th order term
+    + p2 * (r2 + T(2.0) * xp2) // tangential
+    + p1 * xp * yp * T(2.0); // other tangential term
+
+  T ypp2 = yp 
+    + k1 * r2 * yp    // 2nd order term
+    + k2 * r4 * yp    // 4th order term
+    + k3 * r6 * yp    // 6th order term
+    + p1 * (r2 + T(2.0) * yp2) // tangential term
+    + p2 * xp * yp * T(2.0); // other tangential term
+
+  residual[0] = fx * (xpp1+xpp2)/T(2.0) + cx - ox;
+  residual[1] = fy * (ypp1+ypp2)/T(2.0) + cy - oy;
+}
+#endif
+
 struct CameraOnWristExtrinsicCF
 {
     CameraOnWristExtrinsicCF(const double observed_x, 
@@ -276,8 +539,8 @@ struct CameraOnWristIntrinsicCF
 struct ResearchIntrinsicCF
 {
   ResearchIntrinsicCF(const double observed_x, const double observed_y,
-    Point3D point) : observed_x_(observed_x), 
-    observed_y_(observed_y), point_(point) { }
+    Point3D point, double circle_diameter) : observed_x_(observed_x), 
+    observed_y_(observed_y), point_(point), circle_diameter_(circle_diameter) { }
 
   template<typename T> bool operator() (const T* const intrinsic_parameters,
   const T* const target_pose, T* residual) const
@@ -309,6 +572,14 @@ struct ResearchIntrinsicCF
     T observed_x = T(observed_x_);
     T observed_y = T(observed_y_);
 
+    T R_TtoC[9];
+    ceres::AngleAxisToRotationMatrix(target_angle_axis, R_TtoC);
+    T circle_diameter = T(circle_diameter_);
+#if 0  
+    cameraCircResidualDist(camera_point, circle_diameter, R_TtoC, distortion_k1, distortion_k2, 
+      distortion_k3, distortion_p1, distortion_p2, focal_length_x, focal_length_y,
+      optical_center_x, optical_center_y, observed_x, observed_y, residual);
+#endif
     cameraPointResidualWithDistortion(camera_point, distortion_k1, distortion_k2, 
       distortion_k3, distortion_p1, distortion_p2, focal_length_x, focal_length_y,
       optical_center_x, optical_center_y, observed_x, observed_y, residual);
@@ -319,15 +590,16 @@ struct ResearchIntrinsicCF
   // Factory to hide the construction of the Cost Function object from
   // client code.
   static ceres::CostFunction *Create(const double observed_x, const double observed_y,
-    Point3D point)
+    Point3D point, const double circle_diameter)
   {
     return (new ceres::AutoDiffCostFunction<ResearchIntrinsicCF, 2, 9, 6>(new 
-      ResearchIntrinsicCF(observed_x, observed_y, point)));
+      ResearchIntrinsicCF(observed_x, observed_y, point, circle_diameter)));
   }
 
   double observed_x_; // Observed x location of object in the image
   double observed_y_; // Observed y location of object in the image
   Point3D point_;
+  double circle_diameter_;
 };
 
 struct ResearchIntrinsicTheoryCF

@@ -62,7 +62,7 @@ bool ResearchIntrinsic::runCalibration(void)
       double observed_y = observation_data_[i][j].y;
 
       ceres::CostFunction *cost_function =
-        ResearchIntrinsicCF::Create(observed_x, observed_y, point);
+        ResearchIntrinsicCF::Create(observed_x, observed_y, point, target_.getDefinition().circle_diameter);
       problem_.AddResidualBlock(cost_function, NULL, result_.intrinsics,
         &extrinsics_[6*i]);               
     }
@@ -95,6 +95,41 @@ bool ResearchIntrinsic::runCalibration(void)
   }
 
   return false;
+}
+
+IntrinsicsVerificationResearch ResearchIntrinsic::verifyIntrinsics(const ObservationPoints &observation_1,
+  const Pose6D &pose_1, const ObservationPoints &observation_2, const Pose6D &pose_2,
+  double intrinsics[9], double target_guess[6])
+{
+  Pose6D target_to_pose_1;
+  Pose6D target_to_pose_2;
+
+  double target_guess1[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.2};
+  double target_guess2[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.7};
+
+  // Find the poses
+  this->findDistortedTarget(observation_1, target_to_pose_1, intrinsics, target_guess1);
+  this->findDistortedTarget(observation_2, target_to_pose_2, intrinsics, target_guess2);
+
+  // Compare these poses to input poses
+  // Absolute Error = Actual Value - Measured Value
+  IntrinsicsVerificationResearch result;
+  result.target_diff_x = target_to_pose_1.x - target_to_pose_2.x; // m
+  result.tool_diff_x = pose_1.x - pose_2.x; // m
+  result.absolute_error_x = result.tool_diff_x - result.target_diff_x; // m
+  
+  result.target_diff_y = target_to_pose_1.y - target_to_pose_2.y; // m
+  result.tool_diff_y = pose_1.y - pose_2.y; // m
+  result.absolute_error_y = result.tool_diff_y - result.target_diff_y; // m
+  
+  result.target_diff_z = target_to_pose_1.z - target_to_pose_2.z; // m
+  result.tool_diff_z = pose_1.z - pose_2.z; // m
+  result.absolute_error_z = result.tool_diff_z - result.target_diff_z; // m
+
+  std::cerr << "Front: x: " << target_to_pose_1.x << " y: " << target_to_pose_1.y << " z: " << target_to_pose_1.z << '\n';
+  std::cerr << "Back:  x: " << target_to_pose_2.x << " y: " << target_to_pose_2.y << " z: " << target_to_pose_2.z << '\n';
+
+  return result;
 }
 
 // Copied from camera_on_wrist_intrinsic.cpp, should probably break out
@@ -206,6 +241,7 @@ void ResearchIntrinsic::displayCovariance(void)
     }
   }
   
+  #if 0
   covariance.Compute(covariance_pairs, &problem_);
 
   if (output_results_)
@@ -266,6 +302,54 @@ void ResearchIntrinsic::displayCovariance(void)
       }
     }
   }
+  #endif
+  if (covariance.Compute(covariance_pairs, &problem_))
+  {
+    if (output_results_)
+    {
+      std::cout << "Covariance Blocks: " << '\n';
+      for (std::size_t i = 0; i < covariance_blocks.size(); i++)
+      {
+        for (std::size_t j = 0; j < covariance_blocks.size(); j++)
+        {
+          std::cout << "Covariance [" << block_names[i] << ", " 
+            << block_names[j] << "]" << '\n';
+
+          int N = block_sizes[i];
+          int M = block_sizes[j];
+          double* ij_cov_block = new double[N*M];
+
+          covariance.GetCovarianceBlock(covariance_blocks[i], covariance_blocks[j],
+            ij_cov_block);
+
+          for (int q = 0; q < N; q++) 
+          {
+            std::cout << "[";
+            for (int k = 0; k < M; k++)
+            {
+              double value = ij_cov_block[q*N+k];
+
+              if (value > 1.0 || value < -1.0)
+              {
+                std::cout << " " << std::setprecision(9) << value;
+              }
+              else
+              {
+                std::cout << " " << std::setprecision(9) << value;
+              }
+
+            }
+            std::cout << "]" << '\n';
+          }
+          delete [] ij_cov_block;
+        }
+      }
+    }
+  }
+  else
+  {
+    std::cerr << "Failed to Compute Jacobian in displayCovarianceA()" << '\n';
+  }  
 }
 
 // --------------------------------------------------------------------------------

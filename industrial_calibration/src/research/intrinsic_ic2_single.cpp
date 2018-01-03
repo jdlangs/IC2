@@ -17,6 +17,7 @@
 #define OUTPUT_EXTRINSICS false
 #define VISUALIZE_RESULTS false
 #define SAVE_DATA false
+#define VERIFICATION true
 
 struct CalibrationResult
 {
@@ -262,7 +263,7 @@ void calibrateObservationSet(const std::string &data_dir,
   
   calibration.setOutput(true); // Enable output to console.
   calibration.runCalibration();
-  // calibration.displayCovariance();
+  calibration.displayCovariance();
 
   // Print out results.
 #if RUN_THEORY
@@ -323,6 +324,77 @@ int main(int argc, char** argv)
   pnh.getParam("data_dir", data_dir);
   data_dir = addSlashToEnd(data_dir);
 
+#if VERIFICATION
+  // Load images and extract observations
+  std::vector<cv::Mat> verification_images;
+  ICL::Target target(data_dir + "mcircles_11x15.yaml");
+
+  cv::Mat image_0 = cv::imread(data_dir + "verification/cal_target_20cm.png", CV_LOAD_IMAGE_COLOR);
+  cv::Mat image_1 = cv::imread(data_dir + "verification/cal_target_70cm.png", CV_LOAD_IMAGE_COLOR);
+  verification_images.push_back(image_0);
+  verification_images.push_back(image_1);
+
+
+  ICL::ObservationExtractor vobs_extractor(target);
+  int vnum_success = vobs_extractor.extractObservations(verification_images);
+
+  if (vnum_success != 2)
+  {
+    ROS_ERROR_STREAM("Failed to extract observations from images.");
+    return 1;
+  }
+
+  ICL::ObservationData vobs_dat = vobs_extractor.getObservationData();
+
+  ICL::Pose6D pose_0(0, 0, 0.200003743172, 0, 0, 0); // Pose of image 0
+  ICL::Pose6D pose_1(0, 0, 0.700004994869, 0, 0, 0); // Pose of image 1
+
+  ICL::ResearchIntrinsicParams params;
+  ICL::ResearchIntrinsic calibration(vobs_dat, target, params);
+
+  double guess[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.2};
+  double intrinsics[9];
+
+#if 0
+  intrinsics[0] = 533.516;
+  intrinsics[1] = 534.219;
+  intrinsics[2] = 315.152;
+  intrinsics[3] = 232.275;
+  intrinsics[4] = 0.057409;
+  intrinsics[5] = -0.244644;
+  intrinsics[6] = 0.243073;
+  intrinsics[7] = -0.000449239;
+  intrinsics[8] = 0.0001580437;
+#endif
+
+  intrinsics[0] = 533.5158;
+  intrinsics[1] = 534.219;
+  intrinsics[2] = 315.1523;
+  intrinsics[3] = 232.27517;
+  intrinsics[4] = 0.0574090467;
+  intrinsics[5] = -0.244644;
+  intrinsics[6] = 0.2430732;
+  intrinsics[7] = -0.0004492391;
+  intrinsics[8] = 0.0001580437;
+
+  ICL::IntrinsicsVerificationResearch verification = calibration.verifyIntrinsics(
+    vobs_dat[0], pose_0, vobs_dat[1], pose_1, intrinsics, guess);
+
+  // ROS_INFO_STREAM("x Direction:");
+  // ROS_INFO_STREAM("Target (Pose_1 - Pose_2) x: " << verification.target_diff_x << " m");
+  // ROS_INFO_STREAM("Tool Diff (Pose_1 - Pose_2) x: " << verification.tool_diff_x << " m");
+  // ROS_INFO_STREAM("Absolute Error (Tool - Target) x: " << verification.absolute_error_x << " m");
+
+  // ROS_INFO_STREAM("y Direction:");
+  // ROS_INFO_STREAM("Target Diff (Pose_1 - Pose_2) y: " << verification.target_diff_y << " m");
+  // ROS_INFO_STREAM("Tool Diff (Pose_1 - Pose_2) y: " << verification.tool_diff_y << " m");
+  // ROS_INFO_STREAM("Absolute Error (Tool - Target) y: " << verification.absolute_error_y << " m");
+
+  // ROS_INFO_STREAM("z Direction:");
+  // ROS_INFO_STREAM("Target Diff (Pose_1 - Pose_2) z: " << verification.target_diff_z << " m");
+  // ROS_INFO_STREAM("Tool Diff (Pose_1 - Pose_2) z: " << verification.tool_diff_z << " m");
+  // ROS_INFO_STREAM("Absolute Error (Tool - Target) z: " << verification.absolute_error_z << " m");  
+#else
   // I changed some things up so data_dir isn't actually where the data is
   std::string real_data_dir = data_dir + "data/";
 
@@ -372,20 +444,23 @@ int main(int argc, char** argv)
   results.resize(observation_sets.size());
 
   // Run the calibration on each set
+  #if 1
   #pragma omp parallel for
   for (std::size_t i = 0; i < observation_sets.size(); i++)
   {
     calibrateObservationSet(data_dir, observation_sets[i], 
       target, i, results);
   }
+  #endif
+  calibrateObservationSet(data_dir, observation_sets[0], target, 0, results);
 
 #if RUN_THEORY
   std::string result_path = data_dir + "results/ic2_theory_results.csv";
 #else
-  std::string result_path = data_dir + "results/ic2_results.csv";
+  std::string result_path = data_dir + "results/ic2_regular_results.csv";
 #endif
   ROS_INFO_STREAM("Saving Results to: " << result_path);
   saveResultData(result_path, results);
-
+#endif
   return 0;
 }

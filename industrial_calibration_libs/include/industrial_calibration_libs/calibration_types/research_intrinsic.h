@@ -4,6 +4,21 @@
 #include <industrial_calibration_libs/calibration.h>
 namespace industrial_calibration_libs
 {
+struct IntrinsicsVerificationResearch
+{
+  double target_diff_x; // m
+  double tool_diff_x; // m
+  double absolute_error_x; // m
+
+  double target_diff_y; // m
+  double tool_diff_y; // m
+  double absolute_error_y; // m
+
+  double target_diff_z; // m
+  double tool_diff_z; // m
+  double absolute_error_z; // m
+};
+
 struct ResearchIntrinsicParams
 {
   // Unknown Values
@@ -29,6 +44,10 @@ public:
   }
 
   bool runCalibration(void);
+
+  IntrinsicsVerificationResearch verifyIntrinsics(const ObservationPoints &observation_1,
+    const Pose6D &pose_1, const ObservationPoints &observation_2, const Pose6D &pose_2,
+    double intrinsics[9], double target_guess[6]);
 
   void displayCovariance(void);
 
