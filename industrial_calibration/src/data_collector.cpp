@@ -1,7 +1,7 @@
 #include <industrial_calibration/data_collector.h>
 
 CalDataCollector::CalDataCollector(ros::NodeHandle nh, ros::NodeHandle pnh) :
-  nh_(nh), pnh_(pnh), i_(0) // RENAME i_ TO SOMETHING ELSE
+  nh_(nh), pnh_(pnh), i_(1) // RENAME i_ TO SOMETHING ELSE
 {
   this->initDisplayWindow("Camera View");
 
@@ -37,7 +37,7 @@ void CalDataCollector::collectData(void)
 void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConstPtr &image_msg,
   const sensor_msgs::JointStateConstPtr &joint_state_msg)
 {
-  ROS_INFO_STREAM("Joint State MSG Received: " << joint_state_msg->name.size());
+  // ROS_INFO_STREAM("Joint State MSG Received: " << joint_state_msg->name.size());
 
   std::size_t size = joint_state_msg->name.size();
   
@@ -55,7 +55,7 @@ void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConst
     joint_state[i] = joint_state_msg->position[i];
   }
 
-  ROS_INFO_STREAM("Image MSG Received");
+  // ROS_INFO_STREAM("Image MSG Received");
 
   cv_bridge::CvImageConstPtr msg_ptr;
 
@@ -77,12 +77,12 @@ void CalDataCollector::synchronizedMessageCallback(const sensor_msgs::ImageConst
   {
     if (this->drawGrid(grid_image))
     {
-      ROS_INFO_STREAM("CIRCLE GRID FOUND!!!");
+      // ROS_INFO_STREAM("CIRCLE GRID FOUND!!!");
       display_image = grid_image;
     }
     else
     {
-      ROS_INFO_STREAM("NO CIRCLE GRID FOUND!!!");
+      // ROS_INFO_STREAM("NO CIRCLE GRID FOUND!!!");
       display_image = raw_image;    
     }
 
@@ -201,33 +201,33 @@ inline void CalDataCollector::writeIntrinsicMatrixToYAML(YAML::Emitter &out,
 inline void CalDataCollector::saveCalibrationData(const cv::Mat &image,
   const std::vector<std::string> &joint_names, const std::vector<float> &joint_state)
 {
-  // TF Transforms
-  tf_.waitForTransform(from_link_, to_link_, ros::Time(), ros::Duration(0.5));
-  tf::StampedTransform transform;
+  // // TF Transforms
+  // tf_.waitForTransform(from_link_, to_link_, ros::Time(), ros::Duration(0.5));
+  // tf::StampedTransform transform;
   
-  try
-  {
-    tf_.lookupTransform(from_link_, to_link_, ros::Time(), transform);
-  }
-  catch (tf::TransformException &ex)
-  {
-    ROS_ERROR_STREAM("TF Exception: " << ex.what());
-  }
+  // try
+  // {
+  //   tf_.lookupTransform(from_link_, to_link_, ros::Time(), transform);
+  // }
+  // catch (tf::TransformException &ex)
+  // {
+  //   ROS_ERROR_STREAM("TF Exception: " << ex.what());
+  // }
 
-  YAML::Emitter out;
-  out << YAML::BeginMap;
-    this->writeTransformToYAML(out, from_link_, to_link_, transform);
-    this->writeJointStateToYAML(out, joint_names, joint_state);
-    this->writeIntrinsicMatrixToYAML(out, intrinsic_matrix_);
-  out << YAML::EndMap;
+  // YAML::Emitter out;
+  // out << YAML::BeginMap;
+  //   this->writeTransformToYAML(out, from_link_, to_link_, transform);
+  //   this->writeJointStateToYAML(out, joint_names, joint_state);
+  //   this->writeIntrinsicMatrixToYAML(out, intrinsic_matrix_);
+  // out << YAML::EndMap;
 
-  if (out.good())
-  {
-    std::string yaml_file_name = save_path_ + std::to_string(i_) + ".yaml";
-    ROS_INFO_STREAM("Saving YAML to: " << yaml_file_name);
-    std::ofstream yaml_file(yaml_file_name);
-    yaml_file << out.c_str();
-  }
+  // if (out.good())
+  // {
+  //   std::string yaml_file_name = save_path_ + std::to_string(i_) + ".yaml";
+  //   ROS_INFO_STREAM("Saving YAML to: " << yaml_file_name);
+  //   std::ofstream yaml_file(yaml_file_name);
+  //   yaml_file << out.c_str();
+  // }
 
   try
   {

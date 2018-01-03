@@ -28,10 +28,10 @@
   <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
 
   <build_depend>yaml-cpp</build_depend>
-  <build_depend>ceres-solver</build_depend>
+  <build_depend>libceres-dev</build_depend>
 
   <run_depend>yaml-cpp</run_depend>
-  <run_depend>ceres-solver</run_depend>
+  <run_depend>libceres-dev</run_depend>
 
   <!-- The *_depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->

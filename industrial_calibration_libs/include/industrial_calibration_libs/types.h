@@ -187,7 +187,7 @@ struct Extrinsics
   Extrinsics(Pose6D pose) : data{pose.ax, pose.ay, pose.az, 
     pose.x, pose.y, pose.z} { }
 
-  Pose6D asPose6D(void) {return Pose6D(data[3], data[4], data[5], 
+  Pose6D asPose6D(void) const {return Pose6D(data[3], data[4], data[5], 
     data[0], data[1], data[2]);}
 
   const double &ax(void) const {return data[0];}

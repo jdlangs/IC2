@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="data_dir"/>
+
+  <!-- Debug arguments -->
+  <arg name="debug" default="false"/>
+  <arg unless="$(arg debug)" name="launch_prefix" value=""/>
+  <arg if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args"/>
+
+  <node name="intrinsic_opencv" pkg="industrial_calibration" type="intrinsic_opencv" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
+    <param name="data_dir" value="$(arg data_dir)" type="string"/>
+  </node>
+</launch>

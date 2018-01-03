@@ -9,11 +9,15 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <industrial_calibration_libs/industrial_calibration_libs.h>
 
+#include <boost/filesystem.hpp>
+
 typedef std::vector<double> JointStates;
 typedef std::vector<double> Translation;
 typedef std::vector<double> Quaternion;
 typedef std::vector<double> RotationRad;
 typedef std::vector<double> RotationDeg;
+
+typedef std::vector<cv::Mat> CalibrationImages;
 
 struct LinkData
 {
@@ -49,6 +53,23 @@ void getQuaternion(double distance, double &qx, double &qy, double &qz,
   double &qw);
 
 bool loadCameraInfo(const std::string &path, double *camera_info);
+
+std::string addSlashToEnd(const std::string &directory);
+
+bool isPNG(const std::string &file_name);
+
+void getCalibrationImages(const std::string &path, CalibrationImages &images);
+
+// https://stackoverflow.com/questions/33665257/
+// how-to-overload-ostream-for-vector-to-print-all-collection-from-vector
+template<class T>
+std::ostream& operator<<(std::ostream& stream, const std::vector<T>& values)
+{
+    stream << "[ ";
+    std::copy( std::begin(values), std::end(values), std::ostream_iterator<T>(stream, " ") );
+    stream << ']';
+    return stream;
+}
 
 bool parseYAML(const YAML::Node &node, const std::string &var_name, 
   std::vector<double> &var_value)
@@ -215,4 +236,43 @@ bool loadCameraInfo(const std::string &path, double *camera_info)
   camera_info[8] = distortion_coefficients[4]; // distortion p2
 
   return success;
+}
+
+std::string addSlashToEnd(const std::string &directory)
+{
+  if (directory.back() != '/')
+  {
+    return directory + '/';
+  }
+  return directory;
+}
+
+bool isPNG(const std::string &file_name)
+{
+  std::size_t dot_location = file_name.find('.');
+  std::string extension = file_name.substr(dot_location + 1);
+  if (extension.compare("png") == 0) {return true;}
+  return false;
+}
+
+void getCalibrationImages(const std::string &path, CalibrationImages &images)
+{
+  boost::filesystem::path image_dir(path);
+  boost::filesystem::directory_iterator end_iter;
+
+  if (boost::filesystem::exists(image_dir) &&
+    boost::filesystem::is_directory(image_dir))
+  {
+    for (boost::filesystem::directory_iterator dir_iter(image_dir);
+      dir_iter != end_iter; ++dir_iter)
+    {
+      if (boost::filesystem::is_regular_file(dir_iter->status()) &&
+        isPNG(dir_iter->path().filename().string()))
+      {
+        std::string image_path = path + dir_iter->path().filename().string();
+        cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_COLOR);
+        images.push_back(image);
+      }
+    }
+  }
 }

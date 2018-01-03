@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="data_dir"/>
+
+  <!-- Debug arguments -->
+  <arg name="debug" default="false"/>
+  <arg unless="$(arg debug)" name="launch_prefix" value=""/>
+  <arg if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args"/>
+
+  <arg name="sim" default="false"/>
+  <arg unless="$(arg sim)" name="node" value="intrinsic_ic2"/>
+  <arg if="$(arg sim)" name="node" value="intrinsic_ic2_sim"/>
+
+  <node name="$(arg node)" pkg="industrial_calibration" type="$(arg node)" output="screen" launch-prefix="$(arg launch_prefix)" required="true">
+    <param name="data_dir" value="$(arg data_dir)" type="string"/>
+  </node>
+</launch>
