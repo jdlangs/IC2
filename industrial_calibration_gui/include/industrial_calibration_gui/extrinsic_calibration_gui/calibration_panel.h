@@ -3,7 +3,7 @@
 
 #include <rviz/panel.h>
 
-namespace industrial_calibration_gui
+namespace extrinsic_calibration_gui
 {
 // Forward declare calibration widget
 class CalibrationWidget;
@@ -21,5 +21,5 @@ public:
 protected:
   CalibrationWidget* widget_;
 };
-} // namespace industrial_calibration_gui
+} // namespace extrinsic_calibration_gui
 #endif // CALIBRATION_PANEL_H

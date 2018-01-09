@@ -1,6 +1,6 @@
-#include <industrial_calibration_gui/calibration_widget.h>
+#include <industrial_calibration_gui/extrinsic_calibration_gui/calibration_widget.h>
 
-namespace industrial_calibration_gui
+namespace extrinsic_calibration_gui
 {
 CalibrationWidget::CalibrationWidget(QWidget* parent) : QWidget(parent), pnh_("~"),
   it_(pnh_)
@@ -86,7 +86,7 @@ void CalibrationWidget::updateCalibrationTypeText(int current_index)
   switch (current_index)
   {
     case welcome_screen:
-      ui_->calibration_type_text_browser->setText("Welcome to the industrial_calibration_gui.");
+      ui_->calibration_type_text_browser->setText("Welcome to the extrinsic_calibration_gui.");
       break;
 
     case camera_on_wrist_extrinsic:
@@ -104,7 +104,7 @@ void CalibrationWidget::updateCalibrationTypeText(int current_index)
       ui_->calibration_type_text_browser->setText("Static Camera Moving Target on Wrist (Extrinsic + Intrinsic) [EXPERIMENTAL]");
 
     default:
-      ui_->calibration_type_text_browser->setText("Welcome to the industrial_calibration_gui.");
+      ui_->calibration_type_text_browser->setText("Welcome to the extrinsic_calibration_gui.");
       break;
   }
   calibration_type_ = static_cast<CalibrationType>(current_index);
@@ -1181,4 +1181,4 @@ bool operator!=(const tf::StampedTransform &t1, const tf::StampedTransform &t2)
   }
   else {return true;}
 }
-} // namespace industrial_calibration_gui
+} // namespace extrinsic_calibration_gui

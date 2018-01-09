@@ -9,7 +9,7 @@ Panels:
         - /Image1
       Splitter Ratio: 0.5
     Tree Height: 837
-  - Class: industrial_calibration_gui/CalibrationPanel
+  - Class: extrinsic_calibration_gui/CalibrationPanel
     Name: CalibrationPanel
 Visualization Manager:
   Class: ""

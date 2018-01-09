@@ -1,9 +1,9 @@
 #include <ros/console.h>
 #include <QVBoxLayout>
-#include <industrial_calibration_gui/calibration_panel.h>
-#include <industrial_calibration_gui/calibration_widget.h>
+#include <industrial_calibration_gui/extrinsic_calibration_gui/calibration_panel.h>
+#include <industrial_calibration_gui/extrinsic_calibration_gui/calibration_widget.h>
 
-namespace industrial_calibration_gui
+namespace extrinsic_calibration_gui
 {
 CalibrationPanel::CalibrationPanel(QWidget* parent) : rviz::Panel(parent)
 {
@@ -21,7 +21,7 @@ void CalibrationPanel::onInitialize()
 {
   ROS_INFO("Initializng calibration panel");
 }
-} // namespace industrial_calibration_gui
+} // namespace extrinsic_calibration_gui
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(industrial_calibration_gui::CalibrationPanel, rviz::Panel)
+PLUGINLIB_EXPORT_CLASS(extrinsic_calibration_gui::CalibrationPanel, rviz::Panel)

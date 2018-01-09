@@ -45,7 +45,7 @@ namespace Ui
 class CalibrationWidget;
 }
 
-namespace industrial_calibration_gui
+namespace extrinsic_calibration_gui
 {
 enum CalibrationType
 {
@@ -181,6 +181,6 @@ private:
 
 bool operator!=(const tf::StampedTransform &t1, const tf::StampedTransform &t2);
 
-} // namespace industrial_calibration_gui
+} // namespace extrinsic_calibration_gui
 
 #endif //CALIBRATION_WIDGET_H

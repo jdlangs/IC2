@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
-<library path="lib/libindustrial_calibration_gui">
-  <class name="industrial_calibration_gui/CalibrationPanel" 
-    type="industrial_calibration_gui::CalibrationPanel" 
+<library path="lib/libextrinsic_calibration_gui">
+  <class name="extrinsic_calibration_gui/CalibrationPanel" 
+    type="extrinsic_calibration_gui::CalibrationPanel" 
     base_class_type="rviz::Panel">
     <description>
       A panel widget that can be used in an rviz instance for collecting calibration data.
