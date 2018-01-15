@@ -108,5 +108,4 @@ install(TARGETS extrinsic_calibration_gui
 
 install(DIRECTORY include/${PROJECT_NAME}
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-}
 )
