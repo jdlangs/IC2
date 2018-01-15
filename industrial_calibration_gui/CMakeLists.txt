@@ -106,6 +106,7 @@ install(TARGETS extrinsic_calibration_gui
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
 
-install(DIRECTORY include/extrinsic_calibration_gui/
+install(DIRECTORY include/${PROJECT_NAME}
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+}
 )
