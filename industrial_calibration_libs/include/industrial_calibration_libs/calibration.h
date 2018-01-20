@@ -7,7 +7,6 @@
 
 // Note(gChiou): Name for other classes
 // CameraToBaseExtrinsic
-// CameraToBaseIntrinsic
 
 namespace industrial_calibration_libs
 {

@@ -73,59 +73,9 @@ set_target_properties(extrinsic_example_debug ${COMPILER_WARNINGS})
 target_link_libraries(extrinsic_example_debug ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
   ${Boost_LIBRARIES} yaml-cpp)
 
-add_executable(intrinsic_example_mh3 src/intrinsic_example_mh3.cpp)
-add_dependencies(intrinsic_example_mh3 ${catkin_EXPORTED_TARGETS})
-set_target_properties(intrinsic_example_mh3 ${COMPILER_WARNINGS})
-target_link_libraries(intrinsic_example_mh3 ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
-  ${Boost_LIBRARIES} yaml-cpp)
-
-add_executable(intrinsic_example_abb src/intrinsic_example_abb.cpp)
-add_dependencies(intrinsic_example_abb ${catkin_EXPORTED_TARGETS})
-set_target_properties(intrinsic_example_abb ${COMPILER_WARNINGS})
-target_link_libraries(intrinsic_example_abb ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
-  ${Boost_LIBRARIES} yaml-cpp)
-
 add_executable(extrinsic_simulate src/extrinsic_simulate.cpp)
 add_dependencies(extrinsic_simulate ${catkin_EXPORTED_TARGETS})
 set_target_properties(extrinsic_simulate ${COMPILER_WARNINGS})
 target_link_libraries(extrinsic_simulate ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
   ${Boost_LIBRARIES} yaml-cpp)
 
-# Research
-add_executable(intrinsic_opencv src/research/intrinsic_opencv.cpp)
-add_dependencies(intrinsic_opencv ${catkin_EXPORTED_TARGETS})
-set_target_properties(intrinsic_opencv ${COMPILER_WARNINGS})
-target_link_libraries(intrinsic_opencv ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
-  ${Boost_LIBRARIES} yaml-cpp)
-
-add_executable(intrinsic_opencv_single src/research/intrinsic_opencv_single.cpp)
-add_dependencies(intrinsic_opencv_single ${catkin_EXPORTED_TARGETS})
-set_target_properties(intrinsic_opencv_single ${COMPILER_WARNINGS})
-target_link_libraries(intrinsic_opencv_single ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
-  ${Boost_LIBRARIES} yaml-cpp ${OpenMP_LIBS})
-target_compile_options(intrinsic_opencv_single PRIVATE ${OpenMP_FLAGS})
-
-add_executable(intrinsic_ic2 src/research/intrinsic_ic2.cpp)
-add_dependencies(intrinsic_ic2 ${catkin_EXPORTED_TARGETS})
-set_target_properties(intrinsic_ic2 ${COMPILER_WARNINGS})
-target_link_libraries(intrinsic_ic2 ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
-  ${Boost_LIBRARIES} yaml-cpp)
-
-add_executable(intrinsic_ic2_single src/research/intrinsic_ic2_single.cpp)
-add_dependencies(intrinsic_ic2_single ${catkin_EXPORTED_TARGETS})
-set_target_properties(intrinsic_ic2_single ${COMPILER_WARNINGS})
-target_link_libraries(intrinsic_ic2_single ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
-  ${Boost_LIBRARIES} yaml-cpp ${OpenMP_LIBS})
-target_compile_options(intrinsic_ic2_single PRIVATE ${OpenMP_FLAGS})
-
-add_executable(intrinsic_ic2_sim src/research/intrinsic_ic2_sim.cpp)
-add_dependencies(intrinsic_ic2_sim ${catkin_EXPORTED_TARGETS})
-set_target_properties(intrinsic_ic2_sim ${COMPILER_WARNINGS})
-target_link_libraries(intrinsic_ic2_sim ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
-  ${Boost_LIBRARIES} yaml-cpp)
-
-add_executable(data_cleaner src/research/data_cleaner.cpp)
-add_dependencies(data_cleaner ${catkin_EXPORTED_TARGETS})
-set_target_properties(data_cleaner ${COMPILER_WARNINGS})
-target_link_libraries(data_cleaner ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
-  ${Boost_LIBRARIES} yaml-cpp)

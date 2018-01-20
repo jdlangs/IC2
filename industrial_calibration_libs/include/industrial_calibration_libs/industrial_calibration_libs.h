@@ -8,9 +8,6 @@
 #include <industrial_calibration_libs/types.h>
 
 #include <industrial_calibration_libs/calibration_types/camera_on_wrist_extrinsic.h>
-#include <industrial_calibration_libs/calibration_types/camera_on_wrist_intrinsic.h>
-#include <industrial_calibration_libs/calibration_types/camera_on_wrist_extrinsic_intrinsic.h>
-#include <industrial_calibration_libs/calibration_types/research_intrinsic.h>
 
 namespace industrial_calibration_libs
 {
